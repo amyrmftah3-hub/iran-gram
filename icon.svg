@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#06113f"/><stop offset=".48" stop-color="#075cff"/><stop offset="1" stop-color="#001044"/></linearGradient>
+ <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#13dfff"/><stop offset=".5" stop-color="#0878ff"/><stop offset="1" stop-color="#00b8ff"/></linearGradient>
+ <linearGradient id="plane" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#bdeaff"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="9"/></filter>
+</defs>
+<rect width="512" height="512" rx="112" fill="#00103d"/>
+<rect x="43" y="43" width="426" height="426" rx="104" fill="url(#edge)" filter="url(#glow)" opacity=".8"/>
+<rect x="49" y="49" width="414" height="414" rx="98" fill="url(#bg)" stroke="#35caff" stroke-width="5"/>
+<path d="M115 164 Q115 106 174 106 H345 Q391 106 408 144 Q350 220 251 256 Q161 289 112 361Z" fill="#087cff" opacity=".35"/>
+<path d="M154 146 Q154 122 180 132 L376 227 Q397 237 376 250 L180 380 Q154 397 154 369Z" fill="none" stroke="url(#edge)" stroke-width="44" stroke-linejoin="round"/>
+<path d="M151 256 Q153 232 180 225 L391 177 Q416 171 402 197 L308 365 Q294 390 273 371 L226 326 Q210 310 232 294 L352 207 L175 286 Q150 297 151 256Z" fill="url(#plane)"/>
+</svg>

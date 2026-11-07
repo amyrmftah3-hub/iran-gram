@@ -82,7 +82,7 @@ async function loadOnlineChats(){
  const ids=state.chats.map(c=>c.id);
  if(ids.length){
   const {data:members}=await supabaseClient.from('conversation_members').select('conversation_id,user_id').in('conversation_id',ids);
-  const {data:channelStatus}=await supabaseClient.from('channel_verification_status').select('channel_id,is_verified,active_users_30d').in('channel_id',ids);
+  const {data:channelStatus,error:statusError}=await supabaseClient.rpc('get_channel_verification_status');if(statusError)console.warn('Channel verification status unavailable',statusError.message);
   const {data:verifiedUsers}=await supabaseClient.from('user_verification_overrides').select('user_id').eq('is_verified',true);
   const verifiedSet=new Set((verifiedUsers||[]).map(x=>x.user_id));
   const statusMap=new Map((channelStatus||[]).map(x=>[x.channel_id,x]));
@@ -95,7 +95,7 @@ async function loadOnlineChats(){
  renderChats();
  if(state.active)openChatNoFocus();else{$('#chatView').style.display='none';$('#emptyState').style.display='grid'}
 }
-async function recordChannelActivity(channelId){if(!remoteMode||!currentUser||!channelId)return;const {error}=await supabaseClient.from('channel_activity').upsert({channel_id:channelId,user_id:currentUser.id,last_active_at:new Date().toISOString()},{onConflict:'channel_id,user_id'});if(error)console.warn('Channel activity update failed',error.message)}
+async function recordChannelActivity(channelId){if(!remoteMode||!currentUser||!channelId)return;const {error}=await supabaseClient.rpc('record_channel_activity',{p_channel_id:channelId});if(error)console.warn('Channel activity update failed',error.message)}
 async function startOnline(){
  const {data,error}=await supabaseClient.auth.getUser();
  if(error||!data.user){authModal();return}

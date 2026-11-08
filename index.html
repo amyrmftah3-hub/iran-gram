@@ -25,6 +25,47 @@ body{font-family:'Vazirmatn','Markazi Text',Tahoma,sans-serif}
 .photo.eight{background-image:url(https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=85)}
 @media(max-width:760px){.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.photo.tall{grid-row:span 2;min-height:420px}.photo{min-height:200px}}
 @media(max-width:460px){.gallery{grid-template-columns:1fr}.photo.tall{grid-row:auto;min-height:250px}.photo{min-height:220px}}
+
+/* Art-directed landing refresh */
+:root{--bg:#0b1420;--panel:#131f2c;--panel2:#1c2b3a;--line:#26394b;--blue:#3390ec;--gold:#d9b76e}
+body{background:radial-gradient(ellipse at 78% 5%,#153451 0,transparent 34%),#0b1420}
+.nav{height:82px;border-color:#26394b}
+.logo{background:linear-gradient(145deg,#244f75,#102337);border:1px solid #527b9d;box-shadow:0 8px 25px #0005}
+.hero{padding-top:68px;gap:52px}
+.hero h1{font-size:clamp(40px,5.5vw,66px);letter-spacing:-.5px;text-shadow:0 8px 35px #0005}
+.hero h1 span{background:linear-gradient(90deg,#a8d8ff,#4b9fe8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.eyebrow{display:inline-flex;padding:5px 12px;border:1px solid #34536d;background:#142a3d;border-radius:30px}
+.lead{font-size:18px;line-height:2.05;color:#c4d2df}
+.heroimg{min-height:450px;border-radius:34px;border-color:#3b5b75;box-shadow:0 25px 80px #0005;background-image:linear-gradient(135deg,#0d2034aa,#0e1621aa),url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1600&q=90')}
+.phone{border-color:#354d61;box-shadow:0 30px 90px #000b;backdrop-filter:blur(12px)}
+.stat,.feature{background:linear-gradient(145deg,#172635,#111d29);border-color:#2a4053;box-shadow:0 12px 34px #0002}
+.feature{transition:transform .22s,border-color .22s,box-shadow .22s}
+.feature:hover{transform:translateY(-5px);border-color:#4c86b2;box-shadow:0 18px 42px #0004}
+.ico{background:linear-gradient(145deg,#254c6b,#1b3145);border:1px solid #345a78}
+.section{padding-top:66px;padding-bottom:66px}
+.sectionhead{margin-bottom:38px}
+.sectionhead h2{font-size:36px}
+.sectionhead p{font-size:15px}
+.gallery{gap:16px}
+.photo{min-height:255px;border-radius:24px;border-color:#31485d;box-shadow:0 16px 42px #0005}
+.photo:after{inset:35% 0 0;background:linear-gradient(transparent,#07111df2)}
+.photo span{right:19px;bottom:16px;font-family:'Lalezar','Markazi Text',sans-serif;font-size:21px;text-shadow:0 2px 12px #0009}
+.photo.tall{min-height:526px}
+.photo.nine{background-image:url('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=90')}
+.photo.ten{background-image:url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1000&q=90')}
+.photo.eleven{background-image:url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=90')}
+.photo.twelve{background-image:url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=90')}
+.photo.thirteen{background-image:url('https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1000&q=90')}
+.photo.fourteen{background-image:url('https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1000&q=90')}
+.photo.fifteen{background-image:url('https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=1000&q=90')}
+.photo.sixteen{background-image:url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1000&q=90')}
+.roadmap{background:linear-gradient(135deg,#18334a,#111f2c);border-color:#35536b;box-shadow:0 18px 45px #0003}
+.download{border-color:#3b6382;box-shadow:0 22px 55px #0004}
+.btn{border-radius:13px;background:linear-gradient(135deg,#3390ec,#2878c5);border-color:#5aa9f2}
+.btn.secondary{background:#1b2b3a;border-color:#3a4e60}
+.footer{border-color:#26394b}
+@media(max-width:760px){.hero{gap:30px}.heroimg{min-height:360px}.section{padding-top:46px;padding-bottom:46px}.photo.tall{min-height:420px}}
+
 </style>
 </head>
 <body>
@@ -46,7 +87,15 @@ body{font-family:'Vazirmatn','Markazi Text',Tahoma,sans-serif}
 <article class="feature"><div class="ico">📣</div><h3>تبلیغات</h3><p>زیرساخت ثبت و نمایش تبلیغ کانال؛ نمایش تبلیغات در فید گفتگو هنوز باید توسعه یابد.</p><span class="tag">نسخه اولیه مدیریتی</span></article>
 <article class="feature"><div class="ico">🌙</div><h3>ظاهر تاریک و فارسی</h3><p>رابط راست‌چین با تم تاریک و طراحی مناسب نمایشگر موبایل.</p><span class="tag live">فعال</span></article>
 </div></section>
-<section class="section wrap" id="gallery"><div class="sectionhead"><h2>نگاهی به دنیای ارتباطات</h2><p>تصاویر مفهومی برای معرفی تجربه ارتباطی ایران‌گرام</p></div><div class="gallery"><div class="photo tall"><span>همیشه در ارتباط</span></div><div class="photoside"><div class="photo one"><span>با هم، در یک گروه</span></div><div class="photo two"><span>فضایی برای گفتگو</span></div></div><div class="photoside"><div class="photo three"><span>همراهی در هر لحظه</span></div><div class="photo four"><span>دنیایی از ایده‌ها</span></div></div><div class="photo five"><span>گفت‌وگوهای بی‌مرز</span></div><div class="photo six"><span>تیمی کنار هم</span></div><div class="photo seven"><span>ایده‌های تازه</span></div><div class="photo eight"><span>همیشه همراه تو</span></div></div></section>
+<section class="section wrap" id="gallery"><div class="sectionhead"><h2>نگاهی به دنیای ارتباطات</h2><p>تصاویر مفهومی برای معرفی تجربه ارتباطی ایران‌گرام</p></div><div class="gallery"><div class="photo tall"><span>همیشه در ارتباط</span></div><div class="photoside"><div class="photo one"><span>با هم، در یک گروه</span></div><div class="photo two"><span>فضایی برای گفتگو</span></div></div><div class="photoside"><div class="photo three"><span>همراهی در هر لحظه</span></div><div class="photo four"><span>دنیایی از ایده‌ها</span></div></div><div class="photo five"><span>گفت‌وگوهای بی‌مرز</span></div><div class="photo six"><span>تیمی کنار هم</span></div><div class="photo seven"><span>ایده‌های تازه</span></div><div class="photo eight"><span>همیشه همراه تو</span></div>
+<div class="photo nine"><span>لحظه‌های مشترک</span></div>
+<div class="photo ten"><span>ایده تا اجرا</span></div>
+<div class="photo eleven"><span>ارتباط در حرکت</span></div>
+<div class="photo twelve"><span>جهان دیجیتال</span></div>
+<div class="photo thirteen"><span>تجربه‌ای تازه</span></div>
+<div class="photo fourteen"><span>کنار هم بسازیم</span></div>
+<div class="photo fifteen"><span>گفت‌وگوی بی‌وقفه</span></div>
+<div class="photo sixteen"><span>فردای ارتباط</span></div></div></section>
 <section class="section wrap" id="roadmap"><div class="sectionhead"><h2>مسیر توسعه</h2><p>هدف ما نزدیک شدن به تجربه کامل پیام‌رسان‌های مدرن است.</p></div><div class="roadmap"><div><h3>پایه‌های فعلی</h3><ul><li>ورود و حساب کاربری ایمیلی</li><li>پروفایل و گفت‌وگوهای آنلاین اولیه</li><li>ساخت گروه و کانال</li><li>استوری و تنظیمات آرشیو</li><li>نسخه آزمایشی اندروید و وب</li></ul></div><div><h3>مراحل بعدی</h3><ul><li>تکمیل مدیران و دسترسی‌های گروه/کانال</li><li>پایداری پیام‌رسانی و رسانه‌ها</li><li>تکمیل تماس‌ها و آزمایش چنددستگاهی</li><li>تبلیغات بومی و آمار کمپین</li><li>بررسی امنیت و انتشار عمومی</li></ul></div></div></section>
 <section class="wrap download" id="download"><h2>ایران‌گرام را امتحان کن</h2><p>نسخه وب را همین حالا باز کن؛ فایل اندروید فعلی آزمایشی است و نسخه رسمی پس از تکمیل و امضای انتشار قرار می‌گیرد.</p><div class="actions" style="justify-content:center"><a class="btn" href="https://github.com/amyrmftah3-hub/iran-gram/actions/workflows/build-apk.yml">دانلود نسخه آزمایشی APK</a><a class="btn secondary" href="app.html">اجرای برنامه وب</a></div><div class="note">در صفحه GitHub، بخش Artifacts و فایل IranGram-Android-APK را انتخاب کن. فایل دانلودی ZIP است و APK داخل آن قرار دارد.</div></section>
 </main>

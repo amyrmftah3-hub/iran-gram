@@ -118,7 +118,7 @@ async function startOnline(){
  }).subscribe();
 }
 
-let callSignalChannel=null,callInviteChannel=null,activeCall=null,pendingIncomingCall=null,callSeconds=0,callClock=null;
+let callSignalChannel=null,callInviteChannel=null,activeCall=null,pendingIncomingCall=null,callSeconds=0,callClock=null,callRingTimeout=null;
 function callIsSupported(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.RTCPeerConnection)}
 function callPeerId(chat){return chat&&chat.remote&&chat.type==='people'&&chat.id?chat.id:null}
 async function sendCallSignal(kind,payload={}){
@@ -154,10 +154,11 @@ async function flushCallIce(){
  for(const candidate of queued){try{await activeCall.pc.addIceCandidate(new RTCIceCandidate(candidate))}catch(e){console.warn('ICE candidate skipped',e)}}
 }
 async function handleCallSignal(row){
+ if(!activeCall&&pendingIncomingCall&&row.call_id===pendingIncomingCall.id&&(row.kind==='end'||row.kind==='reject')){pendingIncomingCall=null;closeModal();toast('تماس لغو شد');return}
  if(!activeCall||row.call_id!==activeCall.id)return;
  try{
   if(row.kind==='offer'){activeCall.offer=row.payload;if(activeCall.accepting)await acceptOffer(row.payload)}
-  else if(row.kind==='answer'){await activeCall.pc.setRemoteDescription(new RTCSessionDescription(row.payload));await flushCallIce();startCallClock()}
+  else if(row.kind==='answer'){if(callRingTimeout)clearTimeout(callRingTimeout);callRingTimeout=null;await activeCall.pc.setRemoteDescription(new RTCSessionDescription(row.payload));await flushCallIce();startCallClock()}
   else if(row.kind==='ice'){if(activeCall.pc.remoteDescription)await activeCall.pc.addIceCandidate(new RTCIceCandidate(row.payload));else activeCall.iceQueue.push(row.payload)}
   else if(row.kind==='reject'||row.kind==='busy'){toast(row.kind==='busy'?'مخاطب در حال مکالمه است':'تماس رد شد');finishCall(false)}
   else if(row.kind==='end'){toast('تماس پایان یافت');finishCall(false)}
@@ -220,11 +221,12 @@ async function startOutgoingCall(type){
   const offer=await pc.createOffer();await pc.setLocalDescription(offer);
   await sendCallSignal('offer',pc.localDescription.toJSON());
   $('#callTimer').textContent='در انتظار پاسخ…';
+  if(callRingTimeout)clearTimeout(callRingTimeout);callRingTimeout=setTimeout(()=>{if(activeCall?.id===session.id){toast('پاسخی دریافت نشد');finishCall(true)}},45000);
  }catch(e){console.error(e);toast('شروع تماس ناموفق بود: '+(e.message||'خطای دسترسی یا سرور'));finishCall(false)}
 }
 async function finishCall(notify=true){
  const call=activeCall;if(!call)return;
- activeCall=null;if(callClock)clearInterval(callClock);callClock=null;
+ activeCall=null;if(callRingTimeout)clearTimeout(callRingTimeout);callRingTimeout=null;if(callClock)clearInterval(callClock);callClock=null;
  if(notify&&call.id){activeCall=call;await sendCallSignal('end',{});activeCall=null}
  try{call.pc?.close()}catch(e){}
  call.localStream?.getTracks().forEach(track=>track.stop());

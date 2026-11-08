@@ -443,7 +443,88 @@ body{font-family:Roboto,"Segoe UI",Tahoma,sans-serif}
  .chatview{height:100%}
 }
 
-.cyrus-mark{width:112px;height:112px;border-radius:50%;display:grid;place-items:center;filter:drop-shadow(0 0 24px #d5a94755);animation:cyrusGlow 3s ease-in-out infinite}@keyframes cyrusGlow{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.035)}}</style>
+.cyrus-mark{width:112px;height:112px;border-radius:50%;display:grid;place-items:center;filter:drop-shadow(0 0 24px #d5a94755);animation:cyrusGlow 3s ease-in-out infinite}@keyframes cyrusGlow{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.035)}}
+/* IranGram UI redesign — refined Telegram-inspired mobile experience */
+:root{
+ --tg-panel:#17212b;--tg-bg:#0e1621;--tg-blue:#3390ec;--tg-line:#263442;
+ --ig-accent:#36a3ee;--ig-gold:#d8b45f;
+}
+body{background:#0e1621;color:#edf4f8}
+.app{background:#17212b}
+.sidebar{background:linear-gradient(180deg,#17212b 0%,#151f2a 100%);border-left:1px solid #263746}
+.topbar{height:62px;flex-basis:62px;background:#17212b;padding:9px 15px}
+.topbar-title{display:none}
+.brand{justify-content:center}
+.brand .logo{width:42px;height:42px;border:1px solid #d7b45e;box-shadow:0 0 0 3px #d7b45e18,0 4px 16px #0004}
+.iconbtn{transition:background .16s ease,transform .16s ease}
+.iconbtn:active,.round:active,.send:active{transform:scale(.94)}
+.searchbox{padding:9px 13px 12px}
+.searchbox input{height:42px;border-radius:12px;background:#222f3d;border:1px solid #2b3b4b;transition:border-color .2s,background .2s}
+.searchbox input:focus{border-color:#3390ec;background:#202e3c}
+.filters{height:46px;flex-basis:46px;gap:5px;padding:0 12px 8px}
+.filter{border-radius:18px;padding:8px 13px;font-weight:600;transition:all .18s}
+.filter.active{background:#263e52;color:#61b7ff;box-shadow:inset 0 0 0 1px #3390ec25}
+.stories{min-height:100px;padding:13px 14px 11px;gap:15px;border-bottom:1px solid #263442}
+.story{min-width:58px;color:#a8b7c5}
+.storyring{width:54px;height:54px;padding:3px}
+.storyring span{background:#263747;border:2px solid #17212b;color:#d8eaff}
+.storyring.add{background:#34495c}
+.storyring.add span{background:#263746;color:#60b5f5}
+.chatrow{min-height:78px;padding:12px 14px;border-bottom:1px solid #26344265;transition:background .16s}
+.chatrow:hover,.chatrow.selected{background:#202e3b}
+.chatrow.selected{box-shadow:inset -3px 0 #3390ec}
+.avatar{width:52px;height:52px;box-shadow:0 1px 2px #0002}
+.chathead b{font-size:14px;font-weight:650;color:#f2f6fa}
+.preview{font-size:12px;color:#9aabba}
+.time{color:#8293a3}
+.unread{min-width:20px;text-align:center;background:#3390ec;font-weight:700}
+.main{background:#0e1621}
+.empty{background:radial-gradient(ellipse at 50% 45%,#1c2b39 0%,#0e1621 72%)}
+.emptycard{background:#17212bd9;border:1px solid #2b3b4a;box-shadow:0 18px 50px #0003;backdrop-filter:blur(12px)}
+.emptycard .plane{filter:drop-shadow(0 5px 12px #3390ec66)}
+.emptycard h2{color:#f4f8fb}
+.emptycard p{color:#a8b8c7}
+.chatheader{background:#17212b;border-bottom:1px solid #263442;padding:8px 15px}
+.chatheader .avatar{border:1px solid #ffffff12}
+.chatname b{font-size:15px}
+.chatname small{color:#91a3b4}
+.messages{background-color:#0e1621;background-image:radial-gradient(#ffffff08 1px,transparent 1px);background-size:24px 24px}
+.daylabel{background:#263746;color:#d6e2eb;border:1px solid #34495a}
+.msg{background:#1b2a38;border:1px solid #263746;box-shadow:0 2px 5px #0002;border-radius:16px 16px 16px 5px}
+.msg.mine{background:#254d70;border-color:#2b5d83;border-radius:16px 16px 5px 16px}
+.msg p{color:#f0f5f9}
+.msgmeta{color:#a8bfce}
+.tiny{background:#30475a;color:#d9e8f3}
+.composer{background:#17212b;border-top:1px solid #263442;padding:10px 12px}
+.composefield{background:#222f3d;border:1px solid #304252;border-radius:24px;padding:5px 10px}
+.composefield:focus-within{border-color:#3390ec}
+.composefield textarea{color:#edf4f8}
+.composefield textarea::placeholder{color:#8194a5}
+.round{background:#222f3d;color:#9fb3c3;border:1px solid #304252;transition:all .16s}
+.send{background:linear-gradient(145deg,#48a8f5,#2585d8);box-shadow:0 4px 12px #168bd544}
+.send:hover{background:#2585d8}
+.compose-fab{box-shadow:0 6px 20px #0005!important}
+.menu{background:#202e3b;border:1px solid #334454;box-shadow:0 12px 34px #0006}
+.menu button{color:#edf4f8}
+.menu button:hover{background:#2a3d4d}
+.modal{background:#192633;border:1px solid #304252;color:#edf4f8}
+.modal input,.modal textarea,.modal select{background:#22313f;border-color:#34495a;color:#edf4f8}
+.secondary{background:#2a3b4a;color:#edf4f8}
+.toast{background:#263746;border:1px solid #3a5368;box-shadow:0 8px 24px #0005}
+@media(max-width:760px){
+ .topbar{height:60px;flex-basis:60px}
+ .chatrow{min-height:76px;padding:11px 13px}
+ .chatrow .avatar{flex-basis:51px}
+ .messages{background-size:22px 22px}
+ .composer{gap:6px}
+ .round{width:40px;height:40px}
+ .send{width:43px;height:43px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+
+</style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="manifest" href="./manifest.json">

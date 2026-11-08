@@ -18,6 +18,7 @@ public class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 41;
     private WebView webView;
     private PermissionRequest pendingWebPermission;
+    private String[] pendingAndroidPermissions = new String[0];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,9 +47,11 @@ public class MainActivity extends Activity {
                         request.grant(request.getResources());
                     } else {
                         pendingWebPermission = request;
-                        ActivityCompat.requestPermissions(MainActivity.this,
-                            new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA},
-                            MEDIA_PERMISSION_REQUEST);
+                        java.util.ArrayList<String> needed = new java.util.ArrayList<>();
+                        if (needsAudio && !audioOk) needed.add(Manifest.permission.RECORD_AUDIO);
+                        if (needsVideo && !videoOk) needed.add(Manifest.permission.CAMERA);
+                        pendingAndroidPermissions = needed.toArray(new String[0]);
+                        ActivityCompat.requestPermissions(MainActivity.this, pendingAndroidPermissions, MEDIA_PERMISSION_REQUEST);
                     }
                 });
             }
@@ -70,8 +73,9 @@ public class MainActivity extends Activity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == MEDIA_PERMISSION_REQUEST && pendingWebPermission != null) {
-            boolean allGranted = true;
+            boolean allGranted = grantResults.length == pendingAndroidPermissions.length;
             for (int result : grantResults) if (result != PackageManager.PERMISSION_GRANTED) allGranted = false;
+            pendingAndroidPermissions = new String[0];
             if (allGranted) pendingWebPermission.grant(pendingWebPermission.getResources());
             else {
                 pendingWebPermission.deny();

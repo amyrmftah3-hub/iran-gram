@@ -5,7 +5,6 @@ on:
   push:
     paths:
       - 'app/**'
-      - 'index.html'
       - 'app.html'
       - 'icon.svg'
       - '*.gradle'

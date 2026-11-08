@@ -614,7 +614,7 @@ async function createStory(){
  picker.onchange=async()=>{
   const file=picker.files?.[0];if(!file)return;
   if(file.size>20*1024*1024){toast('حجم داستان باید کمتر از ۲۰ مگابایت باشد');return}
-  if(!/^(image\\/(jpeg|png|webp|gif)|video\\/(mp4|webm))$/i.test(file.type)){toast('فقط عکس یا ویدئوی مجاز انتخاب کن');return}
+  if(!/^(image\/(jpeg|png|webp|gif)|video\\/(mp4|webm))$/i.test(file.type)){toast('فقط عکس یا ویدئوی مجاز انتخاب کن');return}
   const caption=prompt('یک توضیح کوتاه برای داستانت بنویس (اختیاری):')||'';
   const path=currentUser.id+'/'+Date.now()+'_'+(file.name||'story').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,80);
   const up=await supabaseClient.storage.from('arogram-stories').upload(path,file,{contentType:file.type,upsert:false});

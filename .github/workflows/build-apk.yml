@@ -6,6 +6,7 @@ on:
     paths:
       - 'app/**'
       - 'index.html'
+      - 'app.html'
       - 'icon.svg'
       - '*.gradle'
       - 'settings.gradle'

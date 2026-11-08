@@ -388,6 +388,61 @@ html,body{background:var(--tg-bg);color:var(--tg-text)}
 }
 @media(hover:none){.chatrow:hover{background:transparent}.chatrow:active{background:#263746}}
 
+
+/* IranGram Telegram-style finishing pass */
+/* Android Telegram dark layout proportions and touch behavior */
+:root{--tg-panel:#17212b;--tg-bg:#0e1621;--tg-blue:#3390ec;--tg-line:#263442}
+html,body{width:100%;height:100%;margin:0;background:var(--tg-bg)}
+body{font-family:Roboto,"Segoe UI",Tahoma,sans-serif}
+.app{height:100dvh;min-height:0;grid-template-columns:minmax(320px,420px) minmax(0,1fr);overflow:hidden}
+.sidebar{height:100%;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.topbar{flex:0 0 56px;height:56px;min-height:56px}
+.searchbox{flex:0 0 auto}
+.filters{flex:0 0 44px;height:44px;min-height:44px}
+.stories{flex:0 0 auto;min-height:94px}
+.chats{flex:1 1 auto;min-height:0;overflow-y:auto}
+.main{height:100%;min-height:0;min-width:0;overflow:hidden}
+.chatview{height:100%;min-height:0;display:flex;flex-direction:column}
+.chatheader{flex:0 0 58px}
+.messages{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.composer{flex:0 0 auto}
+.chatrow{min-height:72px}
+.chatrow .avatar{flex:0 0 52px}
+.chatinfo{min-width:0;flex:1}
+.chathead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.chathead b,.preview{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview{display:block}
+.msg{max-width:min(76%,560px);width:max-content;min-width:72px}
+.msgactions{display:flex;flex-wrap:wrap;opacity:1;gap:4px;margin-top:6px}
+.msgactions .tiny{min-height:26px;padding:4px 7px;border-radius:14px;font-size:10px}
+.msgmeta{font-variant-numeric:tabular-nums}
+.chatheader .iconbtn{width:38px;height:38px;min-width:38px;display:inline-grid;place-items:center}
+.composefield{min-height:42px}
+.composefield textarea{max-height:120px;min-height:30px}
+.menu{z-index:20;max-height:min(80dvh,620px);overflow:auto}
+.modalback{z-index:80}
+.toast{z-index:100}
+@media(max-width:760px){
+ .app{display:block;width:100%;height:100dvh;min-height:0}
+ .sidebar{width:100%;height:100dvh}
+ .main{width:100%;height:100dvh}
+ .app.chat-open .sidebar{display:none}
+ .app.chat-open .main{display:flex}
+ .chatview{height:100dvh}
+ .messages{padding:12px 8px}
+ .msg{max-width:86%;width:auto}
+ .msgactions{opacity:1;max-height:none;overflow:visible}
+ .msgactions .tiny{min-height:28px}
+ .chatheader{padding-inline:7px;gap:5px}
+ .chatheader .iconbtn{width:34px;height:34px;min-width:34px}
+ .composer{padding-left:8px;padding-right:8px;padding-bottom:max(8px,env(safe-area-inset-bottom))}
+}
+@media(min-width:761px){
+ .app{max-width:none}
+ .sidebar{max-width:420px}
+ .chatview{height:100%}
+}
+
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">

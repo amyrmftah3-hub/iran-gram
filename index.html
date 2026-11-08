@@ -93,6 +93,87 @@ body{background:#0e1621;color:#f5f7f9}
 }
 .chatrow.swipe-archive::after{content:"↑ آرشیو";left:12px;background:#3390ec}
 .chatrow.swipe-hidden::after{content:"↓ مخفی";left:12px;background:#8b5cf6}
+
+/* Telegram-like conversation screen: layout, hierarchy and controls */
+:root{--blue:#3390ec;--blue2:#2b82d9;--bg:#0e1621;--panel:#17212b;--text:#f5f7f9;--muted:#8b9bab;--line:#263442;--chat:#0e1621;--bubble:#182533;--mine:#2b5278}
+body{background:#0e1621}
+.app{max-width:none;width:100%;grid-template-columns:minmax(320px,420px) minmax(0,1fr);background:#17212b}
+.sidebar{position:relative;background:#17212b;border-left:1px solid #263442}
+.topbar{height:58px;background:#17212b;padding:7px 12px;gap:12px;flex-shrink:0}
+.topbar .brand{flex:0 0 auto;width:42px}
+.topbar .logo{width:40px;height:40px;object-fit:cover;border:0;border-radius:50%;background:#263746}
+.topbar-title{font-size:17px;font-weight:600;color:#f2f5f7;flex:1}
+#menuBtn{order:0;color:#a9bac9}
+.searchbox{padding:8px 12px 10px;background:#17212b;border:0}
+.searchbox input{height:42px;border-radius:8px;background:#242f3d;color:#f5f7f9;padding:0 14px}
+.filters{display:flex;gap:0;padding:0 10px;background:#17212b;border-bottom:1px solid #263442;overflow-x:auto;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filter{position:relative;flex:0 0 auto;border-radius:0;padding:12px 13px 11px;color:#9aabba;font-size:13px;background:transparent}
+.filter.active{background:transparent;color:#65b5f5;font-weight:700}
+.filter.active:after{content:"";position:absolute;bottom:0;right:10px;left:10px;height:3px;background:#3390ec;border-radius:3px 3px 0 0}
+.stories{gap:13px;padding:11px 12px 12px;background:#17212b;border-bottom:1px solid #263442;scrollbar-width:none}
+.story{min-width:58px;color:#a8b8c7}
+.storyring{width:54px;height:54px;padding:2px}
+.storyring span{background:#263746;border:2px solid #17212b;color:#e9f3fb}
+.chats{background:#17212b;padding-bottom:82px}
+.chatrow{min-height:76px;padding:10px 13px;gap:12px;border:0;position:relative}
+.chatrow:after{content:"";position:absolute;bottom:0;right:78px;left:0;height:1px;background:#263442;opacity:.7}
+.chatrow:hover,.chatrow.selected{background:#202d3a}
+.chatrow .avatar{width:54px;height:54px;font-size:19px}
+.chathead b{font-size:15px;font-weight:600}
+.preview{font-size:13px;margin-top:5px;color:#9aabba}
+.time{font-size:11px;color:#8294a5}
+.unread{border-radius:20px;min-width:20px;font-weight:700}
+.compose-fab{position:absolute;z-index:4;bottom:20px;left:20px;width:56px;height:56px;border-radius:50%;background:#3390ec;color:#fff;font-size:25px;box-shadow:0 4px 14px #0005;display:grid;place-items:center}
+.compose-fab:active{transform:scale(.95)}
+.main{background:#0e1621}
+.empty{background:#0e1621;color:#a9bac8}
+.emptycard{background:#17212b;color:#e8eef4;border:1px solid #263442;border-radius:18px}
+.emptycard p{color:#a7b7c6}
+.chatheader{height:58px;flex-shrink:0;background:#17212b;border-color:#263442;padding:6px 12px}
+.chatheader .avatar{width:42px;height:42px}
+.chatname b{font-size:15px;color:#f2f5f7}
+.chatname small{color:#8da0b1}
+.messages{background-color:#0e1621;background-image:radial-gradient(#26344240 1px,transparent 1px);background-size:26px 26px;padding:18px max(14px,6%)}
+.daylabel{background:#263746;color:#b6c8d8}
+.msg{background:#182533;color:#edf3f8;border-radius:14px;box-shadow:0 1px 2px #0003}
+.msg.mine{background:#2b5278;color:#fff;border-bottom-right-radius:4px}
+.msg p{font-size:14px;line-height:1.6}
+.msgmeta{color:#a8bac9}
+.tiny{background:#263746;color:#c2d2df}
+.composer{background:#17212b;border-color:#263442;padding:8px 10px;gap:7px}
+.composefield{background:#242f3d;border:0;border-radius:22px}
+.composefield textarea{color:#f2f5f7}
+.composefield textarea::placeholder{color:#899bab}
+.round{background:#242f3d;color:#a9bac9}
+.send{background:#3390ec;color:#fff}
+.menu{background:#202d3a;border:1px solid #304253;box-shadow:0 8px 28px #0008}
+.menu button{color:#e6edf3}
+.menu button:hover{background:#2b3b4b}
+.modal{background:#17212b;color:#f2f5f7;border:1px solid #2b3b49}
+.modal input,.modal textarea,.modal select{background:#202d3a;border-color:#344555;color:#f2f5f7}
+.secondary{background:#263746;color:#e5edf4}
+@media(max-width:760px){
+ .app{display:block;height:100dvh;max-width:none}
+ .sidebar{height:100%;border:0}
+ .main{display:none;height:100dvh}
+ .app.chat-open .sidebar{display:none}
+ .app.chat-open .main{display:flex}
+ .topbar{height:56px}
+ .topbar-title{font-size:18px}
+ .searchbox{padding:7px 10px 9px}
+ .filters{padding:0 5px}
+ .filter{padding:11px 12px 10px}
+ .stories{padding:9px 10px 11px}
+ .chatrow{min-height:72px;padding:9px 11px}
+ .chatrow:after{right:75px}
+ .chatrow .avatar{width:52px;height:52px}
+ .compose-fab{bottom:calc(18px + env(safe-area-inset-bottom));left:18px;width:54px;height:54px}
+ .chatheader{height:56px}
+ .messages{padding:12px 9px}
+ .composer{padding-bottom:max(8px,env(safe-area-inset-bottom))}
+}
+
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -104,8 +185,9 @@ body{background:#0e1621;color:#f5f7f9}
 <div class="app" id="app">
 <aside class="sidebar">
  <header class="topbar">
-  <div class="brand"><img class="logo" src="./icon.svg" alt="ایران‌گرام"><div><b>ایران‌گرام</b><small>پیام‌رسان ایرانی</small></div></div>
-  <button class="iconbtn" id="newBtn" title="گفتگوی جدید">✎</button><button class="iconbtn" id="menuBtn" title="منو">☰</button>
+  <button class="iconbtn" id="menuBtn" title="منو" aria-label="منو">☰</button>
+  <div class="brand" aria-label="ایران‌گرام"><img class="logo" src="./icon.svg" alt="نشان ایران‌گرام"></div>
+  <div class="topbar-title">گفتگوها</div>
  </header>
  <div class="menu" id="mainMenu">
   <button data-action="profile">👤 پروفایل من</button><button data-action="group">👥 ساخت گروه</button><button data-action="channel">📢 ساخت کانال</button><button data-action="settings">⚙️ تنظیمات</button><button data-action="ads">📣 تبلیغات</button><button data-action="admin">🛡️ مدیریت ایران‌گرام</button><button data-action="export">⬇️ خروجی پشتیبان</button><button data-action="about">ℹ️ درباره ایران‌گرام</button><button data-action="logout">🚪 خروج از حساب</button>
@@ -114,6 +196,7 @@ body{background:#0e1621;color:#f5f7f9}
  <div class="filters"><button class="filter active" data-filter="all">همه</button><button class="filter" data-filter="unread">خوانده‌نشده</button><button class="filter" data-filter="groups">گروه‌ها</button><button class="filter" data-filter="channels">کانال‌ها</button><button class="filter" data-filter="archive">آرشیو</button><button class="filter" data-filter="hidden">مخفی</button></div>
  <div class="stories" id="stories"></div>
  <div class="chats" id="chatList"></div>
+ <button class="compose-fab" id="newBtn" title="گفتگوی جدید" aria-label="گفتگوی جدید">✎</button>
 </aside>
 <main class="main" id="main">
  <div class="empty" id="emptyState"><div class="emptycard"><div class="plane">✈️</div><h2>به ایران‌گرام خوش آمدی</h2><p>یک گفت‌وگو را انتخاب کن یا گفت‌وگوی تازه بساز.<br>نسخه نمایشی پیشرفته با طراحی مناسب گوشی.</p><button class="primary" id="startChat">شروع گفت‌وگو</button><p class="subtle">این نسخه به‌تنهایی پیام‌ها را به دستگاه‌های دیگر ارسال نمی‌کند.</p></div></div>

@@ -580,7 +580,62 @@ function save(){try{localStorage.setItem('iranGramPro',JSON.stringify(state))}ca
 function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500)}
 function activeChat(){return state.chats.find(c=>c.id===state.active)}
-function renderStories(){const items=[['＋','داستان من','add'],['ن','نیلوفر',''],['ا','آرمان',''],['گ','گروه دوستان',''],['ای','ایران‌گرام','']];$('#stories').innerHTML=items.map((x,i)=>`<div class="story" data-story="${i}"><div class="storyring ${x[2]}"><span>${x[0]}</span></div>${x[1]}</div>`).join('')}
+let storyRows=[];
+function renderStories(){
+ const mine=storyRows.filter(x=>x.user_id===currentUser?.id);
+ const groups=new Map();
+ for(const story of storyRows){if(!groups.has(story.user_id))groups.set(story.user_id,story)}
+ const items=[{id:'add',label:'داستان من',letter:'＋',add:true},...Array.from(groups.values()).map(x=>({id:x.user_id,label:x.user_id===currentUser?.id?'داستان من':(x.profileName||x.username||'کاربر'),letter:(x.user_id===currentUser?.id?'شما':(x.profileName||x.username||'ک')[0]),storyId:x.id}))];
+ $('#stories').innerHTML=items.map(x=>`<div class="story" data-story="${esc(x.id)}"><div class="storyring ${x.add?'add':''}"><span>${esc(x.letter)}</span></div>${esc(x.label)}</div>`).join('');
+}
+async function loadStories(){
+ if(!remoteMode||!currentUser){storyRows=[];renderStories();return}
+ const {data,error}=await supabaseClient.from('stories').select('id,user_id,media_path,media_type,caption,created_at,expires_at').gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false}).limit(100);
+ if(error){console.warn('Stories load failed',error.message);return}
+ const ids=[...new Set((data||[]).map(x=>x.user_id))];
+ let profiles=[];
+ if(ids.length){const p=await supabaseClient.from('profiles').select('id,display_name,username').in('id',ids);profiles=p.data||[]}
+ const byId=new Map(profiles.map(x=>[x.id,x]));
+ storyRows=await Promise.all((data||[]).map(async x=>{
+  const p=byId.get(x.user_id)||{};
+  const signed=await supabaseClient.storage.from('arogram-stories').createSignedUrl(x.media_path,3600);
+  return {...x,profileName:p.display_name||'',username:p.username||'',signedUrl:signed.data?.signedUrl||''};
+ }));
+ renderStories();
+}
+async function createStory(){
+ if(!remoteMode||!currentUser){toast('برای انتشار داستان اول وارد حسابت شو');return}
+ const picker=document.createElement('input');picker.type='file';picker.accept='image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm';
+ picker.onchange=async()=>{
+  const file=picker.files?.[0];if(!file)return;
+  if(file.size>20*1024*1024){toast('حجم داستان باید کمتر از ۲۰ مگابایت باشد');return}
+  if(!/^(image\\/(jpeg|png|webp|gif)|video\\/(mp4|webm))$/i.test(file.type)){toast('فقط عکس یا ویدئوی مجاز انتخاب کن');return}
+  const caption=prompt('یک توضیح کوتاه برای داستانت بنویس (اختیاری):')||'';
+  const path=currentUser.id+'/'+Date.now()+'_'+(file.name||'story').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,80);
+  const up=await supabaseClient.storage.from('arogram-stories').upload(path,file,{contentType:file.type,upsert:false});
+  if(up.error){toast('آپلود داستان ناموفق بود: '+up.error.message);return}
+  const expires=new Date(Date.now()+24*60*60*1000).toISOString();
+  const ins=await supabaseClient.from('stories').insert({user_id:currentUser.id,media_path:path,media_type:file.type,caption:caption.slice(0,300),expires_at:expires});
+  if(ins.error){await supabaseClient.storage.from('arogram-stories').remove([path]);toast('ثبت داستان ناموفق بود: '+ins.error.message);return}
+  await loadStories();toast('داستانت تا ۲۴ ساعت نمایش داده می‌شود');
+ };
+ picker.click();
+}
+async function openStoryGroup(userId){
+ const items=storyRows.filter(x=>x.user_id===userId);
+ if(!items.length)return;
+ const story=items[0];
+ if(!story.signedUrl){toast('دریافت فایل داستان ناموفق بود');return}
+ const media=story.media_type.startsWith('video/')?`<video src="${esc(story.signedUrl)}" controls autoplay playsinline style="width:100%;max-height:58vh;border-radius:14px;background:#000"></video>`:`<img src="${esc(story.signedUrl)}" alt="داستان" style="width:100%;max-height:58vh;object-fit:contain;border-radius:14px;background:#000">`;
+ const own=story.user_id===currentUser?.id;
+ showModal(esc(story.profileName||story.username||'داستان'),`<div style="text-align:center">${media}<p>${esc(story.caption||'')}</p><small class="subtle">این داستان پس از ۲۴ ساعت ناپدید می‌شود.</small></div><div class="modalactions"><button class="secondary" data-close>بستن</button>${own?'<button class="primary" id="deleteOwnStory">حذف داستان</button>':''}</div>`);
+ if(own)$('#deleteOwnStory').onclick=async()=>{
+  const del=await supabaseClient.from('stories').delete().eq('id',story.id).eq('user_id',currentUser.id);
+  if(del.error){toast('حذف داستان ناموفق بود: '+del.error.message);return}
+  await supabaseClient.storage.from('arogram-stories').remove([story.media_path]);
+  closeModal();await loadStories();toast('داستان حذف شد');
+ };
+}
 function renderChats(){let arr=state.chats.filter(c=>{const inFolder=state.filter==='all'?!c.archived&&!c.hidden:state.filter==='archive'?!!c.archived:state.filter==='hidden'?!!c.hidden:state.filter==='unread'?c.unread>0:c.type===state.filter;return inFolder&&(`${c.name} ${c.messages.at(-1)?.text||''}`).toLowerCase().includes(state.query.toLowerCase())});const empty=state.filter==='archive'?'<div class="folder-empty"><span class="folder-icon">📂</span><b>آرشیو هنوز خالیه</b><p>گفت‌وگوها را به بالا بکش تا اینجا نگه‌شان داری.</p></div>':state.filter==='hidden'?'<div class="folder-empty"><span class="folder-icon">🗂️</span><b>پوشه مخفی خالیه</b><p>گفت‌وگوهای مخفی‌شده با کشیدن به پایین اینجا می‌آیند.</p></div>':'<div class="folder-empty"><span class="folder-icon">✈️</span><b>گفت‌وگویی پیدا نشد</b><p>یک گفت‌وگوی تازه بساز و شروع کن.</p></div>';$('#chatList').innerHTML=arr.map(c=>{let m=c.messages.at(-1)||{};return `<div class="chatrow ${state.active===c.id?'selected':''}" data-chat="${c.id}"><div class="avatar ${c.color||''}">${esc(c.avatar||c.name[0])}</div><div class="chatinfo"><div class="chathead"><b>${esc(c.name)}${c.verified?' <span class="verified" title="تأییدشده">✓</span>':''}</b><span class="time">${esc(m.time||'')}</span></div><div class="preview">${c.type==='channels'?'📢 ':''}${esc(m.text||'هنوز پیامی نیست')}</div></div>${c.unread?`<span class="unread">${c.unread}</span>`:''}</div>`}).join('')||empty}
 function parseMediaMarker(value){const match=String(value||'').match(/^\[\[media:([^|]+)\|([^|]+)\|([^|]+)\]\]$/);if(!match)return null;try{return {path:decodeURIComponent(match[1]),type:decodeURIComponent(match[2]),name:decodeURIComponent(match[3])}}catch(e){return null}}
 function renderMessageContent(message){const value=typeof message==='string'?message:(message.text||'');const sticker=String(value).match(/^\[\[sticker:(.+)\]\]$/);if(sticker)return '<span class="animated-sticker" role="img" aria-label="استیکر">'+esc(sticker[1])+'</span>';const media=parseMediaMarker(value);if(media){if(!message||typeof message==='string'||!message.mediaUrl)return '<span class="subtle">📎 '+esc(media.name)+' — در حال بارگذاری</span>';if(media.type.startsWith('image/'))return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer"><img class="media-image" src="'+esc(message.mediaUrl)+'" alt="'+esc(media.name)+'"></a>';if(media.type.startsWith('video/'))return '<video class="media-video" controls playsinline preload="metadata" src="'+esc(message.mediaUrl)+'"></video><div class="subtle">'+esc(media.name)+'</div>';return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer" download="'+esc(media.name)+'">📎 '+esc(media.name)+'</a>'}return esc(value)}
@@ -625,6 +680,7 @@ async function startOnline(){
  currentUser=data.user;remoteMode=true;
  const {data:myProfile}=await supabaseClient.from('profiles').select('display_name,bio,username,avatar_url').eq('id',currentUser.id).maybeSingle();if(myProfile){state.profile.name=myProfile.display_name||state.profile.name;state.profile.bio=myProfile.bio||'';state.profile.username=myProfile.username||'';state.profile.avatar_url=myProfile.avatar_url||'';save()}
  await loadOnlineChats();
+ await loadStories();
  await setupCallRealtime();
  if(activityHeartbeat)clearInterval(activityHeartbeat);
  activityHeartbeat=setInterval(()=>{const c=activeChat();if(c&&c.remote&&c.type==='channels')recordChannelActivity(c.id)},10*60*1000);
@@ -633,7 +689,7 @@ async function startOnline(){
    const m=payload.new;const c=state.chats.find(x=>x.id===m.conversation_id);if(!c||m.sender_id===currentUser.id)return;
    c.messages.push({id:m.id,text:m.body,mine:false,time:new Date(m.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[]});
    if(state.active===c.id)renderMessages();renderChats();
- }).subscribe();
+ }).on('postgres_changes',{event:'INSERT',schema:'public',table:'stories'},()=>{loadStories()}).on('postgres_changes',{event:'DELETE',schema:'public',table:'stories'},()=>{loadStories()}).subscribe();
 }
 
 let callSignalChannel=null,callInviteChannel=null,activeCall=null,pendingIncomingCall=null,callSeconds=0,callClock=null,callRingTimeout=null;
@@ -853,7 +909,7 @@ $('#chatList').addEventListener('touchend',e=>{
 },{passive:true});
 $('#chatList').addEventListener('touchcancel',()=>{chatTouchStart=null;clearSwipeHint()},{passive:true});
 $('#messages').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const c=activeChat();if(!c)return;if(b.dataset.jumpPinned){document.querySelector('[data-msg="'+CSS.escape(b.dataset.jumpPinned)+'"]')?.scrollIntoView({behavior:'smooth',block:'center'});return}const id=b.dataset.react||b.dataset.edit||b.dataset.delete||b.dataset.reply||b.dataset.pin||b.dataset.forward||b.dataset.copy;const m=c.messages.find(x=>x.id===id);if(!m)return;if(b.dataset.react!==undefined){const emoji=b.dataset.emoji||'❤️';m.reactions=Array.isArray(m.reactions)?m.reactions:[];const likedAt=m.reactions.indexOf(emoji);if(remoteMode&&c.remote&&currentUser){if(likedAt>=0){const {error}=await supabaseClient.from('message_reactions').delete().eq('message_id',id).eq('user_id',currentUser.id).eq('reaction',emoji);if(error){toast('حذف واکنش ناموفق بود: '+error.message);return}}else{const {error}=await supabaseClient.from('message_reactions').insert({message_id:id,user_id:currentUser.id,reaction:emoji});if(error){toast('ثبت واکنش ناموفق بود: '+error.message);return}}}if(likedAt>=0)m.reactions.splice(likedAt,1);else m.reactions.push(emoji);const keepScroll=$('#messages').scrollTop;save();renderMessages();$('#messages').scrollTop=keepScroll;toast(likedAt>=0?'واکنش برداشته شد':'واکنش ثبت شد')} else if(b.dataset.delete!==undefined){if(confirm('این پیام از همین دستگاه حذف شود؟')){c.messages=c.messages.filter(x=>x.id!==id);if(c.pinnedMessageId===id)c.pinnedMessageId=null;save();renderChats();renderMessages()}}else if(b.dataset.edit!==undefined){showModal('ویرایش پیام',`<textarea id="editText">${esc(m.text)}</textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveEdit">ذخیره</button></div>`);$('#saveEdit').onclick=()=>{m.text=$('#editText').value;save();closeModal();renderChats();renderMessages()}}else if(b.dataset.reply!==undefined){state.reply=id;$('#messageInput').placeholder='پاسخ به پیام انتخاب‌شده...';$('#messageInput').focus();toast('حالا پاسخ را بنویس و ارسال کن')}else if(b.dataset.pin!==undefined){c.pinnedMessageId=c.pinnedMessageId===id?null:id;save();renderMessages();toast(c.pinnedMessageId?'پیام سنجاق شد':'سنجاق پیام برداشته شد')}else if(b.dataset.copy!==undefined){try{await navigator.clipboard.writeText(String(m.text||''));toast('متن پیام کپی شد')}catch(err){showModal('کپی پیام',`<textarea id="copyFallback" readonly>${esc(m.text||'')}</textarea><div class="modalactions"><button class="primary" id="selectCopy">انتخاب متن</button><button class="secondary" data-close>بستن</button></div>`);$('#selectCopy').onclick=()=>{$('#copyFallback').select();toast('متن را کپی کن')}}}else if(b.dataset.forward!==undefined){const targets=state.chats.filter(x=>x.id!==c.id);if(!targets.length){toast('گفت‌وگوی دیگری برای فوروارد وجود ندارد');return}showModal('فوروارد پیام',`<p class="subtle">پیام به کدام گفت‌وگو فرستاده شود؟</p><select id="forwardTarget">${targets.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="confirmForward">فوروارد</button></div>`);$('#confirmForward').onclick=async()=>{const target=state.chats.find(x=>x.id===$('#forwardTarget').value);if(!target)return;if(remoteMode&&target.remote){const {error}=await supabaseClient.from('messages').insert({conversation_id:target.id,sender_id:currentUser.id,body:'فوروارد‌شده: '+String(m.text||'')});if(error){toast('فوروارد آنلاین ناموفق بود: '+error.message);return}}target.messages.push({id:uid(),text:'فوروارد‌شده: '+String(m.text||''),mine:true,time:now(),reactions:[]});save();closeModal();renderChats();toast('پیام فوروارد شد')}}};
-$('#stories').onclick=e=>{const el=e.target.closest('[data-story]');if(!el)return;if(el.dataset.story==='0'){showModal('داستان من',`<label>متن داستان</label><textarea id="storyText" placeholder="چه خبر؟"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="postStory">انتشار نمایشی</button></div><p class="subtle">داستان فقط به‌صورت آزمایشی روی همین دستگاه ثبت می‌شود.</p>`);$('#postStory').onclick=()=>{const t=$('#storyText').value.trim();closeModal();toast(t?'داستان نمایشی ثبت شد':'متنی وارد نکردی')}}else toast('استوری‌های این نسخه نمونه هستند و از کاربران واقعی دریافت نمی‌شوند')};
+$('#stories').onclick=e=>{const el=e.target.closest('[data-story]');if(!el)return;if(el.dataset.story==='add'){createStory();return}openStoryGroup(el.dataset.story)};
 $('#emojiBtn').onclick=()=>{const input=$('#messageInput');input.value+=' 😊';input.focus()};$('#stickerBtn').onclick=stickerModal;$('#modal').addEventListener('click',e=>{const b=e.target.closest('[data-sticker]');if(b)sendSticker(b.dataset.sticker)});$('#attachBtn').onclick=()=>$('#fileInput').click();$('#fileInput').onchange=async e=>{const files=[...e.target.files];for(const file of files)await uploadAndSendFile(file);e.target.value=''};
 $('#chatSearchBtn').onclick=()=>{showModal('جست‌وجوی پیام',`<label>عبارت موردنظر</label><input id="msgSearch" placeholder="متن پیام"><div id="searchResults" class="subtle" style="margin-top:10px"></div><div class="modalactions"><button class="secondary" data-close>بستن</button><button class="primary" id="doSearch">جست‌وجو</button></div>`);$('#doSearch').onclick=()=>{const q=$('#msgSearch').value.toLowerCase();const hits=activeChat().messages.filter(m=>m.text.toLowerCase().includes(q));$('#searchResults').innerHTML=hits.length?hits.map(m=>`<p>• ${esc(m.text)}</p>`).join(''):'چیزی پیدا نشد.'}};
 $('#chatMoreBtn').onclick=()=>{const c=activeChat();if(!c)return;showModal('گزینه‌های گفت‌وگو',`<button class="secondary" id="clearChat" style="width:100%;margin-bottom:8px">پاک‌کردن پیام‌های این گفت‌وگو</button><button class="secondary" id="archiveChat" style="width:100%;margin-bottom:8px">${c.archived?'بازگرداندن از آرشیو':'انتقال به آرشیو'}</button><button class="secondary" id="hideChat" style="width:100%;margin-bottom:8px">${c.hidden?'نمایش دوباره گفت‌وگو':'مخفی‌کردن گفت‌وگو'}</button><p class="subtle">کشیدن گفت‌وگو به بالا: آرشیو | کشیدن به پایین: مخفی‌کردن</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>`)};$('#modal').addEventListener('click',e=>{if(e.target.matches('[data-close]'))closeModal();if(e.target.id==='clearChat'){if(confirm('پیام‌های این گفت‌وگو پاک شوند؟')){activeChat().messages=[];save();closeModal();renderMessages();renderChats()}}if(e.target.id==='archiveChat'){const c=activeChat();c.archived=!c.archived;if(c.archived)c.hidden=false;save();closeModal();renderChats()}if(e.target.id==='hideChat'){const c=activeChat();c.hidden=!c.hidden;if(c.hidden)c.archived=false;save();closeModal();renderChats()}});$('#modalBack').onclick=e=>{if(e.target===$('#modalBack'))closeModal()};

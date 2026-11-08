@@ -240,6 +240,47 @@ button{transition:background .16s ease,transform .16s ease,opacity .16s ease}
 .msg[data-msg]{animation:messageIn .18s ease-out}
 @keyframes messageIn{from{opacity:.35;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 
+
+/* Closer Telegram mobile chat-list hierarchy */
+.topbar{height:58px;min-height:58px;padding:7px 12px;gap:10px;background:#17212b;color:#f4f7fa;border-bottom:1px solid #263442}
+.topbar .brand{flex:0 0 auto;gap:0}
+.topbar .logo{width:36px;height:36px;border-width:1.5px}
+.topbar-title{font-size:19px;font-weight:650;letter-spacing:-.25px;flex:1}
+#menuBtn{order:0;margin-left:1px}
+.searchbox{padding:8px 12px 9px;background:#17212b}
+.searchbox input{height:40px;border-radius:22px;background:#242f3d;border:1px solid #2b3b49;padding:0 16px;font-size:14px}
+.filters{display:flex;gap:0;padding:0 7px;background:#17212b;border-bottom:1px solid #263442;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
+.filter{flex:0 0 auto;padding:12px 13px 11px;font-size:13px;color:#9aabba;white-space:nowrap}
+.filter.active{color:#65b5f5;background:transparent}
+.filter.active:after{height:3px;right:9px;left:9px;background:#3390ec}
+.stories{display:flex;gap:14px;padding:12px 13px 11px;background:#17212b;border-bottom:1px solid #263442;overflow-x:auto;scrollbar-width:none}
+.story{min-width:58px;font-size:11px;color:#a8b8c7}
+.storyring{width:54px;height:54px;padding:2px}
+.storyring span{background:#263746;border:2px solid #17212b;color:#e9f3fb}
+.storyring.add{background:#3390ec;padding:2px}
+.storyring.add span{background:#17212b;color:#65b5f5;border:2px solid #17212b}
+.chats{background:#17212b;padding-bottom:82px;overscroll-behavior:contain}
+.chatrow{min-height:74px;padding:9px 13px;gap:12px;border:0;position:relative}
+.chatrow:after{content:"";position:absolute;bottom:0;right:78px;left:0;height:1px;background:#263442;opacity:.78}
+.chatrow .avatar{width:54px;height:54px;font-size:19px}
+.chathead b{font-size:15px;font-weight:600}
+.preview{font-size:13px;margin-top:5px;color:#9aabba}
+.time{font-size:11px;color:#8294a5}
+.unread{border-radius:20px;min-width:20px;padding:3px 7px;background:#3390ec}
+.compose-fab{width:54px;height:54px;bottom:20px;left:18px;background:#3390ec;box-shadow:0 3px 12px #0005}
+@media(max-width:760px){
+ .topbar{height:56px;min-height:56px;padding-inline:11px}
+ .topbar-title{font-size:18px}
+ .searchbox{padding:7px 10px 8px}
+ .filters{padding-inline:4px}
+ .filter{padding:11px 12px 10px}
+ .stories{padding:9px 10px 10px;gap:12px}
+ .chatrow{min-height:72px;padding:8px 11px}
+ .chatrow:after{right:75px}
+ .chatrow .avatar{width:52px;height:52px}
+ .compose-fab{bottom:calc(18px + env(safe-area-inset-bottom));left:16px}
+}
+
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -253,13 +294,13 @@ button{transition:background .16s ease,transform .16s ease,opacity .16s ease}
  <header class="topbar">
   <button class="iconbtn" id="menuBtn" title="منو" aria-label="منو">☰</button>
   <div class="brand" aria-label="ایران‌گرام"><img class="logo" src="./icon.svg" alt="نشان ایران‌گرام"></div>
-  <div class="topbar-title">گفتگوها</div>
+  <div class="topbar-title">ایران‌گرام</div>
  </header>
  <div class="menu" id="mainMenu">
   <button data-action="profile">👤 پروفایل من</button><button data-action="group">👥 ساخت گروه</button><button data-action="channel">📢 ساخت کانال</button><button data-action="settings">⚙️ تنظیمات</button><button data-action="ads">📣 تبلیغات</button><button data-action="admin">🛡️ مدیریت ایران‌گرام</button><button data-action="export">⬇️ خروجی پشتیبان</button><button data-action="about">ℹ️ درباره ایران‌گرام</button><button data-action="logout">🚪 خروج از حساب</button>
  </div>
- <div class="searchbox"><input id="search" placeholder="جست‌وجو در گفتگوها" autocomplete="off"></div>
- <div class="filters"><button class="filter active" data-filter="all">همه</button><button class="filter" data-filter="unread">خوانده‌نشده</button><button class="filter" data-filter="groups">گروه‌ها</button><button class="filter" data-filter="channels">کانال‌ها</button><button class="filter" data-filter="archive">آرشیو</button><button class="filter" data-filter="hidden">مخفی</button></div>
+ <div class="searchbox"><input id="search" placeholder="جست‌وجو در پیام‌ها و گفتگوها" autocomplete="off"></div>
+ <div class="filters" role="tablist" aria-label="پوشه گفتگوها"><button class="filter active" role="tab" aria-selected="true" data-filter="all">همه چت‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="people">شخصی</button><button class="filter" role="tab" aria-selected="false" data-filter="unread">خوانده‌نشده</button><button class="filter" role="tab" aria-selected="false" data-filter="groups">گروه‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="channels">کانال‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="archive">آرشیو</button><button class="filter" role="tab" aria-selected="false" data-filter="hidden">مخفی</button></div>
  <div class="stories" id="stories"></div>
  <div class="chats" id="chatList"></div>
  <button class="compose-fab" id="newBtn" title="گفتگوی جدید" aria-label="گفتگوی جدید">✎</button>

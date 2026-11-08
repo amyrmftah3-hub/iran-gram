@@ -174,6 +174,66 @@ body{background:#0e1621}
  .composer{padding-bottom:max(8px,env(safe-area-inset-bottom))}
 }
 
+
+/* Telegram-inspired polish: spacing, surfaces, message controls and mobile ergonomics */
+:root{--tg-blue:#3390ec;--tg-line:#263442;--tg-muted:#8da0b1}
+html,body{height:100%;overscroll-behavior:none}
+button{transition:background .16s ease,transform .16s ease,opacity .16s ease}
+.app{border:1px solid #263442}
+.sidebar{min-height:0}
+.topbar{background:#17212b;border-bottom:1px solid #263442}
+.logo{box-shadow:0 0 0 2px #17212b,0 0 0 3px #d6b25c}
+.searchbox{background:#17212b;border-color:#263442}
+.searchbox input{background:#242f3d;color:#eaf2f8;border:1px solid #2d3b49;border-radius:22px;padding:10px 15px}
+.searchbox input::placeholder{color:#8da0b1}
+.filter:focus-visible,.iconbtn:focus-visible,.tiny:focus-visible{outline:2px solid #3390ec;outline-offset:2px}
+.chatrow{transition:background .14s ease}
+.chatrow:active{background:#263746}
+.chatrow .avatar{box-shadow:0 1px 3px #0003}
+.chatrow.selected{background:#263746}
+.chatrow.selected .preview{color:#c2d2df}
+.chathead b{letter-spacing:0}
+.main{background:#0e1621}
+.chatheader{box-shadow:0 1px 3px #0002;z-index:1}
+.chatheader .iconbtn{color:#a9bac9!important}
+.chatheader .iconbtn:hover{background:#263746}
+.messages{background-image:radial-gradient(#52627324 1px,transparent 1px),linear-gradient(135deg,#0e1621,#101b29)}
+.msg{max-width:min(78%,560px);padding:8px 11px 6px;border-radius:14px 14px 14px 4px;box-shadow:0 1px 1px #0003}
+.msg.mine{border-radius:14px 14px 4px 14px;background:#2b5278}
+.msg p{letter-spacing:.05px}
+.msgactions{opacity:.72;flex-wrap:wrap}
+.msgactions .tiny{font-size:10px;padding:4px 7px;border:1px solid #ffffff0d}
+.msg:hover .msgactions,.msg:focus-within .msgactions{opacity:1}
+.pinned-banner{color:#dbeeff!important;background:#17212b!important;border-color:#3390ec!important;border-right:3px solid #3390ec!important}
+.composer{box-shadow:0 -2px 8px #0002;z-index:1}
+.composefield:focus-within{box-shadow:0 0 0 1px #3390ec}
+.send{width:42px;height:42px;box-shadow:0 2px 8px #0003}
+.round{width:40px;height:40px}
+.modalback{backdrop-filter:blur(3px)}
+.modal{border-radius:16px}
+.modal h3{font-size:17px}
+.menu{border-radius:12px;overflow:hidden}
+.menu button{padding:11px 14px;text-align:right}
+.chatview{min-height:0}
+.messages{overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#405367 transparent}
+.chats{scrollbar-width:thin;scrollbar-color:#405367 transparent}
+@media(hover:none){.msgactions{opacity:1}.chatrow:hover{background:transparent}.chatrow:active{background:#263746}}
+@media(max-width:760px){
+ .app{border:0}
+ .topbar{padding-inline:12px}
+ .chatheader{padding-inline:8px;gap:6px}
+ .chatheader .iconbtn{min-width:34px;min-height:34px;padding:5px}
+ .messages{gap:7px;padding:12px 8px}
+ .msg{max-width:86%;padding:8px 10px 6px}
+ .msgactions{gap:3px}
+ .msgactions .tiny{font-size:10px;padding:4px 6px}
+ .composer{gap:5px}
+ .composefield{gap:5px;padding:5px 8px}
+ .round{width:36px;height:36px;font-size:18px}
+ .send{width:39px;height:39px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">

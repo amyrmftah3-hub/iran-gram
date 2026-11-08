@@ -156,6 +156,7 @@ async function flushCallIce(){
 async function handleCallSignal(row){
  if(!activeCall&&pendingIncomingCall&&row.call_id===pendingIncomingCall.id&&(row.kind==='end'||row.kind==='reject')){pendingIncomingCall=null;closeModal();toast('تماس لغو شد');return}
  if(!activeCall||row.call_id!==activeCall.id)return;
+ if(activeCall.seenSignalIds?.has(row.id))return;if(activeCall.seenSignalIds)activeCall.seenSignalIds.add(row.id);
  try{
   if(row.kind==='offer'){activeCall.offer=row.payload;if(activeCall.accepting)await acceptOffer(row.payload)}
   else if(row.kind==='answer'){if(callRingTimeout)clearTimeout(callRingTimeout);callRingTimeout=null;await activeCall.pc.setRemoteDescription(new RTCSessionDescription(row.payload));await flushCallIce();startCallClock()}
@@ -191,14 +192,14 @@ async function receiveIncomingCall(row){
 }
 async function acceptIncomingCall(row,name){
  if(!callIsSupported()){toast('مرورگر این دستگاه از تماس پشتیبانی نمی‌کند');return}
- activeCall={id:row.id,peerId:row.caller_id,type:row.call_type,iceQueue:[],accepting:true};
+ activeCall={id:row.id,peerId:row.caller_id,type:row.call_type,iceQueue:[],seenSignalIds:new Set(),accepting:true};
  try{
   await addLocalCallMedia(row.call_type);showCallOverlay(row.call_type,name);
   const pc=await getCallPeerConnection();activeCall.accepting=true;
   activeCall.localStream.getTracks().forEach(track=>pc.addTrack(track,activeCall.localStream));
-  const {data:offers,error}=await supabaseClient.from('call_signals').select('payload').eq('call_id',row.id).eq('kind','offer').order('created_at',{ascending:true}).limit(1);
+  const {data:signals,error}=await supabaseClient.from('call_signals').select('id,kind,payload').eq('call_id',row.id).in('kind',['offer','ice']).order('created_at',{ascending:true});
   if(error)throw error;
-  const offer=offers?.[0]?.payload||activeCall.offer;
+  let offer=activeCall.offer;for(const signal of (signals||[])){activeCall.seenSignalIds.add(signal.id);if(signal.kind==='offer')offer=signal.payload;else if(signal.kind==='ice')activeCall.iceQueue.push(signal.payload)}
   if(offer)await acceptOffer(offer);
  }catch(e){console.error(e);toast('دسترسی به میکروفون یا دوربین ممکن نشد: '+(e.message||''));finishCall(false)}
 }
@@ -211,7 +212,7 @@ async function startOutgoingCall(type){
   if(membersError||!members?.length)throw membersError||new Error('مخاطب پیدا نشد');
   const peerId=members[0].user_id;
   const {data:profile}=await supabaseClient.from('profiles').select('display_name').eq('id',peerId).maybeSingle();
-  activeCall={peerId,type,iceQueue:[],initiator:true};
+  activeCall={peerId,type,iceQueue:[],seenSignalIds:new Set(),initiator:true};
   await addLocalCallMedia(type);
   const {data:session,error}=await supabaseClient.from('call_sessions').insert({conversation_id:chat.id,caller_id:currentUser.id,callee_id:peerId,call_type:type}).select('id').single();
   if(error)throw error;

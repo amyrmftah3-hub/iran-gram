@@ -532,10 +532,61 @@ body{font-family:'Vazirmatn',Tahoma,sans-serif}
 .msg.mine .msg-signature{color:#c2e3ff}
 .channel-author{display:block;margin-bottom:5px;font-family:'Markazi Text','Vazirmatn',sans-serif;font-size:14px;font-weight:700;color:#79baff}
 .msg:not(.mine) .channel-author{color:#9ccfff}
+
+/* Final Telegram-style visual system */
+:root{font-family:'Vazirmatn','Segoe UI',Tahoma,sans-serif}
+body,button,input,textarea{font-family:'Vazirmatn','Segoe UI',Tahoma,sans-serif}
+.topbar-title,.chathead b,.chatname b,.modal h3,.emptycard h2{font-family:'Vazirmatn',Tahoma,sans-serif}
+.topbar-title{font-weight:700;letter-spacing:-.2px}
+.brand b{font-family:'Lalezar','Vazirmatn',sans-serif;font-size:19px;font-weight:400}
+.logo{overflow:hidden}
+.searchbox input{font-size:13px}
+.filters{gap:2px}
+.filter{font-weight:600}
+.stories{scroll-snap-type:x proximity}
+.story{scroll-snap-align:start}
+.storyring{box-shadow:0 2px 10px #0003}
+.chatrow{min-height:78px}
+.chatrow .avatar{box-shadow:0 2px 9px #0004;border:1px solid #ffffff12}
+.chatrow.selected{box-shadow:inset -3px 0 #3390ec}
+.chathead b{font-weight:650}
+.preview{line-height:1.6}
+.main{background:#0e1621}
+.emptycard{box-shadow:0 16px 50px #0003}
+.emptycard .plane{color:#65b5f5;text-shadow:0 5px 24px #3390ec55}
+.chatheader{backdrop-filter:blur(14px)}
+.chatname b{font-weight:700}
+.messages{background-image:radial-gradient(#52627320 1px,transparent 1px),linear-gradient(135deg,#0e1621,#111d2a);background-size:24px 24px,auto}
+.msg{border:1px solid #ffffff08;box-shadow:0 2px 5px #0002}
+.msg.mine{background:linear-gradient(145deg,#2b5278,#26496b);border-color:#47739a}
+.msg p{font-size:14px;line-height:1.8}
+.msgmeta{font-variant-numeric:tabular-nums}
+.composer{background:#17212b}
+.composefield{border:1px solid #2b3b4b;box-shadow:0 1px 3px #0002}
+.composefield:focus-within{border-color:#3390ec;box-shadow:0 0 0 2px #3390ec22}
+.round{border:1px solid #2d3d4d}
+.send{background:linear-gradient(145deg,#42a5f5,#287bc5);box-shadow:0 4px 14px #0004}
+.iconbtn:active,.round:active,.send:active{transform:scale(.94)}
+.menu{min-width:205px}
+.menu button{font-family:'Vazirmatn',sans-serif;font-size:13px}
+.modal{box-shadow:0 24px 80px #0008}
+.modal input:focus,.modal textarea:focus,.modal select:focus{border-color:#3390ec;outline:0;box-shadow:0 0 0 3px #3390ec22}
+@media(min-width:761px){
+ .sidebar{max-width:430px}
+ .main{min-width:0}
+ .chatview{background:#0e1621}
+}
+@media(max-width:760px){
+ .chatrow{min-height:74px}
+ .chatheader{padding-inline:10px}
+ .msg{max-width:88%}
+}
+
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="manifest" href="./manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Markazi+Text:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Markazi+Text:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

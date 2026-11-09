@@ -1293,6 +1293,26 @@ body{font-family:Tahoma,"Vazirmatn","Segoe UI",Arial,sans-serif;letter-spacing:0
 .composer #photoBtn{color:#8fa1b1}
 .composer .send{width:42px;height:42px;border-radius:50%;background:#3390ec;color:#fff;box-shadow:0 2px 7px #0002}
 @media(max-width:760px){.composer{gap:4px;padding-left:7px;padding-right:7px}.composer .round{width:34px;min-width:34px;height:38px;font-size:18px}.composer .send{width:40px;height:40px;min-width:40px}.composefield{min-width:0}.composefield textarea{font-size:14px}}
+
+/* Keep voice and round-video controls visible on every chat type */
+#voiceRecordBtn,#videoNoteBtn{
+ display:inline-grid!important;visibility:visible!important;opacity:1!important;
+ place-items:center;flex:0 0 36px!important;width:36px!important;min-width:36px!important;
+ height:40px!important;padding:0!important;margin:0!important;position:relative;z-index:2;
+ color:#d5e6f5!important;background:#263746!important;border:1px solid #35495a!important;
+ border-radius:50%!important;font-size:19px!important;line-height:1;
+}
+#voiceRecordBtn:active,#videoNoteBtn:active{background:#3390ec!important;color:#fff!important}
+#voiceRecordBtn.recording,#videoNoteBtn.recording{background:#d94b59!important;color:#fff!important}
+.composer{flex-wrap:nowrap;min-width:0;overflow:visible}
+.composefield{flex:1 1 auto;min-width:48px}
+.composefield textarea{min-width:0;width:100%}
+#emojiBtn{flex:0 0 32px!important;width:32px!important;min-width:32px!important}
+@media(max-width:390px){
+ #emojiBtn{display:none!important}
+ #voiceRecordBtn,#videoNoteBtn{flex-basis:34px!important;width:34px!important;min-width:34px!important;height:38px!important}
+ .composer{gap:3px!important;padding-left:5px!important;padding-right:5px!important}
+}
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">

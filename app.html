@@ -1311,6 +1311,25 @@ body{font-family:Roboto,"Vazirmatn",Tahoma,sans-serif!important;-webkit-tap-high
 <div class="modalback" id="modalBack"><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast"></div>
 <script>
+(function(){
+ function report(message){
+  try{
+   var box=document.getElementById('igRuntimeError');
+   if(!box){
+    box=document.createElement('div');
+    box.id='igRuntimeError';
+    box.style.cssText='position:fixed;z-index:2147483647;left:10px;right:10px;bottom:10px;padding:14px;border-radius:12px;background:#7f1d1d;color:#fff;font:14px/1.6 Tahoma,sans-serif;direction:rtl;white-space:pre-wrap;max-height:35vh;overflow:auto;box-shadow:0 4px 24px #0008';
+    document.addEventListener('DOMContentLoaded',function(){if(!box.isConnected)document.body.appendChild(box)});
+    if(document.body)document.body.appendChild(box);
+   }
+   box.textContent='خطای فنی ایرانگرام:\n'+String(message||'خطای نامشخص');
+  }catch(ignore){}
+ }
+ window.addEventListener('error',function(e){report((e.message||'خطای جاوااسکریپت')+'\n'+(e.filename||'')+':'+(e.lineno||''))});
+ window.addEventListener('unhandledrejection',function(e){var r=e.reason;report(r&&(r.stack||r.message)||r||'خطای درخواست آنلاین')});
+})();
+</script>
+<script>
 const SUPABASE_URL = 'https://gqitvlgdcrbwejaadorc.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_2NkURiHcD4ceRzqXUNsYlQ_jZzsVbhf';
 const supabaseClient = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_KEY) || null;

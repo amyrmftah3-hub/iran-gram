@@ -160,15 +160,10 @@ body{background:radial-gradient(ellipse at 78% 5%,#153451 0,transparent 34%),#0b
  async function refreshStats(){
   const status=document.getElementById('statsStatus');
   try{
-   const [stats,presence]=await Promise.all([
-    client.from('site_stats').select('total_users').eq('id',1).single(),
-    client.from('user_presence').select('last_seen_at')
-   ]);
-   if(stats.error)throw stats.error;
-   if(presence.error)throw presence.error;
-   const total=Number(stats.data.total_users||0);
-   const cutoff=Date.now()-120000;
-   const online=Math.min(total,(presence.data||[]).filter(x=>x.last_seen_at&&new Date(x.last_seen_at).getTime()>cutoff).length);
+   const {data,error}=await client.from('public_user_stats').select('total_users,online_users').single();
+   if(error)throw error;
+   const total=Number(data.total_users||0);
+   const online=Math.min(total,Number(data.online_users||0));
    document.getElementById('totalUsers').textContent=fmt(total);
    document.getElementById('onlineUsers').textContent=fmt(online);
    document.getElementById('offlineUsers').textContent=fmt(Math.max(0,total-online));

@@ -117,7 +117,7 @@ body{background:radial-gradient(ellipse at 78% 5%,#153451 0,transparent 34%),#0b
 <header class="wrap nav"><a class="brand" href="#"><span class="logo">✈</span><span>ایران‌گرام</span></a><nav class="navlinks"><a href="#features">امکانات</a><a href="#gallery">تصاویر</a><a href="#roadmap">برنامه توسعه</a><a href="#download">دانلود</a></nav><a class="btn secondary" href="#download">دریافت برنامه</a></header>
 <main>
 <section class="wrap hero"><div><div class="eyebrow">یک پیام‌رسان فارسی؛ با نگاه رو به آینده</div><h1>ارتباط ساده‌تر،<br><span>در ایران‌گرام</span></h1><div class="maker">سازنده و توسعه‌دهنده:<b>امیررضا مفتاح</b><small>شناسه: Manager_MT</small></div><p class="lead">گفت‌وگو کن، گروه بساز، کانال دنبال کن و لحظه‌هایت را با دیگران به اشتراک بگذار. ایران‌گرام با الهام از تجربه پیام‌رسان‌های محبوب و با هویت مستقل در حال توسعه است.</p><div class="actions"><a class="btn" href="https://github.com/amyrmftah3-hub/iran-gram/actions/workflows/build-apk.yml">⬇ دریافت نسخه آزمایشی اندروید</a><a class="btn secondary" href="app.html">ورود به برنامه وب</a></div><div class="note">نسخه فعلی آزمایشی است؛ همه قابلیت‌های معرفی‌شده هنوز در دسترس عمومی نیستند.</div></div><div class="heroimg" role="img" aria-label="تصویر مفهومی پیام‌رسان ایران‌گرام"><div class="phone"><div class="phonehead"><div class="dot"></div><div><b>ایران‌گرام</b><small>پیام‌رسان فارسی</small></div></div><div class="bubble">سلام! به ایران‌گرام خوش اومدی 👋</div><div class="bubble mine">چه خبر؟ 😊</div><div class="bubble">داریم امکانات تازه اضافه می‌کنیم…</div><div class="bubble mine">عالیه! 🚀</div><div class="phonefoot"></div></div></div></section>
-<section class="wrap stats" id="liveStats"><div class="stat"><b id="totalUsers">…</b><span>کل کاربران ثبت‌نام‌شده</span></div><div class="stat"><b id="onlineUsers">…</b><span>کاربران آنلاین</span></div><div class="stat"><b id="offlineUsers">…</b><span>کاربران آفلاین</span></div><p id="statsStatus" style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:11px;margin:0">در حال دریافت آمار زنده…</p></section>
+<section class="wrap stats" id="liveStats" style="grid-template-columns:minmax(0,1fr);max-width:360px"><div class="stat"><b id="totalUsers">…</b><span>کل کاربران ثبت‌نام‌شده</span></div><p id="statsStatus" style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:11px;margin:0">در حال دریافت آمار ثبت‌نام‌ها…</p></section>
 <section class="section wrap" id="features"><div class="sectionhead"><h2>امکانات ایران‌گرام</h2><p>قابلیت‌های موجود و مسیر توسعه، شفاف و بدون وعده غیرواقعی</p></div><div class="grid">
 <article class="feature"><div class="ico"><img src="assets/chat-list.svg" alt="نمای برنامه ایران‌گرام"></div><h3>گفت‌وگوی خصوصی</h3><p>پیام‌رسانی بین کاربران، نمایش پیام‌ها و مدیریت گفت‌وگوها.</p><span class="tag live">پیاده‌سازی اولیه</span></article>
 <article class="feature"><div class="ico"><img src="assets/group-chat.svg" alt="نمای برنامه ایران‌گرام"></div><h3>گروه‌ها</h3><p>ساخت فضای گفت‌وگوی گروهی و گردهم‌آوردن دوستان در یک گفتگو.</p><span class="tag live">پیاده‌سازی اولیه</span></article>
@@ -160,19 +160,15 @@ body{background:radial-gradient(ellipse at 78% 5%,#153451 0,transparent 34%),#0b
  async function refreshStats(){
   const status=document.getElementById('statsStatus');
   try{
-   const {data,error}=await client.rpc('get_public_user_stats');
+   const {data,error}=await client.from('site_stats').select('total_users').eq('id',1).single();
    if(error)throw error;
-   const stats=(data||[])[0]||{};
-   const total=Number(stats.total_users||0);
-   const online=Math.min(total,Number(stats.online_users||0));
+   const total=Number(data.total_users||0);
    document.getElementById('totalUsers').textContent=fmt(total);
-   document.getElementById('onlineUsers').textContent=fmt(online);
-   document.getElementById('offlineUsers').textContent=fmt(Math.max(0,total-online));
-   status.textContent='آمار زنده · به‌روزرسانی هر ۳۰ ثانیه · آخرین بروزرسانی: '+new Date().toLocaleTimeString('fa-IR');
+   status.textContent='آمار ثبت‌نام‌ها · آخرین بروزرسانی: '+new Date().toLocaleTimeString('fa-IR');
   }catch(e){
    console.warn('Public user stats unavailable',e);
    status.textContent='اتصال به آمار کاربران برقرار نشد؛ لطفاً بعداً دوباره تلاش کن.';
-   ['totalUsers','onlineUsers','offlineUsers'].forEach(id=>document.getElementById(id).textContent='—');
+   document.getElementById('totalUsers').textContent='—';
   }
  }
  refreshStats();setInterval(refreshStats,30000);

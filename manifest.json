@@ -3,11 +3,11 @@
   "short_name": "ایران‌گرام",
   "lang": "fa",
   "dir": "rtl",
-  "start_url": "./",
+  "start_url": "./app.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#061b3b",
-  "theme_color": "#087ff0",
+  "background_color": "#0e1621",
+  "theme_color": "#17212b",
   "icons": [
     {
       "src": "./icon.svg",

@@ -1280,6 +1280,8 @@ body{font-family:Tahoma,"Vazirmatn","Segoe UI",Arial,sans-serif;letter-spacing:0
  .composefield textarea{font-size:14px}
 }
 
+
+.voice-message{display:flex;align-items:center;gap:9px;min-width:220px;padding:7px 9px;border-radius:14px;background:#3390ec18}.voice-message audio{width:min(260px,62vw);height:38px}.round-video-message{width:220px;height:220px;max-width:65vw;max-height:65vw;border-radius:50%;overflow:hidden;background:#101923}.round-video-message video{width:100%;height:100%;object-fit:cover;border-radius:50%}#voiceRecordBtn.recording,#videoNoteBtn.recording{background:#d94b59;color:#fff;animation:igRecordPulse 1s infinite}@keyframes igRecordPulse{50%{box-shadow:0 0 0 7px #e34d5940}}
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -1331,7 +1333,7 @@ body{font-family:Tahoma,"Vazirmatn","Segoe UI",Arial,sans-serif;letter-spacing:0
  <section class="chatview" id="chatView" style="display:none">
   <header class="chatheader"><button class="iconbtn backbtn" id="backBtn" style="color:var(--text)">‹</button><div class="avatar" id="headAvatar">ای</div><div class="chatname"><b id="headName">گفت‌وگو</b><small id="headStatus">نمایشی</small></div><button class="iconbtn callbtn" id="audioCallBtn" title="تماس صوتی" aria-label="تماس صوتی">☎</button><button class="iconbtn callbtn" id="videoCallBtn" title="تماس تصویری" aria-label="تماس تصویری">▣</button><button class="iconbtn" id="chatSearchBtn" style="color:var(--text)" title="جست‌وجوی پیام">⌕</button><button class="iconbtn" id="chatMoreBtn" style="color:var(--text)" title="گزینه‌ها">⋮</button></header>
   <div class="messages" id="messages"></div>
-  <div class="composer"><button class="round" id="emojiBtn" title="ایموجی">☺</button><button class="round" id="photoBtn" title="ارسال عکس از گالری" aria-label="ارسال عکس">▧</button><div class="composefield"><button class="iconbtn" id="attachBtn" style="color:var(--muted)" title="پیوست">＋</button><textarea id="messageInput" rows="1" placeholder="پیامت رو بنویس..."></textarea></div><button class="send" id="sendBtn" title="ارسال">➤</button><input type="file" id="fileInput" hidden multiple><input type="file" id="photoInput" accept="image/*" hidden></div>
+  <div class="composer"><button class="round" id="emojiBtn" title="ایموجی">☺</button><button class="round" id="photoBtn" title="ارسال عکس از گالری" aria-label="ارسال عکس">▧</button><button class="round" id="voiceRecordBtn" title="ضبط ویس">🎙️</button><button class="round" id="videoNoteBtn" title="پیام گردالی">◉</button><div class="composefield"><button class="iconbtn" id="attachBtn" style="color:var(--muted)" title="پیوست">＋</button><textarea id="messageInput" rows="1" placeholder="پیامت رو بنویس..."></textarea></div><button class="send" id="sendBtn" title="ارسال">➤</button><input type="file" id="fileInput" hidden multiple><input type="file" id="photoInput" accept="image/*" hidden></div>
  </section>
 </main>
 </div>
@@ -1486,8 +1488,8 @@ function showChatFolderActions(chat){
   <button class="secondary chat-folder-action" data-chat-folder-action="hidden" style="width:100%;margin:5px 0">${hiddenLabel}</button>
   <div class="modalactions"><button class="secondary" data-close>بستن</button></div>`);
 }
-function parseMediaMarker(value){const match=String(value||'').match(/^\[\[media:([^|]+)\|([^|]+)\|([^|]+)\]\]$/);if(!match)return null;try{return {path:decodeURIComponent(match[1]),type:decodeURIComponent(match[2]),name:decodeURIComponent(match[3])}}catch(e){return null}}
-function renderMessageContent(message){const value=typeof message==='string'?message:(message.text||'');if(/^\[\[sticker:(.+)\]\]$/.test(String(value)))return '<span class="subtle">استیکر قدیمی؛ برای جایگزینی، عکس را از گالری بفرست.</span>';const media=parseMediaMarker(value);if(media){if(!message||typeof message==='string'||!message.mediaUrl)return '<span class="subtle">📎 '+esc(media.name)+' — در حال بارگذاری</span>';if(media.type.startsWith('image/'))return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer"><img class="media-image" src="'+esc(message.mediaUrl)+'" alt="'+esc(media.name)+'"></a>';if(media.type.startsWith('video/'))return '<video class="media-video" controls playsinline preload="metadata" src="'+esc(message.mediaUrl)+'"></video><div class="subtle">'+esc(media.name)+'</div>';return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer" download="'+esc(media.name)+'">📎 '+esc(media.name)+'</a>'}return esc(value)}
+function parseMediaMarker(value){const match=String(value||'').match(/^\\[\\[(media|roundvideo):([^|]+)\\|([^|]+)\\|([^|]+)\\]\\]$/);if(!match)return null;try{return {kind:match[1],path:decodeURIComponent(match[2]),type:decodeURIComponent(match[3]),name:decodeURIComponent(match[4])}}catch(e){return null}}
+function renderMessageContent(message){const value=typeof message==='string'?message:(message.text||'');if(/^\\[\\[sticker:(.+)\\]\\]$/.test(String(value)))return '<span class="subtle">استیکر قدیمی؛ برای جایگزینی، عکس را از گالری بفرست.</span>';const media=parseMediaMarker(value);if(media){if(!message||typeof message==='string'||!message.mediaUrl)return '<span class="subtle">📎 '+esc(media.name)+' — در حال بارگذاری</span>';if(media.type.startsWith('image/'))return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer"><img class="media-image" src="'+esc(message.mediaUrl)+'" alt="'+esc(media.name)+'"></a>';if(media.type.startsWith('audio/'))return '<div class="voice-message">🎙️ <audio controls preload="metadata" src="'+esc(message.mediaUrl)+'"></audio></div>';if(media.type.startsWith('video/')&&media.kind==='roundvideo')return '<div class="round-video-message"><video controls playsinline preload="metadata" src="'+esc(message.mediaUrl)+'"></video></div>';if(media.type.startsWith('video/'))return '<video class="media-video" controls playsinline preload="metadata" src="'+esc(message.mediaUrl)+'"></video><div class="subtle">'+esc(media.name)+'</div>';return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer" download="'+esc(media.name)+'">📎 '+esc(media.name)+'</a>'}return esc(value)}
 const mediaRefreshInFlight=new Set();
 async function refreshMediaUrls(chat){
  if(!remoteMode||!chat||!chat.remote||mediaRefreshInFlight.has(chat.id))return;
@@ -1747,7 +1749,7 @@ async function initAuth(){
 }
 
 
-async function uploadAndSendFile(file){
+async function uploadAndSendFile(file,kind='media'){
  const c=activeChat();if(!c){toast('اول یه چت باز کن 🙂');return}
  if(!remoteMode||!currentUser||!c.remote){toast('ارسال فایل فقط در گفت‌وگوی آنلاین فعال است.');return}
  if(c.type==='channels'&&c.memberRole!=='owner'){toast('فقط مدیر کانال می‌تواند در کانال فایل بفرستد.');return}
@@ -1758,7 +1760,7 @@ async function uploadAndSendFile(file){
  const path=c.id+'/'+currentUser.id+'/'+Date.now()+'_'+safeName;
  const {error:uploadError}=await supabaseClient.storage.from('arogram-chat-media').upload(path,file,{upsert:false,contentType:file.type});
  if(uploadError){toast('آپلود فایل ناموفق بود: '+uploadError.message);return}
- const body='[[media:'+encodeURIComponent(path)+'|'+encodeURIComponent(file.type)+'|'+encodeURIComponent(file.name||safeName)+']]';
+ const body='[['+(kind==='roundvideo'?'roundvideo':'media')+':'+encodeURIComponent(path)+'|'+encodeURIComponent(file.type)+'|'+encodeURIComponent(file.name||safeName)+']]';
  const {data:sent,error}=await supabaseClient.from('messages').insert({conversation_id:c.id,sender_id:currentUser.id,body}).select('id,created_at').single();
  if(error){await supabaseClient.storage.from('arogram-chat-media').remove([path]);toast('ثبت پیام فایل ناموفق بود: '+error.message);return}
  c.messages.push({id:sent.id,text:body,mine:true,time:new Date(sent.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[]});save();renderMessages();renderChats();
@@ -2091,6 +2093,35 @@ $('#messages').onclick=async e=>{const b=e.target.closest('button');if(!b)return
  toast(previous===emoji?'واکنش برداشته شد':previous?'واکنش تغییر کرد':'واکنش ثبت شد')
 } else if(b.dataset.delete!==undefined){if(confirm(c.remote?'این پیام برای همه حذف شود؟':'این پیام از همین دستگاه حذف شود؟')){if(remoteMode&&c.remote&&currentUser){const media=parseMediaMarker(m.text);const {data,error}=await supabaseClient.from('messages').delete().eq('id',id).eq('sender_id',currentUser.id).select('id').maybeSingle();if(error||!data){toast('حذف آنلاین پیام ناموفق بود'+(error?': '+error.message:''));return}if(media)await supabaseClient.storage.from('arogram-chat-media').remove([media.path])}c.messages=c.messages.filter(x=>x.id!==id);if(c.pinnedMessageId===id)c.pinnedMessageId=null;save();renderChats();renderMessages()}}else if(b.dataset.edit!==undefined){showModal('ویرایش پیام',`<textarea id="editText">${esc(m.text)}</textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveEdit">ذخیره</button></div>`);$('#saveEdit').onclick=async()=>{const next=$('#editText').value.trim();if(!next){toast('متن پیام خالی نمی‌تواند باشد');return}if(remoteMode&&c.remote&&currentUser){const {data,error}=await supabaseClient.from('messages').update({body:next}).eq('id',id).eq('sender_id',currentUser.id).select('id').maybeSingle();if(error||!data){toast('ویرایش آنلاین ناموفق بود'+(error?': '+error.message:''));return}}m.text=next;m.edited=true;save();closeModal();renderChats();renderMessages()}}else if(b.dataset.reply!==undefined){state.reply=id;$('#messageInput').placeholder='پاسخ به پیام انتخاب‌شده...';$('#messageInput').focus();toast('خب، جوابت رو بنویس و بفرست 🙂')}else if(b.dataset.pin!==undefined){c.pinnedMessageId=c.pinnedMessageId===id?null:id;c.pinned=!!c.pinnedMessageId;save();await persistChatPreference(c);renderMessages();toast(c.pinnedMessageId?'پیام سنجاق شد':'سنجاق پیام برداشته شد')}else if(b.dataset.copy!==undefined){try{await navigator.clipboard.writeText(String(m.text||''));toast('متن پیام کپی شد')}catch(err){showModal('کپی پیام',`<textarea id="copyFallback" readonly>${esc(m.text||'')}</textarea><div class="modalactions"><button class="primary" id="selectCopy">انتخاب متن</button><button class="secondary" data-close>بستن</button></div>`);$('#selectCopy').onclick=()=>{$('#copyFallback').select();toast('متن را کپی کن')}}}else if(b.dataset.forward!==undefined){const targets=state.chats.filter(x=>x.id!==c.id);if(!targets.length){toast('گفت‌وگوی دیگری برای فوروارد وجود ندارد');return}showModal('فوروارد پیام',`<p class="subtle">پیام به کدام گفت‌وگو فرستاده شود؟</p><select id="forwardTarget">${targets.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="confirmForward">فوروارد</button></div>`);$('#confirmForward').onclick=async()=>{const target=state.chats.find(x=>x.id===$('#forwardTarget').value);if(!target)return;if(remoteMode&&target.remote){const {error}=await supabaseClient.from('messages').insert({conversation_id:target.id,sender_id:currentUser.id,body:'فوروارد‌شده: '+String(m.text||'')});if(error){toast('فوروارد آنلاین ناموفق بود: '+error.message);return}}target.messages.push({id:uid(),text:'فوروارد‌شده: '+String(m.text||''),mine:true,time:now(),reactions:[]});save();closeModal();renderChats();toast('پیام فوروارد شد')}}};
 $('#stories').onclick=e=>{const el=e.target.closest('[data-story]');if(!el)return;if(el.dataset.story==='add'){createStory();return}openStoryGroup(el.dataset.story)};
+
+let igVoiceRecorder=null,igVideoRecorder=null,igRecorderStream=null,igRecorderChunks=[];
+async function startIgRecorder(kind){
+ const chat=activeChat();if(!chat){toast('اول یک گفت‌وگو باز کن');return}
+ if(!remoteMode||!currentUser||!chat.remote){toast('برای ارسال ویس و پیام گردالی وارد حسابت شو');return}
+ if(chat.type==='channels'&&chat.memberRole!=='owner'){toast('فقط مدیر کانال می‌تواند پیام بفرستد');return}
+ if(igVoiceRecorder||igVideoRecorder){toast('اول ضبط فعلی را تمام کن');return}
+ const video=kind==='roundvideo';
+ try{
+  igRecorderStream=await navigator.mediaDevices.getUserMedia(video?{audio:true,video:{facingMode:'user',width:{ideal:480},height:{ideal:480}}}:{audio:true});
+  const types=video?['video/webm;codecs=vp8,opus','video/webm']:['audio/webm;codecs=opus','audio/webm'];
+  const mime=types.find(t=>MediaRecorder.isTypeSupported(t))||'';
+  const rec=new MediaRecorder(igRecorderStream,mime?{mimeType:mime}:{});
+  if(video)igVideoRecorder=rec;else igVoiceRecorder=rec;igRecorderChunks=[];
+  rec.ondataavailable=e=>{if(e.data&&e.data.size)igRecorderChunks.push(e.data)};
+  rec.onstop=async()=>{
+   const blob=new Blob(igRecorderChunks,{type:rec.mimeType||(video?'video/webm':'audio/webm')});igRecorderChunks=[];
+   igRecorderStream?.getTracks().forEach(t=>t.stop());igRecorderStream=null;igVoiceRecorder=null;igVideoRecorder=null;
+   const btn=$(video?'#videoNoteBtn':'#voiceRecordBtn');btn.classList.remove('recording');btn.textContent=video?'◉':'🎙️';
+   if(blob.size){const f=new File([blob],(video?'video-note-':'voice-')+Date.now()+'.webm',{type:blob.type});await uploadAndSendFile(f,video?'roundvideo':'media')}
+  };
+  rec.start(250);const btn=$(video?'#videoNoteBtn':'#voiceRecordBtn');btn.classList.add('recording');btn.textContent='⏹';
+  toast(video?'ضبط پیام گردالی شروع شد؛ برای پایان دوباره بزن':'ضبط ویس شروع شد؛ برای پایان دوباره بزن');
+ }catch(err){igRecorderStream?.getTracks().forEach(t=>t.stop());igRecorderStream=null;igVoiceRecorder=null;igVideoRecorder=null;toast('اجازه میکروفون یا دوربین داده نشد')}
+}
+function stopIgRecorder(){const rec=igVideoRecorder||igVoiceRecorder;if(rec&&rec.state!=='inactive')rec.stop()}
+$('#voiceRecordBtn').onclick=()=>igVoiceRecorder?stopIgRecorder():startIgRecorder('voice');
+$('#videoNoteBtn').onclick=()=>igVideoRecorder?stopIgRecorder():startIgRecorder('roundvideo');
+
 $('#emojiBtn').onclick=()=>{const input=$('#messageInput');input.value+=' 😊';input.focus()};$('#photoBtn').onclick=()=>$('#photoInput').click();$('#photoInput').onchange=async e=>{const files=[...e.target.files];for(const file of files)await uploadAndSendFile(file);e.target.value=''};$('#attachBtn').onclick=()=>$('#fileInput').click();$('#fileInput').onchange=async e=>{const files=[...e.target.files];for(const file of files)await uploadAndSendFile(file);e.target.value=''};
 $('#chatSearchBtn').onclick=()=>{
  const c=activeChat();if(!c)return;

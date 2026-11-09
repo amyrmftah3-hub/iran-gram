@@ -751,6 +751,111 @@ body{background:#0e1621;color:var(--text);font-family:Arial,"Vazirmatn",Tahoma,s
 .round:active,.send:active,.iconbtn:active{transform:scale(.96)}
 @media(max-width:600px){.modalback{align-items:flex-end;padding:0}.modal{width:100%;max-width:none;max-height:88dvh;border-radius:18px 18px 0 0;border-bottom:0;padding:20px 18px calc(20px + env(safe-area-inset-bottom))}.modal h3{margin-bottom:18px}}
 
+
+
+/* Final Telegram-style visual pass */
+:root{--tg-bg:#0e1621;--tg-panel:#17212b;--tg-line:#263442;--tg-accent:#3390ec}
+body{background:var(--tg-bg);color:#f1f5f9}
+.app{width:100%;max-width:1600px;grid-template-columns:minmax(300px,410px) minmax(0,1fr);background:var(--tg-panel)}
+.sidebar{background:var(--tg-panel);border-left:1px solid var(--tg-line)}
+.topbar{height:60px;min-height:60px;padding:8px 14px;background:var(--tg-panel);border:0}
+.topbar-title{font-size:18px;font-weight:600;letter-spacing:0}
+.topbar .logo{width:38px;height:38px;object-fit:cover}
+#menuBtn{color:#a9bac9}
+.searchbox{padding:7px 12px 10px}
+.searchbox input{height:40px;border:0;border-radius:22px;background:#242f3d;padding:0 16px}
+.filters{height:44px;align-items:stretch;gap:0;padding:0 8px;border-bottom:1px solid var(--tg-line)}
+.filter{flex:0 0 auto;padding:0 13px;border-radius:0;background:transparent;color:#9aabba;font-size:13px}
+.filter.active{background:transparent;color:#65b5f5}
+.filter.active:after{content:"";position:absolute;bottom:0;right:10px;left:10px;height:3px;border-radius:3px 3px 0 0;background:var(--tg-accent)}
+.stories{padding:11px 12px 12px;gap:13px;border-bottom:1px solid var(--tg-line)}
+.story{min-width:58px;color:#a8b8c7}
+.storyring{width:52px;height:52px;padding:2px}
+.chatrow{min-height:74px;padding:9px 13px;border:0;gap:12px}
+.chatrow:after{content:"";position:absolute;right:78px;left:0;bottom:0;height:1px;background:#263442;opacity:.65}
+.chatrow.selected,.chatrow:hover{background:#202d3a}
+.chatrow .avatar{width:52px;height:52px}
+.chathead b{font-size:14px;font-weight:600}
+.preview{font-size:12px;color:#9aabba}
+.main,.empty{background:#0e1621}
+.chatheader{height:60px;min-height:60px;background:#17212b;border-bottom:1px solid #263442}
+.messages{background-color:#0e1621;background-image:radial-gradient(#8ca0b012 1px,transparent 1px);background-size:22px 22px}
+.msg{border-radius:13px 13px 13px 4px;background:#182533}
+.msg.mine{border-radius:13px 13px 4px 13px;background:#2b5278}
+.composer{background:#17212b;border-top:1px solid #263442}
+.composefield{background:#242f3d;border:0}
+.round{background:#242f3d}
+.send{background:#3390ec}
+.bottom-nav{display:none!important}
+@media(max-width:760px){
+ .app{display:block;height:100dvh}
+ .sidebar{height:100dvh}
+ .topbar{height:56px;min-height:56px}
+ .chatheader{height:56px;min-height:56px}
+ .filters{height:42px;overflow-x:auto;scrollbar-width:none}
+ .stories{padding-top:9px;padding-bottom:10px}
+ .chatrow{min-height:71px;padding:8px 11px}
+ .chatrow:after{right:74px}
+ .messages{padding:12px 8px}
+ .composer{padding-bottom:max(8px,env(safe-area-inset-bottom))}
+}
+
+
+/* Telegram-style menus, sheets, profile and attachment controls */
+#mainMenu{
+ position:absolute;top:54px;right:10px;left:auto;z-index:30;width:min(280px,calc(100vw - 24px));
+ padding:6px;background:#202b36;border:1px solid #344454;border-radius:12px;
+ box-shadow:0 12px 34px #0008;overflow:hidden
+}
+#mainMenu button{
+ display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 13px;
+ color:#e8eef4;font-size:14px;border-radius:7px;text-align:right
+}
+#mainMenu button:hover,#mainMenu button:active{background:#2b3b4b}
+#mainMenu button+button{border-top:1px solid #ffffff08}
+.menu.open{display:block}
+.chatheader .iconbtn{font-size:21px}
+.chatheader .callbtn{color:#8da0b1!important}
+.chatheader .callbtn:hover{color:#65b5f5!important}
+.chatname{padding-inline:2px}
+.chatname b{font-weight:600}
+.verified{background:#3390ec;color:#fff}
+.modalback{z-index:80;background:#07111dcc;backdrop-filter:blur(5px);padding:12px}
+.modal{
+ width:min(460px,100%);max-height:min(88dvh,760px);padding:20px;
+ background:#17212b;border:1px solid #344454;border-radius:16px;
+ color:#eef4f8;box-shadow:0 18px 60px #0009
+}
+.modal h3{font-size:18px;font-weight:650;padding-bottom:12px;border-bottom:1px solid #263442}
+.modal h4{font-size:14px;color:#dce8f1;margin:18px 0 8px}
+.modal label{color:#9aabba;font-size:12px}
+.modal input,.modal textarea,.modal select{
+ background:#202d3a;color:#edf3f8;border:1px solid #344454;border-radius:9px
+}
+.modal input:focus,.modal textarea:focus,.modal select:focus{outline:1px solid #3390ec;border-color:#3390ec}
+.modal .subtle{color:#9aabba}
+.modalactions{gap:9px}
+.primary{background:#3390ec;color:white;border-radius:9px;font-weight:600}
+.secondary{background:#263746;color:#e2ebf2;border-radius:9px}
+.toast{z-index:100;background:#263746;border:1px solid #405367;color:#f2f6fa;box-shadow:0 5px 20px #0006}
+.folder-empty{padding:36px 20px}
+.folder-icon{filter:drop-shadow(0 5px 12px #0005)}
+.storyring{box-shadow:0 1px 5px #0004}
+.storyring span{font-weight:650}
+.compose-fab{width:54px;height:54px;border-radius:50%;background:#3390ec;box-shadow:0 5px 18px #0007}
+.compose-fab:hover{background:#48a0f2}
+.round,.send{transition:background .15s,transform .15s}
+.round:active,.send:active{transform:scale(.94)}
+.messages{scroll-behavior:smooth}
+.msg{overflow:visible}
+.msgactions .tiny{border-radius:14px}
+@media(max-width:760px){
+ #mainMenu{top:52px;right:8px;width:min(290px,calc(100vw - 16px))}
+ .modalback{align-items:flex-end;padding:0}
+ .modal{width:100%;max-width:none;max-height:88dvh;border-radius:18px 18px 0 0;padding:20px 16px calc(18px + env(safe-area-inset-bottom));border-bottom:0}
+ .modal h3{padding-bottom:10px}
+ .toast{bottom:calc(18px + env(safe-area-inset-bottom))}
+}
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -1391,109 +1496,3 @@ if(!window.supabase){toast('بارگذاری سرویس ورود ناموفق ب
 (()=>{const area=document.getElementById('messages');if(!area)return;let holdTimer=null;let held=false;const closeOthers=(keep)=>area.querySelectorAll('.msg.actions-open').forEach(node=>{if(node!==keep)node.classList.remove('actions-open')});area.addEventListener('click',event=>{if(event.target.closest('button,a,video'))return;const msg=event.target.closest('.msg');if(!msg)return;const opening=!msg.classList.contains('actions-open');closeOthers(msg);msg.classList.toggle('actions-open',opening)});area.addEventListener('contextmenu',event=>{const msg=event.target.closest('.msg');if(!msg)return;event.preventDefault();closeOthers(msg);msg.classList.add('actions-open')});area.addEventListener('touchstart',event=>{const msg=event.target.closest('.msg');if(!msg||event.target.closest('button,a,video'))return;held=false;holdTimer=setTimeout(()=>{held=true;closeOthers(msg);msg.classList.add('actions-open')},480)},{passive:true});['touchend','touchmove','touchcancel'].forEach(name=>area.addEventListener(name,()=>{clearTimeout(holdTimer)},{passive:true}));area.addEventListener('click',event=>{if(event.target.closest('.msgactions button')){const msg=event.target.closest('.msg');if(msg)msg.classList.remove('actions-open')} });})();
 </script>
 </body>
-</html>
-
-
-/* Final Telegram-style visual pass */
-:root{--tg-bg:#0e1621;--tg-panel:#17212b;--tg-line:#263442;--tg-accent:#3390ec}
-body{background:var(--tg-bg);color:#f1f5f9}
-.app{width:100%;max-width:1600px;grid-template-columns:minmax(300px,410px) minmax(0,1fr);background:var(--tg-panel)}
-.sidebar{background:var(--tg-panel);border-left:1px solid var(--tg-line)}
-.topbar{height:60px;min-height:60px;padding:8px 14px;background:var(--tg-panel);border:0}
-.topbar-title{font-size:18px;font-weight:600;letter-spacing:0}
-.topbar .logo{width:38px;height:38px;object-fit:cover}
-#menuBtn{color:#a9bac9}
-.searchbox{padding:7px 12px 10px}
-.searchbox input{height:40px;border:0;border-radius:22px;background:#242f3d;padding:0 16px}
-.filters{height:44px;align-items:stretch;gap:0;padding:0 8px;border-bottom:1px solid var(--tg-line)}
-.filter{flex:0 0 auto;padding:0 13px;border-radius:0;background:transparent;color:#9aabba;font-size:13px}
-.filter.active{background:transparent;color:#65b5f5}
-.filter.active:after{content:"";position:absolute;bottom:0;right:10px;left:10px;height:3px;border-radius:3px 3px 0 0;background:var(--tg-accent)}
-.stories{padding:11px 12px 12px;gap:13px;border-bottom:1px solid var(--tg-line)}
-.story{min-width:58px;color:#a8b8c7}
-.storyring{width:52px;height:52px;padding:2px}
-.chatrow{min-height:74px;padding:9px 13px;border:0;gap:12px}
-.chatrow:after{content:"";position:absolute;right:78px;left:0;bottom:0;height:1px;background:#263442;opacity:.65}
-.chatrow.selected,.chatrow:hover{background:#202d3a}
-.chatrow .avatar{width:52px;height:52px}
-.chathead b{font-size:14px;font-weight:600}
-.preview{font-size:12px;color:#9aabba}
-.main,.empty{background:#0e1621}
-.chatheader{height:60px;min-height:60px;background:#17212b;border-bottom:1px solid #263442}
-.messages{background-color:#0e1621;background-image:radial-gradient(#8ca0b012 1px,transparent 1px);background-size:22px 22px}
-.msg{border-radius:13px 13px 13px 4px;background:#182533}
-.msg.mine{border-radius:13px 13px 4px 13px;background:#2b5278}
-.composer{background:#17212b;border-top:1px solid #263442}
-.composefield{background:#242f3d;border:0}
-.round{background:#242f3d}
-.send{background:#3390ec}
-.bottom-nav{display:none!important}
-@media(max-width:760px){
- .app{display:block;height:100dvh}
- .sidebar{height:100dvh}
- .topbar{height:56px;min-height:56px}
- .chatheader{height:56px;min-height:56px}
- .filters{height:42px;overflow-x:auto;scrollbar-width:none}
- .stories{padding-top:9px;padding-bottom:10px}
- .chatrow{min-height:71px;padding:8px 11px}
- .chatrow:after{right:74px}
- .messages{padding:12px 8px}
- .composer{padding-bottom:max(8px,env(safe-area-inset-bottom))}
-}
-
-
-/* Telegram-style menus, sheets, profile and attachment controls */
-#mainMenu{
- position:absolute;top:54px;right:10px;left:auto;z-index:30;width:min(280px,calc(100vw - 24px));
- padding:6px;background:#202b36;border:1px solid #344454;border-radius:12px;
- box-shadow:0 12px 34px #0008;overflow:hidden
-}
-#mainMenu button{
- display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 13px;
- color:#e8eef4;font-size:14px;border-radius:7px;text-align:right
-}
-#mainMenu button:hover,#mainMenu button:active{background:#2b3b4b}
-#mainMenu button+button{border-top:1px solid #ffffff08}
-.menu.open{display:block}
-.chatheader .iconbtn{font-size:21px}
-.chatheader .callbtn{color:#8da0b1!important}
-.chatheader .callbtn:hover{color:#65b5f5!important}
-.chatname{padding-inline:2px}
-.chatname b{font-weight:600}
-.verified{background:#3390ec;color:#fff}
-.modalback{z-index:80;background:#07111dcc;backdrop-filter:blur(5px);padding:12px}
-.modal{
- width:min(460px,100%);max-height:min(88dvh,760px);padding:20px;
- background:#17212b;border:1px solid #344454;border-radius:16px;
- color:#eef4f8;box-shadow:0 18px 60px #0009
-}
-.modal h3{font-size:18px;font-weight:650;padding-bottom:12px;border-bottom:1px solid #263442}
-.modal h4{font-size:14px;color:#dce8f1;margin:18px 0 8px}
-.modal label{color:#9aabba;font-size:12px}
-.modal input,.modal textarea,.modal select{
- background:#202d3a;color:#edf3f8;border:1px solid #344454;border-radius:9px
-}
-.modal input:focus,.modal textarea:focus,.modal select:focus{outline:1px solid #3390ec;border-color:#3390ec}
-.modal .subtle{color:#9aabba}
-.modalactions{gap:9px}
-.primary{background:#3390ec;color:white;border-radius:9px;font-weight:600}
-.secondary{background:#263746;color:#e2ebf2;border-radius:9px}
-.toast{z-index:100;background:#263746;border:1px solid #405367;color:#f2f6fa;box-shadow:0 5px 20px #0006}
-.folder-empty{padding:36px 20px}
-.folder-icon{filter:drop-shadow(0 5px 12px #0005)}
-.storyring{box-shadow:0 1px 5px #0004}
-.storyring span{font-weight:650}
-.compose-fab{width:54px;height:54px;border-radius:50%;background:#3390ec;box-shadow:0 5px 18px #0007}
-.compose-fab:hover{background:#48a0f2}
-.round,.send{transition:background .15s,transform .15s}
-.round:active,.send:active{transform:scale(.94)}
-.messages{scroll-behavior:smooth}
-.msg{overflow:visible}
-.msgactions .tiny{border-radius:14px}
-@media(max-width:760px){
- #mainMenu{top:52px;right:8px;width:min(290px,calc(100vw - 16px))}
- .modalback{align-items:flex-end;padding:0}
- .modal{width:100%;max-width:none;max-height:88dvh;border-radius:18px 18px 0 0;padding:20px 16px calc(18px + env(safe-area-inset-bottom));border-bottom:0}
- .modal h3{padding-bottom:10px}
- .toast{bottom:calc(18px + env(safe-area-inset-bottom))}
-}

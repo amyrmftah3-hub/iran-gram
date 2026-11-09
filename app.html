@@ -1139,7 +1139,7 @@ async function browsePublicChannels(){
   const button=e.target.closest('[data-join-channel]');if(!button)return;
   const id=button.dataset.joinChannel;
   if(state.chats.some(x=>x.id===id)){closeModal();openChat(id);return}
-  const {error}=await supabaseClient.rpc('join_public_channel',{p_channel_id:id});
+  const {error}=await supabaseClient.from('conversation_members').insert({conversation_id:id,user_id:currentUser.id,role:'member'});
   if(error){toast('عضویت در کانال ناموفق بود: '+error.message);return}
   closeModal();await loadOnlineChats();openChat(id);toast('به کانال پیوستی');
  };

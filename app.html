@@ -855,11 +855,90 @@ body{background:var(--tg-bg);color:#f1f5f9}
  .modal h3{padding-bottom:10px}
  .toast{bottom:calc(18px + env(safe-area-inset-bottom))}
 }
+
+/* Final Telegram-like conversation layout */
+:root{--blue:#3390ec;--blue2:#2b82d9;--bg:#0e1621;--panel:#17212b;--text:#e9edef;--muted:#8b9baa;--line:#263442;--chat:#0e1621;--bubble:#182533;--mine:#2b5278;--shadow:none}
+html,body{width:100%;height:100%;background:#0e1621;color:#e9edef;font-family:Vazirmatn,Tahoma,Arial,sans-serif}
+.app{width:100%;max-width:none;height:100dvh;grid-template-columns:420px minmax(0,1fr);background:#0e1621;box-shadow:none}
+.sidebar{background:#17212b;border-left:1px solid #263442}
+.topbar{height:60px;min-height:60px;background:#17212b;color:#f5f7f9;border-bottom:1px solid #263442;padding:8px 14px;gap:10px}
+.topbar-title{font-size:17px;font-weight:700;color:#f5f7f9}
+.topbar .iconbtn{color:#a9bac9}
+.brand .logo{width:38px;height:38px;border:1px solid #d5ae55;box-shadow:0 0 0 2px #ffffff08}
+.searchbox{padding:8px 12px;background:#17212b;border:0}
+.searchbox input{height:38px;background:#242f3d;color:#e9edef;border:1px solid transparent;border-radius:9px;padding:8px 14px;font-size:13px}
+.searchbox input::placeholder{color:#8193a5}
+.searchbox input:focus{border-color:#3390ec;outline:0}
+.filters{height:44px;flex-shrink:0;gap:0;padding:0 8px;background:#17212b;border-bottom:1px solid #263442;scrollbar-width:none}
+.filters::-webkit-scrollbar,.stories::-webkit-scrollbar,.chats::-webkit-scrollbar,.messages::-webkit-scrollbar{display:none}
+.filter{height:44px;padding:0 13px;border-radius:0;background:transparent;color:#91a0ae;font-size:12px;position:relative}
+.filter.active{background:transparent;color:#65b5f5}
+.filter.active:after{content:"";position:absolute;bottom:0;right:10px;left:10px;height:3px;border-radius:3px 3px 0 0;background:#3390ec}
+.stories{padding:11px 13px;background:#17212b;border-bottom:1px solid #263442;gap:13px;scrollbar-width:none}
+.story{color:#aebdca;min-width:58px;font-size:11px}
+.storyring{width:50px;height:50px;padding:2px;background:linear-gradient(135deg,#3390ec,#8c5bdb,#e7a84a)}
+.storyring span{background:#243342;border:2px solid #17212b;color:#e6edf3}
+.storyring.add{background:#334657}
+.storyring.add span{background:#243342;color:#65b5f5}
+.chats{background:#17212b;scrollbar-width:thin;scrollbar-color:#344454 transparent}
+.chatrow{position:relative;min-height:72px;padding:9px 13px;gap:11px;border:0;background:#17212b;color:#e9edef}
+.chatrow:after{content:"";position:absolute;bottom:0;right:76px;left:0;height:1px;background:#263442}
+.chatrow:hover,.chatrow.selected{background:#202b36}
+.chatrow .avatar{width:52px;height:52px;font-size:19px}
+.chatinfo{align-self:stretch;display:flex;flex-direction:column;justify-content:center}
+.chathead b{font-size:14px;font-weight:600;color:#f0f3f5}
+.time{font-size:10px;color:#8193a5}
+.preview{font-size:12px;color:#9aabba;margin-top:5px}
+.unread{background:#3390ec;color:white;min-width:19px;text-align:center;border-radius:12px;padding:2px 6px}
+.main{background:#0e1621}
+.empty{background:#0e1621;color:#aab8c5}
+.emptycard{background:#17212b;border:1px solid #263442;color:#e9edef;box-shadow:0 12px 40px #0003}
+.emptycard .plane{color:#3390ec}
+.emptycard p{color:#9aabba}
+.chatheader{height:60px;min-height:60px;background:#17212b;color:#e9edef;border-bottom:1px solid #263442;padding:7px 13px;gap:9px}
+.chatheader .avatar{width:42px;height:42px}
+.chatheader .iconbtn{color:#aebdca!important}
+.chatname b{font-size:14px;color:#f4f7f9}
+.chatname small{font-size:11px;color:#8b9baa}
+.messages{background-color:#0e1621;background-image:radial-gradient(#8ca0b012 1px,transparent 1px);background-size:22px 22px;padding:18px max(14px,6%)}
+.msg{max-width:min(78%,560px);padding:8px 11px 6px;border-radius:13px 13px 13px 4px;background:#182533;color:#e9edef;box-shadow:0 1px 1px #0002}
+.msg.mine{border-radius:13px 13px 4px 13px;background:#2b5278;color:#fff}
+.msg p{font-size:14px;line-height:1.65}
+.msgmeta{color:#a9bac9;font-size:10px}
+.daylabel{background:#263746;color:#d6e1ea}
+.composer{background:#17212b;border-top:1px solid #263442;padding:8px 12px calc(8px + env(safe-area-inset-bottom));gap:8px}
+.composefield{background:#242f3d;border:1px solid #2d3c4b;border-radius:22px;padding:5px 9px}
+.composefield textarea{font-family:inherit;color:#f0f3f5;font-size:14px}
+.composefield textarea::placeholder{color:#8b9baa}
+.round{background:transparent;color:#a9bac9}
+.send{width:43px;height:43px;flex-shrink:0;background:#3390ec}
+.compose-fab{width:54px;height:54px;background:#3390ec;box-shadow:0 4px 16px #0006}
+.menu{background:#202b36;border:1px solid #344454;color:#e9edef}
+.modal{background:#17212b;color:#e9edef;border:1px solid #344454}
+.modal input,.modal textarea,.modal select{background:#202d3a;color:#edf3f8}
+.primary{background:#3390ec}
+.secondary{background:#263746;color:#e2ebf2}
+@media(min-width:761px){.app{grid-template-columns:420px minmax(0,1fr)}.sidebar{min-width:0}.compose-fab{bottom:20px;left:20px}}
+@media(max-width:760px){
+ .app{display:block;width:100%;height:100dvh}
+ .sidebar{height:100dvh;width:100%;border:0}
+ .topbar{height:56px;min-height:56px}
+ .topbar-title{font-size:16px}
+ .chatheader{height:56px;min-height:56px}
+ .filters{height:42px}
+ .filter{height:42px}
+ .stories{flex-shrink:0}
+ .chatrow{min-height:70px;padding:8px 11px}
+ .messages{padding:12px 8px}
+ .msg{max-width:86%}
+ .composer{padding-bottom:max(8px,env(safe-area-inset-bottom))}
+ .compose-fab{bottom:calc(18px + env(safe-area-inset-bottom));left:16px}
+}
+
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="manifest" href="./manifest.json">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Markazi+Text:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Markazi+Text:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

@@ -158,6 +158,18 @@ body{background:radial-gradient(ellipse at 50% 18%,#0758a8 0,transparent 42%),li
 @media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.showcase-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{grid-template-columns:1fr 1fr}.heroimg{min-height:440px}}
 @media(max-width:650px){.nav{height:64px}.brand{font-size:20px}.hero{grid-template-columns:1fr;padding:30px 0 22px;gap:18px}.heroimg{min-height:420px;order:2}.hero h1{font-size:48px}.lead{font-size:16px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.showcase-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.showcase-card img{height:230px}.section{padding:34px 0}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:1/-1}}
 
+
+.download{position:relative;overflow:hidden;padding:46px 24px!important;border-radius:28px!important;background:radial-gradient(ellipse at 50% -10%,#245c83 0,#172c3d 45%,#17212b 100%)!important}
+.download:before{content:"";position:absolute;width:260px;height:260px;border:1px solid #ffffff12;border-radius:50%;top:-155px;left:calc(50% - 130px);box-shadow:0 0 0 25px #ffffff06,0 0 0 55px #ffffff04}
+.download-mark{width:58px;height:58px;display:grid;place-items:center;margin:0 auto 15px;border-radius:19px;background:#3390ec;color:white;font-size:27px;box-shadow:0 10px 30px #1684dc44}
+.download h2{position:relative;font-size:32px!important}
+.download p{max-width:600px;margin:10px auto 22px!important;line-height:2}
+.download-steps{max-width:520px;margin:25px auto 0;padding:17px 20px;text-align:right;border:1px solid #ffffff18;border-radius:17px;background:#0e162166}
+.download-steps ol{margin:8px 0 0;padding-right:22px;color:#c5d2dc;font-size:13px;line-height:2}
+.download-steps b{color:#f1f5f8}
+.download .note{max-width:650px;margin:16px auto 0;line-height:1.9}
+@media(max-width:480px){.download{padding:34px 16px!important}.download h2{font-size:27px!important}.download-steps{padding:14px;text-align:right}}
+
 </style>
 </head>
 <body><style>
@@ -236,7 +248,20 @@ body{background:radial-gradient(ellipse at 75% 20%,#0754a6 0,transparent 42%),li
 </div>
 </section>
 <section class="section wrap" id="roadmap"><div class="sectionhead"><h2>مسیر توسعه</h2><p>هدف ما نزدیک شدن به تجربه کامل پیام‌رسان‌های مدرن است.</p></div><div class="roadmap"><div><h3>پایه‌های فعلی</h3><ul><li>ورود و حساب کاربری ایمیلی</li><li>پروفایل و گفت‌وگوهای آنلاین اولیه</li><li>ساخت گروه و کانال</li><li>استوری و تنظیمات آرشیو</li><li>نسخه آزمایشی اندروید و وب</li></ul></div><div><h3>مراحل بعدی</h3><ul><li>تکمیل مدیران و دسترسی‌های گروه/کانال</li><li>پایداری پیام‌رسانی و رسانه‌ها</li><li>تکمیل تماس‌ها و آزمایش چنددستگاهی</li><li>تبلیغات بومی و آمار کمپین</li><li>بررسی امنیت و انتشار عمومی</li></ul></div></div></section>
-<section class="wrap download" id="download"><h2>ایران‌گرام را امتحان کن</h2><p>نسخه وب را همین حالا باز کن؛ فایل اندروید فعلی آزمایشی است و نسخه رسمی پس از تکمیل و امضای انتشار قرار می‌گیرد.</p><div class="actions" style="justify-content:center"><a class="btn" href="https://github.com/amyrmftah3-hub/iran-gram/actions/workflows/build-apk.yml">دانلود نسخه آزمایشی APK</a><a class="btn secondary" href="app.html?v=20261109-136k-settings">اجرای برنامه وب</a></div><div class="note">در صفحه GitHub، بخش Artifacts و فایل IranGram-Android-APK را انتخاب کن. فایل دانلودی ZIP است و APK داخل آن قرار دارد.</div></section>
+<section class="wrap download" id="download">
+ <div class="download-mark">⬇</div>
+ <h2>آروگرام را دریافت کن</h2>
+ <p>برای امتحان نسخه فعلی، برنامه وب را باز کن. برای نسخه اندروید، آخرین خروجی ساخت APK را از صفحه انتشار پروژه دریافت کن.</p>
+ <div class="actions" style="justify-content:center">
+  <a class="btn" href="https://github.com/amyrmftah3-hub/iran-gram/actions/workflows/build-apk.yml" target="_blank" rel="noopener">⬇ دریافت نسخه اندروید</a>
+  <a class="btn secondary" href="app.html?v=20261109-visual-polish" target="_blank" rel="noopener">باز کردن نسخه وب</a>
+ </div>
+ <div class="download-steps">
+  <b>روش دریافت فایل اندروید</b>
+  <ol><li>در صفحه ساخت اندروید، آخرین اجرای موفق را باز کن.</li><li>از بخش <b>Artifacts</b> فایل <b>IranGram-Android-APK</b> را بگیر.</li><li>ZIP را باز کن و فایل APK داخلش را روی گوشی نصب کن.</li></ol>
+ </div>
+ <div class="note">اگر آخرین اجرا موفق نباشد یا بخش Artifacts فایل نداشته باشد، هنوز APK آماده انتشار نیست. نسخه وب هم فعلاً آزمایشی است.</div>
+</section>
 </main>
 <footer class="wrap footer"><span>© ایران‌گرام — پروژه در حال توسعه<br><b style="color:#f1d38d;font-size:17px">سازنده و توسعه‌دهنده: امیررضا مفتاح</b><br><small style="font-size:13px;color:#a9bdce">شناسه: Manager_MT</small></span><span><a href="app.html?v=20261109-136k-settings">ورود به برنامه</a> · <a href="https://github.com/amyrmftah3-hub/iran-gram">مخزن پروژه</a></span></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

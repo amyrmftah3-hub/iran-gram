@@ -1754,7 +1754,7 @@ async function uploadAndSendFile(file,kind='media'){
  if(!remoteMode||!currentUser||!c.remote){toast('ارسال فایل فقط در گفت‌وگوی آنلاین فعال است.');return}
  if(c.type==='channels'&&c.memberRole!=='owner'){toast('فقط مدیر کانال می‌تواند در کانال فایل بفرستد.');return}
  if(file.size>50*1024*1024){toast('حجم فایل باید کمتر از ۵۰ مگابایت باشد.');return}
- const allowed=/^(image\/(jpeg|png|webp|gif|avif|heic|heif)|video\/(mp4|webm)|audio\/(mpeg|ogg|mp4)|application\/(pdf|zip)|text\/plain)$/i;
+ const allowed=/^(image\/(jpeg|png|webp|gif|avif|heic|heif)|video\/(mp4|webm)|audio\/(mpeg|ogg|mp4|webm)|application\/(pdf|zip)|text\/plain)$/i;
  if(!allowed.test(file.type||'')){toast('این نوع فایل پشتیبانی نمی‌شود.');return}
  const safeName=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'file';
  const path=c.id+'/'+currentUser.id+'/'+Date.now()+'_'+safeName;

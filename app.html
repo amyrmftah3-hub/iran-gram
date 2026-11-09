@@ -1460,9 +1460,10 @@ async function conversationSettingsModal(chat){
  };
  const add=$('#csAddMember');if(add)add.onclick=()=>addConversationMember(chat.id);
  const members=$('#csMembers');if(members)members.onclick=async()=>{
-  const {data,error}=await supabaseClient.from('conversation_members').select('user_id,role,profiles(display_name,username)').eq('conversation_id',chat.id);
+  const {data:membersData,error}=await supabaseClient.from('conversation_members').select('user_id,role').eq('conversation_id',chat.id);
   if(error){toast('دریافت اعضا ناموفق بود: '+error.message);return}
-  showModal('اعضای '+esc(chat.name),(data||[]).map(m=>'<div class="setting-row"><span><b>'+esc(m.profiles?.display_name||'کاربر')+'</b><small>@'+esc(m.profiles?.username||'')+' · '+esc(m.role)+'</small></span>'+(isOwner&&m.role!=='owner'?'<button class="secondary" data-remove-member="'+esc(m.user_id)+'">حذف</button>':'')+'</div>').join('')+'<div class="modalactions"><button class="secondary" data-close>بستن</button></div>');
+  const ids=(membersData||[]).map(m=>m.user_id);const {data:profilesData}=ids.length?await supabaseClient.from('profiles').select('id,display_name,username').in('id',ids):{data:[]};const profileMap=new Map((profilesData||[]).map(p=>[p.id,p]));
+  showModal('اعضای '+esc(chat.name),(membersData||[]).map(m=>{const p=profileMap.get(m.user_id)||{};return '<div class="setting-row"><span><b>'+esc(p.display_name||'کاربر')+'</b><small>@'+esc(p.username||'')+' · '+esc(m.role)+'</small></span>'+(isOwner&&m.role!=='owner'?'<button class="secondary" data-remove-member="'+esc(m.user_id)+'">حذف</button>':'')+'</div>'}).join('')+'<div class="modalactions"><button class="secondary" data-close>بستن</button></div>');
   $('#modal').querySelectorAll('[data-remove-member]').forEach(b=>b.onclick=async()=>{if(!confirm('این عضو از گفتگو حذف شود؟'))return;const {error}=await supabaseClient.from('conversation_members').delete().eq('conversation_id',chat.id).eq('user_id',b.dataset.removeMember);if(error){toast('حذف عضو ناموفق بود: '+error.message);return}b.closest('.setting-row').remove();toast('عضو حذف شد')});
  };
 }

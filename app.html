@@ -1462,7 +1462,7 @@ function renderMessages(){
    <div class="msgmeta"><span>${esc(m.time||'')}</span>${m.mine?'<span>✓✓</span>':''}</div>
    ${realRows.length?`<div class="reaction-summary" aria-label="واکنش‌های واقعی">${realRows.map(([emoji,count])=>`<button class="reaction-chip ${m.reactions?.includes(emoji)?"is-liked":""}" data-react="${m.id}" data-emoji="${emoji}" aria-pressed="${m.reactions?.includes(emoji)?"true":"false"}"><span>${emoji}</span><b>${count.toLocaleString("fa-IR")}</b></button>`).join('')}</div>`:''}
    ${demoRows.length?`<div class="demo-reaction-block"><div class="reaction-summary">${demoRows.map(row=>`<span class="reaction-chip demo-chip"><span>${row.emoji}</span><b>${row.count.toLocaleString("fa-IR")}</b></span>`).join('')}</div></div>`:''}
-   <div class="msgactions">${["👍","❤️","😂","😮","😢","🔥","👏","🥰","😍","🤔","🙏","🎉","💯","🚀","👎","🤯","😎","🤩","😡","🤗","🥳","💔","⚡","🌹"].map(em=>`<button class="tiny reaction-btn ${m.reactions?.includes(em)?"is-liked":""}" data-react="${m.id}" data-emoji="${em}" aria-label="واکنش ${em}" aria-pressed="${m.reactions?.includes(em)?"true":"false"}">${em}</button>`).join('')}
+   <div class="msgactions">${["👍","❤️","😂","🔥","👏","🚀"].map(em=>`<button class="tiny reaction-btn ${m.reactions?.includes(em)?"is-liked":""}" data-react="${m.id}" data-emoji="${em}" aria-label="واکنش ${em}" aria-pressed="${m.reactions?.includes(em)?"true":"false"}">${em}</button>`).join('')}
    ${m.mine?`<button class="tiny" data-edit="${m.id}">ویرایش</button><button class="tiny" data-delete="${m.id}">حذف</button>`:''}
    <button class="tiny" data-reply="${m.id}">پاسخ</button><button class="tiny" data-pin="${m.id}">${c.pinnedMessageId===m.id?'برداشتن سنجاق':'📌 سنجاق'}</button><button class="tiny" data-forward="${m.id}">فوروارد</button><button class="tiny" data-copy="${m.id}">کپی</button></div>
   </article>`
@@ -1489,7 +1489,7 @@ function authModal(){
  $('#signUpBtn').onclick=async()=>{const email=$('#authEmail').value.trim(),password=$('#authPassword').value;if(!email||password.length<6){$('#authHint').textContent='ایمیل معتبر و رمز حداقل ۶ کاراکتری وارد کن.';return}const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{name:email.split('@')[0]}}});$('#authHint').textContent=error?error.message:(data.session?'حساب ساخته شد.':'حساب ساخته شد؛ ایمیلت را برای تأیید بررسی کن.');if(data.session){closeModal();await startOnline()}};
 }
 async function loadOnlineChats(){
- const {data,error}=await supabaseClient.from('conversation_members').select('conversation_id,role,conversations(id,title,type,description,avatar_url,username,is_public,created_at,messages(id,body,sender_id,created_at,reply_to_id))').order('created_at',{ascending:false,foreignTable:'messages'}).limit(100,{foreignTable:'messages'});
+ const {data,error}=await supabaseClient.from('conversation_members').select('conversation_id,role,conversations(id,title,type,description,avatar_url,username,is_public,created_at,messages(id,body,sender_id,created_at,reply_to_id))').order('created_at',{ascending:false,foreignTable:'messages'}).limit(30,{foreignTable:'messages'});
  if(error){toast('گرفتن گفتگوها ناموفق بود: '+error.message);return}
  const {data:preferences,error:preferencesError}=await supabaseClient.from('conversation_user_preferences').select('conversation_id,archived,hidden,pinned,pinned_message_id,muted').eq('user_id',currentUser.id);
  if(preferencesError)console.warn('Conversation preferences unavailable',preferencesError.message);
@@ -1932,7 +1932,7 @@ $('#chatList').onclick=e=>{
  if(actionButton){e.stopPropagation();const chat=state.chats.find(x=>x.id===actionButton.dataset.chatActions);showChatFolderActions(chat);return}
  if(e.target.closest('[data-chat-folder-action]'))return;
  if(suppressChatClick){suppressChatClick=false;e.preventDefault();return}
- const row=e.target.closest('[data-chat]');if(row)openChat(row.dataset.chat);
+ const row=e.target.closest('[data-chat]');if(row){try{openChat(row.dataset.chat)}catch(err){console.error('IranGram open chat failed:',err);toast('باز کردن گفتگو با خطا روبه‌رو شد؛ صفحه را تازه کن.')}}
 };
 let chatTouchStart=null;
 const clearSwipeHint=()=>document.querySelectorAll('.chatrow.swipe-archive,.chatrow.swipe-hidden').forEach(x=>x.classList.remove('swipe-archive','swipe-hidden'));

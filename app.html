@@ -11,6 +11,45 @@
 @media(max-width:760px){.app{display:block;height:100dvh}.sidebar{height:100%;border:0}.main{display:none;height:100dvh}.app.chat-open .sidebar{display:none}.app.chat-open .main{display:flex}.topbar{height:60px}.chatheader{height:60px}.messages{padding:14px 10px}.msg{max-width:88%}.backbtn{display:block!important}.filters{padding-top:7px;padding-bottom:7px}.chatrow{padding:10px}.avatar{width:47px;height:47px}}
 @media(min-width:761px){.backbtn{display:none!important}}
 
+
+/* Telegram-like conversation layout refinement */
+:root{--blue:#3390ec;--blue2:#2b82d9;--bg:#0e1621;--panel:#17212b;--text:#f5f7f9;--muted:#8b9baa;--line:#263442;--chat:#0e1621;--bubble:#182533;--mine:#2b5278}
+body{background:#0e1621;color:var(--text);font-family:Arial,"Vazirmatn",Tahoma,sans-serif}
+.app{max-width:1500px;grid-template-columns:390px minmax(0,1fr);background:#17212b;box-shadow:none}
+.sidebar{background:#17212b;border-left:1px solid #263442;padding-bottom:0}
+.topbar{height:58px;min-height:58px;background:#17212b;color:#f5f7f9;padding:7px 13px;gap:8px;border-bottom:1px solid #263442}
+.topbar .brand{flex:0 0 auto}.topbar .logo{width:35px;height:35px;border:0;border-radius:50%;box-shadow:none}
+.topbar-title{font-size:17px;font-weight:700;flex:1;letter-spacing:.1px}
+#settingsQuickBtn{display:none}#menuBtn{order:-1;color:#aebdca}
+.searchbox{padding:8px 12px;background:#17212b;border:0}
+.searchbox input{height:39px;border-radius:9px;background:#242f3d;color:#e9f1f7;padding:9px 14px;font-size:13px}
+.searchbox input::placeholder{color:#91a0ae}
+.filters{gap:0;padding:0 8px;background:#17212b;border-bottom:1px solid #263442;scrollbar-width:none}
+.filters::-webkit-scrollbar,.stories::-webkit-scrollbar{display:none}
+.filter{border-radius:0;padding:11px 13px 10px;color:#9eacb9;border-bottom:2px solid transparent;font-size:12px}
+.filter.active{background:transparent;color:#62b5f5;border-bottom-color:#3390ec}
+.stories{padding:10px 12px;background:#17212b;border-bottom:1px solid #263442;gap:14px}
+.storyring{width:48px;height:48px}.chats{background:#17212b;padding-bottom:8px}
+.chatrow{min-height:72px;padding:10px 13px;gap:11px;border:0;border-bottom:1px solid #202d39;background:#17212b}
+.chatrow:hover,.chatrow.selected{background:#202b36}
+.avatar{width:52px;height:52px}.chathead b{font-size:14px;color:#f1f5f8}
+.preview{font-size:12px;color:#91a0ae;margin-top:5px}.time{color:#81909e}
+.unread{background:#3390ec;min-width:20px;text-align:center}
+.main,.empty{background:#0e1621}.emptycard{background:#17212b;color:#dce6ee;border-radius:18px}.emptycard p{color:#9aabba}
+.chatheader{height:58px;min-height:58px;background:#17212b;color:#f1f5f8;border-bottom:1px solid #263442;box-shadow:none;padding:7px 14px}
+.chatheader .iconbtn{color:#aebdca!important}.chatname b{font-size:14px;color:#f5f7f9}.chatname small{color:#8b9baa}
+.messages{background-color:#0e1621;background-image:radial-gradient(#ffffff08 1px,transparent 1px);background-size:20px 20px;padding:18px max(14px,6%)}
+.msg{background:#182533;color:#edf3f8;border-radius:13px;box-shadow:none}.msg.mine{background:#2b5278;color:#fff;border-bottom-right-radius:4px}.msg:not(.mine){border-bottom-left-radius:4px}
+.daylabel{background:#253544;color:#c2d1dd}
+.composer{background:#17212b;border-top:1px solid #263442;padding:8px 10px}
+.composefield{background:#242f3d;border:0;border-radius:22px}.composefield textarea{color:#f2f6fa}.composefield textarea::placeholder{color:#91a0ae}
+.round{background:#242f3d;color:#a9b9c8}.send{background:#3390ec}
+.menu{background:#202d3a;border:1px solid #304252;box-shadow:0 10px 30px #0006}.menu button{color:#e7edf3}.menu button:hover{background:#2a3b4b}
+.compose-fab{background:#3390ec;box-shadow:0 4px 14px #0005}
+.bottom-nav{display:none!important}.sidebar{padding-bottom:0!important}.chats{padding-bottom:8px!important}
+@media(max-width:760px){.app{display:block;height:100dvh}.sidebar{height:100dvh;padding-bottom:0!important}.main{height:100dvh}.app.chat-open .sidebar{display:none}.app.chat-open .main{display:flex}.topbar{height:56px}.chatheader{height:56px}.filters{overflow-x:auto}.chatrow{padding:9px 12px;min-height:70px}.stories{flex-shrink:0}.compose-fab{bottom:20px;left:17px}.app.chat-open .compose-fab{display:none}}
+@media(min-width:761px){.app{grid-template-columns:390px minmax(0,1fr)}.compose-fab{bottom:20px}}
+
 /* Telegram-inspired dark interface refresh */
 :root{
  --blue:#3390ec;--blue2:#2b82d9;--bg:#0e1621;--panel:#17212b;--text:#f5f7f9;
@@ -683,7 +722,7 @@ body,button,input,textarea{font-family:'Vazirmatn','Segoe UI',Tahoma,sans-serif}
   <div class="topbar-title">ایران‌گرام</div>
  </header>
  <div class="menu" id="mainMenu">
-  <button data-action="ai">✨ گفت‌وگو با هوش مصنوعی</button><button data-action="profile">👤 پروفایل من</button><button data-action="group">👥 ساخت گروه</button><button data-action="channel">📢 ساخت کانال</button><button data-action="settings">⚙️ تنظیمات</button><button data-action="ads">📣 تبلیغات</button><button data-action="admin">🛡️ مدیریت ایران‌گرام</button><button data-action="export">⬇️ خروجی پشتیبان</button><button data-action="about">ℹ️ درباره ایران‌گرام</button><button data-action="logout">🚪 خروج از حساب</button>
+  <button data-action="profile">👤 پروفایل من</button><button data-action="group">👥 ساخت گروه</button><button data-action="channel">📢 ساخت کانال</button><button data-action="settings">⚙️ تنظیمات</button><button data-action="ads">📣 تبلیغات</button><button data-action="admin">🛡️ مدیریت ایران‌گرام</button><button data-action="export">⬇️ خروجی پشتیبان</button><button data-action="about">ℹ️ درباره ایران‌گرام</button><button data-action="logout">🚪 خروج از حساب</button>
  </div>
  <div class="searchbox"><input id="search" placeholder="جست‌وجو در پیام‌ها و گفتگوها" autocomplete="off"></div>
  <div class="filters" role="tablist" aria-label="پوشه گفتگوها"><button class="filter active" role="tab" aria-selected="true" data-filter="all">همه چت‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="people">شخصی</button><button class="filter" role="tab" aria-selected="false" data-filter="unread">خوانده‌نشده</button><button class="filter" role="tab" aria-selected="false" data-filter="groups">گروه‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="channels">کانال‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="archive">آرشیو</button><button class="filter" role="tab" aria-selected="false" data-filter="hidden">مخفی</button></div>
@@ -693,7 +732,6 @@ body,button,input,textarea{font-family:'Vazirmatn','Segoe UI',Tahoma,sans-serif}
  <nav class="bottom-nav" id="bottomNav" aria-label="بخش‌های اصلی">
   <button class="bottom-nav-item active" data-nav="chats" aria-current="page"><span class="nav-icon">☰</span><span>گفتگوها</span></button>
   <button class="bottom-nav-item" data-nav="contacts"><span class="nav-icon">♙</span><span>مخاطبین</span></button>
-  <button class="bottom-nav-item" data-nav="ai"><span class="nav-icon">✦</span><span>آرو</span></button>
   <button class="bottom-nav-item" data-nav="settings"><span class="nav-icon">⚙</span><span>تنظیمات</span></button>
  </nav>
 </aside>
@@ -1131,7 +1169,7 @@ $('#settingsQuickBtn').onclick=()=>settingsModal();$('#audioCallBtn').onclick=()
  else if(action==='settings')settingsModal();
 };
 $('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
-$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({ai:aiAssistantModal,profile:profileModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایران‌گرام',`<p>ایران‌گرام یک نمونه اولیه پیام‌رسان با رابط کاربری فارسی است.</p><p class="subtle">برای چت بین کاربران، ورود امن، آپلود واقعی فایل، استوری آنلاین، اعلان‌ها و نسخه اندروید، باید بک‌اند و سرویس‌های مربوطه پیاده‌سازی و متصل شوند.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
+$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({profile:profileModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایران‌گرام',`<p>ایران‌گرام یک نمونه اولیه پیام‌رسان با رابط کاربری فارسی است.</p><p class="subtle">برای چت بین کاربران، ورود امن، آپلود واقعی فایل، استوری آنلاین، اعلان‌ها و نسخه اندروید، باید بک‌اند و سرویس‌های مربوطه پیاده‌سازی و متصل شوند.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 let suppressChatClick=false;
 $('#chatList').onclick=e=>{if(suppressChatClick){suppressChatClick=false;e.preventDefault();return}const row=e.target.closest('[data-chat]');if(row)openChat(row.dataset.chat)};
 let chatTouchStart=null;

@@ -1,1 +1,65 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900"><defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#153e60"/><stop offset=".55" stop-color="#112a43"/><stop offset="1" stop-color="#091522"/></linearGradient><radialGradient id="glow"><stop stop-color="#49aef1" stop-opacity=".38"/><stop offset="1" stop-color="#49aef1" stop-opacity="0"/></radialGradient><filter id="shadow"><feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#000" flood-opacity=".5"/></filter></defs><rect width="1200" height="900" fill="url(#bg)"/><circle cx="1000" cy="120" r="420" fill="url(#glow)"/><circle cx="140" cy="780" r="250" fill="#52c4e9" opacity=".08"/><g filter="url(#shadow)" transform="translate(360 60)"><rect width="500" height="780" rx="58" fill="#344e64"/><rect x="12" y="12" width="476" height="756" rx="48" fill="#101b28"/><rect x="175" y="20" width="150" height="17" rx="9" fill="#050a10"/><text x="42" y="90" fill="#f5f9fc" font-size="30" font-weight="700" font-family="Vazirmatn,Arial,sans-serif">ایران‌گرام</text><circle cx="430" cy="77" r="21" fill="#263e53"/><path d="M420 77h20m-10-10v20" stroke="#d7eaff" stroke-width="4" stroke-linecap="round"/><rect x="30" y="125" width="440" height="58" rx="18" fill="#22394d"/><text x="70" y="163" fill="#9db4c8" font-size="21" font-family="Vazirmatn,Arial,sans-serif">جست‌وجو در گفتگوها</text><g font-family="Vazirmatn,Arial,sans-serif"><rect x="30" y="210" width="440" height="95" rx="20" fill="#1c3042"/><circle cx="85" cy="258" r="32" fill="#e0b675"/><text x="85" y="269" text-anchor="middle" fill="#49301e" font-size="26">ک</text><text x="140" y="250" fill="#f2f7fb" font-size="22" font-weight="700">کانال رسمی ایران‌گرام</text><text x="140" y="282" fill="#9fb4c6" font-size="18">به جمع ما خوش اومدی 💙</text><rect x="30" y="325" width="440" height="95" rx="20" fill="#1c3042"/><circle cx="85" cy="373" r="32" fill="#638cc6"/><text x="85" y="384" text-anchor="middle" fill="#fff" font-size="26">س</text><text x="140" y="365" fill="#f2f7fb" font-size="22" font-weight="700">سارا احمدی</text><text x="140" y="397" fill="#9fb4c6" font-size="18">عکس‌ها رو فرستادم 📷</text><rect x="30" y="440" width="440" height="95" rx="20" fill="#1c3042"/><circle cx="85" cy="488" r="32" fill="#b97a9c"/><text x="85" y="499" text-anchor="middle" fill="#fff" font-size="26">م</text><text x="140" y="480" fill="#f2f7fb" font-size="22" font-weight="700">موزیک و فیلم</text><text x="140" y="512" fill="#9fb4c6" font-size="18">🎧 آهنگ جدید</text><rect x="30" y="555" width="440" height="95" rx="20" fill="#1c3042"/><circle cx="85" cy="603" r="32" fill="#63aa98"/><text x="85" y="614" text-anchor="middle" fill="#fff" font-size="26">ت</text><text x="140" y="595" fill="#f2f7fb" font-size="22" font-weight="700">توسعه‌دهنده‌ها</text><text x="140" y="627" fill="#9fb4c6" font-size="18">نسخه تازه آماده شد</text></g><rect x="30" y="680" width="440" height="58" rx="29" fill="#22394d"/><text x="80" y="717" fill="#9fb4c6" font-size="19" font-family="Vazirmatn,Arial,sans-serif">پیام بنویس...</text><circle cx="430" cy="709" r="22" fill="#3390ec"/><path d="M420 709h20m-10-10v20" stroke="#fff" stroke-width="3" stroke-linecap="round"/></g><text x="600" y="875" text-anchor="middle" fill="#b6d9f7" font-size="20" font-family="Vazirmatn,Arial,sans-serif">گفت‌وگو • گروه • کانال • استوری</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#061b43"/><stop offset=".52" stop-color="#0755a0"/><stop offset="1" stop-color="#071a36"/></linearGradient>
+ <linearGradient id="glass" x2="1" y2="1"><stop stop-color="#183a69"/><stop offset="1" stop-color="#07152d"/></linearGradient>
+ <linearGradient id="screen" x2="0" y2="1"><stop stop-color="#10243e"/><stop offset="1" stop-color="#08182d"/></linearGradient>
+ <linearGradient id="blue" x2="1" y2="1"><stop stop-color="#25b5ff"/><stop offset="1" stop-color="#0758d5"/></linearGradient>
+ <linearGradient id="bubble" x2="0" y2="1"><stop stop-color="#d9efff"/><stop offset="1" stop-color="#a8d8fa"/></linearGradient>
+ <filter id="shadow"><feDropShadow dx="0" dy="24" stdDeviation="24" flood-color="#000" flood-opacity=".62"/></filter>
+ <filter id="glow"><feGaussianBlur stdDeviation="22"/></filter>
+</defs>
+<rect width="1200" height="900" fill="url(#sky)"/>
+<circle cx="250" cy="170" r="240" fill="#2a9df6" opacity=".18" filter="url(#glow)"/>
+<circle cx="1030" cy="250" r="250" fill="#37aaff" opacity=".16" filter="url(#glow)"/>
+<!-- Tehran night skyline -->
+<path d="M0 675L45 642 70 650 95 610 115 650 150 620 177 670 205 640 238 670 270 615 300 670 330 638 365 675 405 625 435 680 470 640 505 680 540 620 575 680 615 642 650 680 690 625 720 680 755 640 790 680 830 615 865 680 900 635 930 680 970 620 1000 680 1040 640 1080 680 1120 620 1160 670 1200 640V900H0Z" fill="#07152d"/>
+<g fill="#ffc66b" opacity=".65"><circle cx="45" cy="690" r="3"/><circle cx="85" cy="725" r="3"/><circle cx="160" cy="700" r="3"/><circle cx="225" cy="735" r="3"/><circle cx="310" cy="700" r="3"/><circle cx="390" cy="735" r="3"/><circle cx="470" cy="705" r="3"/><circle cx="560" cy="740" r="3"/><circle cx="650" cy="700" r="3"/><circle cx="745" cy="735" r="3"/><circle cx="850" cy="705" r="3"/><circle cx="950" cy="740" r="3"/><circle cx="1060" cy="700" r="3"/><circle cx="1150" cy="735" r="3"/></g>
+<!-- stylized Milad tower -->
+<g fill="#9ac9f5" opacity=".8"><path d="M165 625L182 400 190 400 208 625Z"/><path d="M175 465h29l-4 22h-22z"/><path d="M178 410h20l-3-24h-14z"/><path d="M184 385h8l-4-32z"/></g>
+<!-- Azadi tower silhouette -->
+<path d="M1000 685L1030 570 1050 530 1070 570 1100 685Z" fill="#9bc8ef" opacity=".72"/><path d="M1024 650Q1050 590 1076 650" fill="none" stroke="#163c6b" stroke-width="9"/>
+<text x="600" y="78" text-anchor="middle" fill="#b8e3ff" font-family="Arial,sans-serif" font-size="24" letter-spacing="6">IRANGRAM MESSENGER</text>
+<!-- left phone: chat list -->
+<g filter="url(#shadow)" transform="translate(145 130) rotate(-7 245 350)">
+ <rect x="0" y="0" width="420" height="700" rx="58" fill="#8298b5"/>
+ <rect x="9" y="9" width="402" height="682" rx="51" fill="#050b16"/>
+ <rect x="18" y="20" width="384" height="660" rx="44" fill="url(#screen)"/>
+ <rect x="150" y="20" width="120" height="18" rx="9" fill="#020711"/>
+ <text x="42" y="76" fill="#fff" font-family="Arial,sans-serif" font-size="20" font-weight="bold">ایران‌گرام</text>
+ <circle cx="350" cy="67" r="15" fill="none" stroke="#d7ebff" stroke-width="2.5"/><path d="M361 78l10 10" stroke="#d7ebff" stroke-width="3" stroke-linecap="round"/>
+ <rect x="32" y="100" width="356" height="47" rx="18" fill="#1b3557"/><circle cx="58" cy="123" r="9" fill="none" stroke="#9ec8ed" stroke-width="2"/><path d="M65 130l7 7" stroke="#9ec8ed" stroke-width="2"/><text x="88" y="130" fill="#a9c2df" font-size="15" font-family="Arial,sans-serif">جست‌وجو</text>
+ <g font-family="Arial,sans-serif">
+  <circle cx="67" cy="192" r="27" fill="#d7aa79"/><text x="67" y="199" text-anchor="middle" font-size="19" fill="#54351f">س</text><text x="112" y="184" fill="#fff" font-size="18" font-weight="bold">گفتگوی سارا</text><text x="112" y="209" fill="#a9bed3" font-size="14">سلام، خوبی؟ 😊</text><text x="350" y="181" fill="#8aa7c7" font-size="12">۱۲:۴۰</text><circle cx="366" cy="211" r="11" fill="#1688ed"/><text x="366" y="216" text-anchor="middle" fill="#fff" font-size="12">۲</text>
+  <path d="M35 235H385" stroke="#233c5c"/>
+  <circle cx="67" cy="280" r="27" fill="#5c9ec7"/><text x="67" y="287" text-anchor="middle" font-size="19" fill="#fff">م</text><text x="112" y="272" fill="#fff" font-size="18" font-weight="bold">دوستان قدیمی</text><text x="112" y="297" fill="#a9bed3" font-size="14">عکس‌ها رو دیدی؟ 📷</text><text x="350" y="269" fill="#8aa7c7" font-size="12">۱۲:۲۱</text>
+  <path d="M35 323H385" stroke="#233c5c"/>
+  <circle cx="67" cy="368" r="27" fill="#1988df"/><path d="M55 368l23-13-7 28-6-10z" fill="#fff"/><text x="112" y="360" fill="#fff" font-size="18" font-weight="bold">کانال رسمی ایران‌گرام</text><text x="112" y="385" fill="#a9bed3" font-size="14">خبرهای تازه منتشر شد</text><text x="350" y="357" fill="#8aa7c7" font-size="12">دیروز</text>
+  <path d="M35 411H385" stroke="#233c5c"/>
+  <circle cx="67" cy="456" r="27" fill="#a67ab5"/><text x="67" y="463" text-anchor="middle" font-size="19" fill="#fff">ن</text><text x="112" y="448" fill="#fff" font-size="18" font-weight="bold">نگار</text><text x="112" y="473" fill="#a9bed3" font-size="14">ویس فرستاد 🎙</text><text x="350" y="445" fill="#8aa7c7" font-size="12">دوشنبه</text>
+  <path d="M35 499H385" stroke="#233c5c"/>
+  <circle cx="67" cy="544" r="27" fill="#61a88e"/><text x="67" y="551" text-anchor="middle" font-size="19" fill="#fff">ع</text><text x="112" y="536" fill="#fff" font-size="18" font-weight="bold">علی</text><text x="112" y="561" fill="#a9bed3" font-size="14">باشه، می‌بینمت</text><text x="350" y="533" fill="#8aa7c7" font-size="12">یکشنبه</text>
+ </g>
+ <rect x="30" y="604" width="360" height="55" rx="18" fill="#102846"/><text x="78" y="638" fill="#a7c8e5" font-family="Arial,sans-serif" font-size="14">گفتگوها</text><text x="185" y="638" fill="#a7c8e5" font-family="Arial,sans-serif" font-size="14">مخاطبین</text><text x="300" y="638" fill="#a7c8e5" font-family="Arial,sans-serif" font-size="14">تنظیمات</text>
+</g>
+<!-- right phone: private chat -->
+<g filter="url(#shadow)" transform="translate(570 110) rotate(7 245 360)">
+ <rect x="0" y="0" width="420" height="720" rx="58" fill="#8298b5"/>
+ <rect x="9" y="9" width="402" height="702" rx="51" fill="#050b16"/>
+ <rect x="18" y="20" width="384" height="680" rx="44" fill="url(#screen)"/>
+ <rect x="150" y="20" width="120" height="18" rx="9" fill="#020711"/>
+ <path d="M44 75l-13-12 13-12" fill="none" stroke="#c9e5fb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+ <circle cx="90" cy="64" r="23" fill="#d8aa80"/><text x="90" y="71" text-anchor="middle" fill="#54351f" font-size="17">س</text>
+ <text x="127" y="60" fill="#fff" font-size="18" font-family="Arial,sans-serif" font-weight="bold">سارا احمدی</text><text x="127" y="83" fill="#6ad6a8" font-size="13" font-family="Arial,sans-serif">آنلاین</text>
+ <path d="M365 50v28m-7-21h14" stroke="#d9eaff" stroke-width="2.5" stroke-linecap="round"/>
+ <g font-family="Arial,sans-serif">
+  <rect x="34" y="130" width="260" height="74" rx="20" fill="#1c3b5a"/><text x="53" y="160" fill="#f3f8ff" font-size="17">سلام! عکس‌های امروز</text><text x="53" y="184" fill="#f3f8ff" font-size="17">خیلی قشنگ شدن 😍</text><text x="260" y="194" fill="#9db7d0" font-size="11">۱۲:۳۲</text>
+  <rect x="126" y="225" width="260" height="67" rx="20" fill="#21649a"/><text x="145" y="265" fill="#fff" font-size="17">مرسییی 💙 اینم یکی دیگه</text><text x="345" y="281" fill="#c6e4fa" font-size="11">✓✓</text>
+  <rect x="34" y="315" width="300" height="210" rx="20" fill="#1b4666"/><rect x="44" y="325" width="280" height="190" rx="15" fill="#b5d9ed"/><path d="M44 455l75-82 56 52 45-65 104 155H44Z" fill="#6f9caa"/><path d="M44 470l90-60 65 50 53-34 72 89H44Z" fill="#426c78"/><circle cx="260" cy="365" r="20" fill="#f5d69b"/><text x="300" y="548" fill="#9db7d0" font-size="11">۱۲:۳۳</text>
+  <rect x="145" y="570" width="240" height="60" rx="20" fill="#21649a"/><text x="164" y="606" fill="#fff" font-size="17">عالیه! 😍</text><text x="345" y="620" fill="#c6e4fa" font-size="11">✓✓</text>
+ </g>
+ <rect x="32" y="646" width="356" height="43" rx="21" fill="#1b3552"/><circle cx="57" cy="667" r="11" fill="#1c90e8"/><path d="M57 660v14m-7-7h14" stroke="#fff" stroke-width="2"/><text x="86" y="674" fill="#a9c3dc" font-family="Arial,sans-serif" font-size="14">پیام بنویسید...</text><circle cx="355" cy="667" r="15" fill="url(#blue)"/><path d="M348 667l6 5 9-12" stroke="#fff" stroke-width="2" fill="none"/>
+</g>
+<g transform="translate(990 175)"><rect width="145" height="145" rx="38" fill="url(#blue)" stroke="#8bdcff" stroke-width="3"/><path d="M30 70L112 35 88 115 69 82 30 70Z" fill="#fff"/><path d="M69 82L112 35 80 94" fill="#ccecff"/><path d="M0 125Q55 150 145 118" fill="none" stroke="#20b77a" stroke-width="8"/><path d="M0 137Q70 165 145 130" fill="none" stroke="#e94d55" stroke-width="8"/></g>
+<text x="1060" y="370" text-anchor="middle" fill="#fff" font-size="36" font-family="Arial,sans-serif" font-weight="bold">ایران‌گرام</text>
+<text x="600" y="865" text-anchor="middle" fill="#b7d8f5" font-size="21" font-family="Arial,sans-serif">گفتگوهای شخصی • گروه‌ها • کانال‌ها • استوری</text>
+</svg>

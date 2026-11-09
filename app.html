@@ -1119,7 +1119,7 @@ async function loadOnlineChats(){
  if(ids.length){
   const {data:members}=await supabaseClient.from('conversation_members').select('conversation_id,user_id').in('conversation_id',ids);
   const authorIds=[...new Set([...(members||[]).map(m=>m.user_id),...state.chats.flatMap(c=>c.messages.map(m=>m.senderId).filter(Boolean))])];
-  if(authorIds.length){const {data:authors,error:authorsError}=await supabaseClient.from('profiles').select('id,display_name,username').in('id',authorIds);if(!authorsError){const authorMap=new Map((authors||[]).map(p=>[p.id,p.display_name||p.username||'کاربر']));currentDisplayName=authorMap.get(currentUser.id)||currentUser.user_metadata?.name||'کاربر';for(const chat of state.chats){for(const message of chat.messages){message.senderName=authorMap.get(message.senderId)||(message.mine?currentDisplayName:'کاربر')}}}}
+  if(authorIds.length){const {data:authors,error:authorsError}=await supabaseClient.from('profiles').select('id,display_name,username').in('id',authorIds);if(!authorsError){const authorMap=new Map((authors||[]).map(p=>[p.id,p.display_name||p.username||'کاربر']));currentDisplayName=authorMap.get(currentUser.id)||currentUser.user_metadata?.name||'کاربر';for(const chat of state.chats){for(const message of chat.messages){message.senderName=authorMap.get(message.senderId)||(message.mine?currentDisplayName:'کاربر')}if(chat.type==='people'){const peer=(members||[]).find(m=>m.conversation_id===chat.id&&m.user_id!==currentUser.id);if(peer){chat.recipientUserId=peer.user_id;chat.name=authorMap.get(peer.user_id)||chat.name;chat.avatar=(chat.name||'گ')[0]}}}}}
   const {data:channelStatus,error:statusError}=await supabaseClient.rpc('get_channel_verification_status');if(statusError)console.warn('Channel verification status unavailable',statusError.message);
   const {data:verifiedUsers}=await supabaseClient.from('user_verification_overrides').select('user_id').eq('is_verified',true);
   const verifiedSet=new Set((verifiedUsers||[]).map(x=>x.user_id));
@@ -1343,6 +1343,8 @@ function newChat(){
     users=byName.data||[];
    }
    if(!users||users.length!==1){toast(users&&users.length>1?'چند نفر این نام را دارند؛ نام کاربری دقیق‌تری وارد کن.':'کاربری با این نام پیدا نشد.');return}
+   const existing=state.chats.find(c=>c.type==='people'&&c.recipientUserId===users[0].id);
+   if(existing){closeModal();openChat(existing.id);return}
    const {data:conv,error:convError}=await supabaseClient.from('conversations').insert({title:users[0].display_name||users[0].username||term,type:'private',created_by:currentUser.id}).select('id').single();
    if(convError){toast('ساخت گفتگو ناموفق بود: '+convError.message);return}
    const {error:ownerError}=await supabaseClient.from('conversation_members').insert({conversation_id:conv.id,user_id:currentUser.id,role:'owner'});

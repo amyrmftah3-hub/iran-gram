@@ -1524,12 +1524,28 @@ function authModal(){
  $('#signUpBtn').onclick=async()=>{const email=$('#authEmail').value.trim(),password=$('#authPassword').value;if(!email||password.length<6){$('#authHint').textContent='ایمیل معتبر و رمز حداقل ۶ کاراکتری وارد کن.';return}const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{name:email.split('@')[0]}}});$('#authHint').textContent=error?error.message:(data.session?'حساب ساخته شد.':'حساب ساخته شد؛ ایمیلت را برای تأیید بررسی کن.');if(data.session){closeModal();await startOnline()}};
 }
 async function loadOnlineChats(){
- const {data,error}=await supabaseClient.from('conversation_members').select('conversation_id,role,conversations(id,title,type,description,avatar_url,username,is_public,created_at,messages(id,body,sender_id,created_at,reply_to_id))').order('created_at',{ascending:false,foreignTable:'messages'}).limit(30,{foreignTable:'messages'});
- if(error){toast('گرفتن گفتگوها ناموفق بود: '+error.message);return}
+ const {data:membershipRows,error:membershipError}=await supabaseClient.from('conversation_members').select('conversation_id,role').eq('user_id',currentUser.id);
+ if(membershipError){toast('دریافت عضویت گفت‌وگوها ناموفق بود: '+membershipError.message);return}
+ const conversationIds=(membershipRows||[]).map(x=>x.conversation_id).filter(Boolean);
+ let conversationRows=[];
+ if(conversationIds.length){
+  const {data,error}=await supabaseClient.from('conversations').select('id,title,type,description,avatar_url,username,is_public,created_at').in('id',conversationIds).order('created_at',{ascending:false});
+  if(error){toast('دریافت اطلاعات گفت‌وگوها ناموفق بود: '+error.message);return}
+  conversationRows=data||[];
+ }
+ let messageRows=[];
+ if(conversationIds.length){
+  const {data,error}=await supabaseClient.from('messages').select('id,conversation_id,body,sender_id,created_at,reply_to_id').in('conversation_id',conversationIds).order('created_at',{ascending:false}).limit(1000);
+  if(error){toast('دریافت پیام‌های گفت‌وگو ناموفق بود: '+error.message);return}
+  messageRows=data||[];
+ }
+ const messagesByConversation=new Map();
+ for(const m of messageRows){if(!messagesByConversation.has(m.conversation_id))messagesByConversation.set(m.conversation_id,[]);messagesByConversation.get(m.conversation_id).push(m)}
+ const roleByConversation=new Map((membershipRows||[]).map(x=>[x.conversation_id,x.role]));
  const {data:preferences,error:preferencesError}=await supabaseClient.from('conversation_user_preferences').select('conversation_id,archived,hidden,pinned,pinned_message_id,muted').eq('user_id',currentUser.id);
  if(preferencesError)console.warn('Conversation preferences unavailable',preferencesError.message);
  const preferenceMap=new Map((preferences||[]).map(p=>[p.conversation_id,p]));
- state.chats=(data||[]).filter(x=>x.conversations).map(x=>{const c=x.conversations,flags=preferenceMap.get(c.id)||{};return {id:c.id,name:c.title||'گفت‌وگو',description:c.description||'',avatarUrl:c.avatar_url||'',username:c.username||'',isPublic:!!c.is_public,type:c.type==='channel'?'channels':(c.type==='group'?'groups':'people'),avatar:c.type==='channel'?'📢':(c.type==='group'?'👥':(c.title||'گ')[0]),status:c.description||'گفت‌وگوی آنلاین',unread:0,remote:true,memberRole:x.role,archived:!!flags.archived,hidden:!!flags.hidden,pinned:!!flags.pinned,pinnedMessageId:flags.pinned_message_id||null,muted:!!flags.muted,messages:(c.messages||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).map(m=>({id:m.id,text:m.body,senderId:m.sender_id,senderName:m.sender_id===currentUser.id?'Manager_MT':'کاربر',mine:m.sender_id===currentUser.id,time:new Date(m.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:m.reply_to_id||null}))}});
+ state.chats=conversationRows.map(c=>{const flags=preferenceMap.get(c.id)||{},chatMessages=(messagesByConversation.get(c.id)||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).slice(-30);return {id:c.id,name:c.title||'گفت‌وگو',description:c.description||'',avatarUrl:c.avatar_url||'',username:c.username||'',isPublic:!!c.is_public,type:c.type==='channel'?'channels':(c.type==='group'?'groups':'people'),avatar:c.type==='channel'?'📢':(c.type==='group'?'👥':(c.title||'گ')[0]),status:c.description||'گفت‌وگوی آنلاین',unread:0,remote:true,memberRole:roleByConversation.get(c.id),archived:!!flags.archived,hidden:!!flags.hidden,pinned:!!flags.pinned,pinnedMessageId:flags.pinned_message_id||null,muted:!!flags.muted,messages:chatMessages.map(m=>({id:m.id,text:m.body,senderId:m.sender_id,senderName:m.sender_id===currentUser.id?'Manager_MT':'کاربر',mine:m.sender_id===currentUser.id,time:new Date(m.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:m.reply_to_id||null}))}});
  const messageIds=state.chats.flatMap(c=>c.messages.map(m=>m.id)).filter(id=>typeof id==='string'&&id.length>20);if(messageIds.length){const {data:reactionRows,error:reactionError}=await supabaseClient.from('message_reactions').select('message_id,reaction,user_id').in('message_id',messageIds);if(!reactionError){for(const chat of state.chats){for(const msg of chat.messages){msg.reactions=[];msg.reactionCounts={}}}for(const row of reactionRows||[]){for(const chat of state.chats){const msg=chat.messages.find(m=>m.id===row.message_id);if(msg){msg.reactionCounts=msg.reactionCounts||{};msg.reactionCounts[row.reaction]=(msg.reactionCounts[row.reaction]||0)+1;if(currentUser&&row.user_id===currentUser.id){msg.reactions=Array.isArray(msg.reactions)?msg.reactions:[];if(!msg.reactions.includes(row.reaction))msg.reactions.push(row.reaction)}break}}}}}
  const ids=state.chats.map(c=>c.id);
  if(ids.length){

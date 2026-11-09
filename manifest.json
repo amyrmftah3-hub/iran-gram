@@ -3,7 +3,7 @@
   "short_name": "ایران‌گرام",
   "lang": "fa",
   "dir": "rtl",
-  "start_url": "./app.html",
+  "start_url": "./app.html?v=20261109-136k-settings",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0e1621",
@@ -15,5 +15,6 @@
       "type": "image/svg+xml",
       "purpose": "any"
     }
-  ]
+  ],
+  "id": "./app.html"
 }

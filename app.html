@@ -130,8 +130,8 @@ body{background:#0e1621;color:#f5f7f9}
  padding:7px 11px;border-radius:16px;font-size:11px;font-weight:700;
  color:#fff;box-shadow:0 2px 8px #0003;pointer-events:none
 }
-.chatrow.swipe-archive::after{content:"↑ آرشیو";left:12px;background:#3390ec}
-.chatrow.swipe-hidden::after{content:"↓ مخفی";left:12px;background:#8b5cf6}
+.chatrow.swipe-archive::after{content:"← بایگانی";left:12px;background:#3390ec}
+.chatrow.swipe-hidden::after{content:"→ مخفی";left:12px;background:#8b5cf6}
 
 /* Telegram-like conversation screen: layout, hierarchy and controls */
 :root{--blue:#3390ec;--blue2:#2b82d9;--bg:#0e1621;--panel:#17212b;--text:#f5f7f9;--muted:#8b9bab;--line:#263442;--chat:#0e1621;--bubble:#182533;--mine:#2b5278}
@@ -1200,7 +1200,7 @@ function renderChats(){
  const empty=state.filter==='archive'
   ?'<div class="folder-empty"><span class="folder-icon">📂</span><b>بایگانی خالی است</b><p>گفت‌وگوها اینجا می‌مانند تا دوباره به فهرست اصلی برگردانده شوند.</p></div>'
   :state.filter==='hidden'
-  ?'<div class="folder-empty"><span class="folder-icon">🗂️</span><b>پوشه مخفی خالی است</b><p>گفت‌وگوهای مخفی‌شده فقط از فهرست اصلی پنهان می‌شوند.</p></div>'
+  ?'<div class="folder-empty"><span class="folder-icon">🗂️</span><b>پوشه مخفی خالی است</b><p>برای بازگرداندن گفت‌وگو، آن را به چپ بکش.</p></div>'
   :'<div class="folder-empty"><span class="folder-icon">✈️</span><b>گفت‌وگویی پیدا نشد</b><p>یک گفت‌وگوی تازه بساز و شروع کن.</p></div>';
  $('#chatList').innerHTML=arr.map(c=>{
   const m=c.messages.at(-1)||{};
@@ -1736,27 +1736,31 @@ const clearSwipeHint=()=>document.querySelectorAll('.chatrow.swipe-archive,.chat
 $('#chatList').addEventListener('touchstart',e=>{
  suppressChatClick=false;clearSwipeHint();
  const row=e.target.closest('[data-chat]');
- if(row&&!e.target.closest('button'))chatTouchStart={id:row.dataset.chat,y:e.changedTouches[0].clientY,row};
+ if(row&&!e.target.closest('button'))chatTouchStart={id:row.dataset.chat,x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY,row};
 },{passive:true});
 $('#chatList').addEventListener('touchmove',e=>{
  if(!chatTouchStart)return;
+ const dx=e.touches[0].clientX-chatTouchStart.x;
  const dy=e.touches[0].clientY-chatTouchStart.y;
- const upward=dy < -22,downward=dy > 22;
- chatTouchStart.row.classList.toggle('swipe-archive',
-  state.filter==='hidden'?upward:state.filter==='archive'?false:upward);
- chatTouchStart.row.classList.toggle('swipe-hidden',
-  state.filter==='archive'?downward:state.filter==='hidden'?false:downward);
+ if(Math.abs(dx)<Math.abs(dy)*1.25)return;
+ const left=dx < -22,right=dx > 22;
+ chatTouchStart.row.classList.toggle('swipe-archive',state.filter==='hidden'?left:state.filter==='archive'?false:left);
+ chatTouchStart.row.classList.toggle('swipe-hidden',state.filter==='archive'?right:state.filter==='hidden'?false:right);
 },{passive:true});
 $('#chatList').addEventListener('touchend',e=>{
  if(!chatTouchStart)return;
- const gesture=chatTouchStart;const dy=e.changedTouches[0].clientY-gesture.y;
+ const gesture=chatTouchStart;
+ const dx=e.changedTouches[0].clientX-gesture.x;
+ const dy=e.changedTouches[0].clientY-gesture.y;
  const chat=state.chats.find(x=>x.id===gesture.id);chatTouchStart=null;
  if(!chat){clearSwipeHint();return}
  let action=null;
- if(state.filter==='archive'&&dy>75)action='restore';
- else if(state.filter==='hidden'&&dy < -75)action='restore';
- else if(state.filter!=='archive'&&state.filter!=='hidden'&&dy < -75)action='archive';
- else if(state.filter!=='archive'&&state.filter!=='hidden'&&dy >75)action='hidden';
+ if(Math.abs(dx)>75&&Math.abs(dx)>Math.abs(dy)*1.25){
+  if(state.filter==='archive'&&dx>75)action='restore';
+  else if(state.filter==='hidden'&&dx < -75)action='restore';
+  else if(state.filter!=='archive'&&state.filter!=='hidden'&&dx < -75)action='archive';
+  else if(state.filter!=='archive'&&state.filter!=='hidden'&&dx>75)action='hidden';
+ }
  clearSwipeHint();
  if(action){
   suppressChatClick=true;

@@ -1277,6 +1277,7 @@ body{font-family:Roboto,"Vazirmatn",Tahoma,sans-serif!important;-webkit-tap-high
  </header>
  <div class="menu" id="mainMenu">
   <div class="drawer-profile"><div class="drawer-avatar">ای</div><div class="drawer-user"><b id="drawerName">کاربر ایرانگرام</b><small id="drawerUsername">حساب ایرانگرام</small></div><button class="drawer-close" id="drawerClose" aria-label="بستن">×</button></div>
+  <button data-action="login"><span>🔑</span> ورود / ساخت حساب آنلاین</button>
   <div class="drawer-section">حساب کاربری</div>
   <button data-action="profile"><span>👤</span> پروفایل من</button><button data-action="contacts"><span>♙</span> مخاطبین</button><button data-action="saved"><span>🔖</span> پیام‌های ذخیره‌شده</button>
   <div class="drawer-section">ایرانگرام</div>
@@ -1659,7 +1660,7 @@ async function finishCall(notify=true){
 
 async function initAuth(){
  const {data}=await supabaseClient.auth.getSession();
- if(data.session){await startOnline()}else{authModal()}
+ if(data.session){await startOnline()}else{render();toast('خوش آمدی! برای پیام‌رسانی آنلاین از منوی بالا وارد حسابت شو.')}
  document.addEventListener('visibilitychange',()=>{if(currentUser&&remoteMode)updateMyPresence(document.visibilityState==='visible')});
  supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){if(presenceHeartbeat)clearInterval(presenceHeartbeat);presenceHeartbeat=null;currentUser=null;remoteMode=false;state.chats=[];state.active=null;authModal()}});
 }
@@ -1922,7 +1923,7 @@ $('#settingsQuickBtn').onclick=()=>settingsModal();$('#audioCallBtn').onclick=()
  else if(action==='profile')profileModal();
 };
 $('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
-$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({profile:profileModal,contacts:newChat,saved:()=>showModal('پیام‌های ذخیره‌شده','<p class="subtle">بخش پیام‌های ذخیره‌شده پس از پیاده‌سازی ذخیره‌سازی ابری فعال می‌شود.</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>'),group:()=>createCollection('groups'),channel:()=>createCollection('channels'),settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
+$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,saved:()=>showModal('پیام‌های ذخیره‌شده','<p class="subtle">بخش پیام‌های ذخیره‌شده پس از پیاده‌سازی ذخیره‌سازی ابری فعال می‌شود.</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>'),group:()=>createCollection('groups'),channel:()=>createCollection('channels'),settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 let suppressChatClick=false;
 $('#chatList').onclick=e=>{
  const actionButton=e.target.closest('[data-chat-actions]');
@@ -2043,7 +2044,7 @@ $('#modal').addEventListener('click',e=>{
 });
 $('#modalBack').onclick=e=>{if(e.target===$('#modalBack'))closeModal()};
 setSplashPoem();
-if(!supabaseClient){render();toast('ورود آنلاین در دسترس نیست؛ حالت نمایشی اجرا شد.')}else{initAuth().catch(error=>{console.error('IranGram startup failed:',error);render();toast('بخشی از اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.')})}
+if(!supabaseClient){render();toast('حالت نمایشی اجرا شد؛ برای ورود آنلاین اینترنت را بررسی کن.')}else{initAuth().catch(error=>{console.error('IranGram startup failed:',error);render();toast('بخشی از اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.')})}
 </script>
 
 <script>

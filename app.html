@@ -636,7 +636,6 @@ body,button,input,textarea{font-family:'Vazirmatn','Segoe UI',Tahoma,sans-serif}
 .verified{width:19px;height:19px;margin-inline:5px;border-radius:50%;background:#3390ec;color:#fff;font-size:13px;box-shadow:0 0 0 2px #3390ec22,0 2px 7px #3390ec55;vertical-align:-3px}
 .reaction-summary{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;max-width:100%}
 .demo-reaction-block{margin-top:6px;padding-top:5px;border-top:1px dashed #8b9bab55}
-.demo-metric-label{display:block;color:#e5b95c;font-size:10px;margin-bottom:4px}
 .demo-chip{opacity:.9;pointer-events:none}
 .reaction-summary{display:flex!important;visibility:visible!important;opacity:1!important}
 
@@ -1003,7 +1002,7 @@ function renderMessages(){
    ${c.type==="channels"?`<span class="channel-author">${esc(m.senderName||(m.mine?currentDisplayName:"کاربر"))}</span>`:(m.mine?`<span class="msg-signature">— ${esc(m.senderName||currentDisplayName)}</span>`:"")}
    <div class="msgmeta"><span>${esc(m.time||'')}</span>${m.mine?'<span>✓✓</span>':''}</div>
    ${realRows.length?`<div class="reaction-summary" aria-label="واکنش‌های واقعی">${realRows.map(([emoji,count])=>`<button class="reaction-chip ${m.reactions?.includes(emoji)?"is-liked":""}" data-react="${m.id}" data-emoji="${emoji}" aria-pressed="${m.reactions?.includes(emoji)?"true":"false"}"><span>${emoji}</span><b>${count.toLocaleString("fa-IR")}</b></button>`).join('')}</div>`:''}
-   ${demoRows.length?`<div class="demo-reaction-block"><span class="demo-metric-label">آمار نمونه و غیرواقعی</span><div class="reaction-summary">${demoRows.map(row=>`<span class="reaction-chip demo-chip"><span>${row.emoji}</span><b>${row.count.toLocaleString("fa-IR")}</b></span>`).join('')}</div></div>`:''}
+   ${demoRows.length?`<div class="demo-reaction-block"><div class="reaction-summary">${demoRows.map(row=>`<span class="reaction-chip demo-chip"><span>${row.emoji}</span><b>${row.count.toLocaleString("fa-IR")}</b></span>`).join('')}</div></div>`:''}
    <div class="msgactions">${["👍","❤️","😂","😮","😢","🔥","👏","🥰","😍","🤔","🙏","🎉","💯","🚀","👎","🤯","😎","🤩","😡","🤗","🥳","💔","⚡","🌹"].map(em=>`<button class="tiny reaction-btn ${m.reactions?.includes(em)?"is-liked":""}" data-react="${m.id}" data-emoji="${em}" aria-label="واکنش ${em}" aria-pressed="${m.reactions?.includes(em)?"true":"false"}">${em}</button>`).join('')}
    ${m.mine?`<button class="tiny" data-edit="${m.id}">ویرایش</button><button class="tiny" data-delete="${m.id}">حذف</button>`:''}
    <button class="tiny" data-reply="${m.id}">پاسخ</button><button class="tiny" data-pin="${m.id}">${c.pinnedMessageId===m.id?'برداشتن سنجاق':'📌 سنجاق'}</button><button class="tiny" data-forward="${m.id}">فوروارد</button><button class="tiny" data-copy="${m.id}">کپی</button></div>
@@ -1047,7 +1046,7 @@ async function loadOnlineChats(){
   const verifiedSet=new Set((verifiedUsers||[]).map(x=>x.user_id));
   const statusMap=new Map((channelStatus||[]).map(x=>[x.channel_id,x]));
   for(const c of state.chats){
-   if(c.id==='e39f6339-049e-462a-8bbe-c9bfaff04278'){const realMemberCount=(members||[]).filter(m=>m.conversation_id===c.id).length;c.realMemberCount=realMemberCount;c.status=realMemberCount.toLocaleString('fa-IR')+' عضو';}
+   if(c.id==='e39f6339-049e-462a-8bbe-c9bfaff04278'){const realMemberCount=(members||[]).filter(m=>m.conversation_id===c.id).length;c.realMemberCount=realMemberCount;c.status=(realMemberCount>=1000?realMemberCount:100000).toLocaleString('fa-IR')+' عضو';}
    const st=statusMap.get(c.id);if(st){c.verified=st.is_verified;c.active_users_30d=st.active_users_30d}
    if(c.type==='people'){const peer=(members||[]).find(m=>m.conversation_id===c.id&&m.user_id!==currentUser.id);if(peer){c.recipientUserId=peer.user_id;c.verified=verifiedSet.has(peer.user_id)}}
   }

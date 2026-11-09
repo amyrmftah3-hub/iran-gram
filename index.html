@@ -160,11 +160,59 @@ body{background:radial-gradient(ellipse at 50% 18%,#0758a8 0,transparent 42%),li
 
 </style>
 </head>
+<body><style>
+/* Full storefront-inspired IranGram landing page */
+:root{--bg:#04142e;--panel:#0b2347;--panel2:#102f5b;--line:#2a5688;--blue:#087ff0;--text:#f4f8ff;--muted:#b8cbe3}
+html,body{background:#04142e!important;color:var(--text)}
+body{background:radial-gradient(ellipse at 75% 20%,#0754a6 0,transparent 42%),linear-gradient(180deg,#061b3b,#03122a 78%,#020c1d)!important}
+.wrap{width:min(1320px,94%)}
+.nav{height:70px;position:relative;z-index:2;border-bottom:1px solid #245083;background:#061a37cc;backdrop-filter:blur(18px);padding:0 14px}
+.logo{border-radius:50%;background:linear-gradient(145deg,#178dff,#063b9a);border:1px solid #5db8ff}
+.navlinks{gap:30px;color:#e0edff}.navlinks a{font-weight:600}
+.btn{border-radius:28px;background:linear-gradient(110deg,#13a7ff,#0756d9);border:1px solid #5bbdff;box-shadow:0 9px 30px #007aff55}
+.btn.secondary{background:#0b2d5b;border-color:#3268a4;color:#fff}
+.poster-hero{width:100%;max-width:none;padding:35px max(3%,calc((100% - 1260px)/2)) 30px;min-height:610px;display:grid;grid-template-columns:1fr 1.05fr;gap:25px;align-items:center;position:relative;overflow:hidden;background:radial-gradient(ellipse at 15% 80%,#0b6bb9aa,transparent 40%)}
+.hero-copy{text-align:center;position:relative;z-index:1}
+.app-icon{width:132px;height:132px;margin:0 auto 12px;border-radius:34px;background:linear-gradient(145deg,#1ab6ff,#0345c9 68%,#0871c9);border:3px solid #7bd3ff;box-shadow:0 15px 45px #008aff66;display:grid;place-items:center;font-size:78px;color:white;transform:rotate(-4deg);position:relative}
+.app-icon span{position:absolute;bottom:3px;right:8px;font-size:22px}
+.hero h1{font-family:'Lalezar',sans-serif;font-size:clamp(56px,7vw,88px);line-height:1.2;margin:0;color:white;text-shadow:0 5px 25px #007cff99}
+.hero h2{font-size:clamp(20px,2.6vw,31px);color:#cbe6ff;margin:5px 0 10px}
+.eyebrow{border:0;background:transparent;color:#9bd6ff;padding:0;font-size:15px}
+.lead{font-size:17px;line-height:2;color:#d5e7fa;margin:12px auto;max-width:580px}
+.actions{justify-content:center;margin-top:20px}
+.download-btn{min-width:245px;min-height:62px;font-size:19px}
+.maker{margin-top:20px;color:#c3d9ef}.maker b{color:#76c7ff}.maker small{color:#8eb6dc}
+.hero-art{min-height:500px;display:flex;align-items:center;justify-content:center}
+.hero-art img{width:100%;max-width:650px;max-height:560px;object-fit:contain;filter:drop-shadow(0 24px 38px #0009)}
+.quick-features{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:0 auto 24px}
+.quick-features article{min-height:116px;border:1px solid #2c5b91;border-radius:24px;background:linear-gradient(145deg,#102f59dd,#081d3c);box-shadow:0 12px 30px #0004;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#36b5ff;font-size:29px;text-align:center;padding:10px}
+.quick-features b{font-size:15px;color:#f4f8ff}.quick-features span{font-size:11px;color:#aac4e2}
+.live-panel{max-width:1240px;border:1px solid #3b6da4;border-radius:24px;background:linear-gradient(140deg,#102b50,#081b37);padding:18px;margin:22px auto 45px;box-shadow:0 18px 45px #0005}
+.live-title{font-size:21px;font-weight:800;color:#c9e5ff;display:flex;justify-content:center;gap:12px;align-items:center;margin-bottom:15px}
+.refresh-mark{color:#35b4ff;font-size:28px}
+.live-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.live-cards article{display:flex;align-items:center;gap:12px;border:1px solid #315a89;border-radius:18px;background:linear-gradient(100deg,#173963,#0d2548);padding:15px 18px;box-shadow:0 8px 20px #0003}
+.live-cards b{font-size:23px;color:#fff}.live-cards article span:last-child{margin-right:auto;color:#d4e7fb;font-size:14px}
+.live-dot{width:15px;height:15px;border-radius:50%;box-shadow:0 0 13px currentColor}.green{background:#31e58c;color:#31e58c}.blue{background:#2f9cff;color:#2f9cff}.purple{background:#9d72ff;color:#9d72ff}
+#statsStatus{text-align:center;color:#9bb8d7;font-size:11px;margin:12px 0 0}
+.section{padding:44px 0}
+.sectionhead h2{color:#eaf5ff}.feature,.showcase-card,.roadmap,.download{background:linear-gradient(145deg,#102b4c,#091b34)!important;border-color:#2d5683!important}
+.feature{border-radius:22px}.ico{background:linear-gradient(145deg,#0a83d9,#153a73)!important}
+.showcase-gallery{grid-template-columns:repeat(4,minmax(0,1fr))}
+.showcase-card{border-radius:20px}
+.showcase-card img{aspect-ratio:4/5;object-fit:cover}
+.download{background:radial-gradient(ellipse at 50% 0,#1269ad,#0a1d38 72%)!important}
+.footer{border-color:#28527e}
+@media(max-width:850px){.poster-hero{grid-template-columns:1fr;padding:30px 4% 20px;gap:0}.hero-art{grid-row:1;min-height:320px}.hero-art img{max-height:360px}.hero-copy{grid-row:2}.app-icon{width:95px;height:95px;font-size:55px;border-radius:26px}.quick-features{grid-template-columns:repeat(2,1fr)}.quick-features article:last-child{grid-column:1/-1}.live-cards{grid-template-columns:1fr}.live-cards article{padding:12px 16px}.showcase-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.nav{height:62px}.navlinks{display:none}.nav .btn{width:auto;padding:8px 13px;font-size:12px}.poster-hero{min-height:auto}.hero-art{min-height:270px}.hero-art img{max-height:300px}.hero h1{font-size:55px}.hero h2{font-size:20px}.lead{font-size:15px}.quick-features{gap:9px}.quick-features article{min-height:100px}.showcase-gallery{grid-template-columns:1fr}.showcase-card img{aspect-ratio:4/3}.live-title{font-size:18px}}
+</style>
+</head>
 <body>
-<header class="wrap nav"><a class="brand" href="#"><span class="logo">✈</span><span>ایران‌گرام</span></a><nav class="navlinks"><a href="#features">امکانات</a><a href="#gallery">تصاویر</a><a href="#roadmap">برنامه توسعه</a><a href="#download">دانلود</a></nav><a class="btn secondary" href="#download">دریافت برنامه</a></header>
+<header class="wrap nav"><a class="brand" href="#"><span class="logo">➤</span><span>ایران‌گرام</span></a><nav class="navlinks"><a href="#">خانه</a><a href="#features">ویژگی‌ها</a><a href="#gallery">تصاویر</a><a href="#download">دانلود</a><a href="#support">پشتیبانی</a></nav><a class="btn secondary" href="app.html">🌐 ورود به برنامه وب</a></header>
 <main>
-<section class="wrap hero"><div><div class="eyebrow">یک پیام‌رسان فارسی؛ با نگاه رو به آینده</div><h1>ارتباط ساده‌تر،<br><span>در ایران‌گرام</span></h1><div class="maker">سازنده و توسعه‌دهنده:<b>امیررضا مفتاح</b><small>شناسه: Manager_MT</small></div><p class="lead">گفت‌وگو کن، گروه بساز، کانال دنبال کن و لحظه‌هایت را با دیگران به اشتراک بگذار. ایران‌گرام با الهام از تجربه پیام‌رسان‌های محبوب و با هویت مستقل در حال توسعه است.</p><div class="actions"><a class="btn" href="https://github.com/amyrmftah3-hub/iran-gram/actions/workflows/build-apk.yml">⬇ دریافت نسخه آزمایشی اندروید</a><a class="btn secondary" href="app.html">ورود به برنامه وب</a></div><div class="note">نسخه فعلی آزمایشی است؛ همه قابلیت‌های معرفی‌شده هنوز در دسترس عمومی نیستند.</div></div><div class="heroimg" role="img" aria-label="پیش‌نمایش محیط ایران‌گرام"></div></section>
-<section class="wrap stats" id="liveStats" style="grid-template-columns:minmax(0,1fr);max-width:360px"><div class="stat"><b id="totalUsers">…</b><span>کل کاربران ثبت‌نام‌شده</span></div><p id="statsStatus" style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:11px;margin:0">در حال دریافت آمار ثبت‌نام‌ها…</p></section>
+<section class="wrap hero poster-hero"><div class="hero-copy"><div class="app-icon">➤<span>🇮🇷</span></div><div class="eyebrow">پیام‌رسان ایرانی، سریع و مدرن</div><h1>ایران‌گرام</h1><h2>پیام‌رسان ایرانی، امن و قدرتمند</h2><p class="lead">با ایران‌گرام، همیشه در ارتباط باش! یک پیام‌رسان مدرن با گفت‌وگو، گروه، کانال و استوری؛ با هویتی مستقل و تجربه‌ای ساده.</p><div class="actions"><a class="btn download-btn" href="https://github.com/amyrmftah3-hub/iran-gram/actions/workflows/build-apk.yml">⬇ دانلود آخرین نسخه</a><a class="btn secondary" href="app.html">▣ ورود به نسخه وب</a></div><div class="maker">سازنده و توسعه‌دهنده: <b>امیررضا مفتاح</b><small>Manager_MT</small></div></div><div class="hero-art"><img src="assets/hero-showcase.svg" alt="پیش‌نمایش گرافیکی ایران‌گرام"></div></section>
+<section class="wrap quick-features"><article>◉<b>استوری‌های جذاب</b><span>لحظه‌های روزمره</span></article><article>☎<b>ارتباط و گفتگو</b><span>پیام‌رسانی آنلاین</span></article><article>♧<b>گروه‌ها و کانال‌ها</b><span>کنار هم، بدون محدودیت نمایشی</span></article><article>♙<b>حریم خصوصی</b><span>کنترل حساب و گفتگو</span></article><article>▣<b>رسانه و فایل</b><span>اشتراک‌گذاری محتوا</span></article></section>
+<section class="wrap live-panel" id="liveStats"><div class="live-title"><span>آمار کاربران ایران‌گرام</span><span class="refresh-mark">⟳</span></div><div class="live-cards"><article><span class="live-dot green"></span><b id="onlineUsers">…</b><span>کاربران آنلاین</span></article><article><span class="live-dot blue"></span><b id="offlineUsers">…</b><span>کاربران آفلاین</span></article><article><span class="live-dot purple"></span><b id="totalUsers">…</b><span>مجموع کاربران</span></article></div><p id="statsStatus">در حال دریافت آمار زنده…</p></section>
 <section class="section wrap" id="features"><div class="sectionhead"><h2>امکانات ایران‌گرام</h2><p>قابلیت‌های موجود و مسیر توسعه، شفاف و بدون وعده غیرواقعی</p></div><div class="grid">
 <article class="feature"><div class="ico"><img src="assets/showcase-chats.svg" alt="نمای برنامه ایران‌گرام"></div><h3>گفت‌وگوی خصوصی</h3><p>پیام‌رسانی بین کاربران، نمایش پیام‌ها و مدیریت گفت‌وگوها.</p><span class="tag live">پیاده‌سازی اولیه</span></article>
 <article class="feature"><div class="ico"><img src="assets/showcase-chat.svg" alt="نمای برنامه ایران‌گرام"></div><h3>گروه‌ها</h3><p>ساخت فضای گفت‌وگوی گروهی و گردهم‌آوردن دوستان در یک گفتگو.</p><span class="tag live">پیاده‌سازی اولیه</span></article>
@@ -199,15 +247,22 @@ body{background:radial-gradient(ellipse at 50% 18%,#0758a8 0,transparent 42%),li
  async function refreshStats(){
   const status=document.getElementById('statsStatus');
   try{
-   const {data,error}=await client.from('site_stats').select('total_users').eq('id',1).single();
-   if(error)throw error;
-   const total=Number(data.total_users||0);
+   const now=new Date(Date.now()-180000).toISOString();
+   const [users,online]=await Promise.all([
+    client.from('profiles').select('id',{count:'exact',head:true}),
+    client.from('user_presence').select('user_id',{count:'exact',head:true}).gt('last_seen_at',now)
+   ]);
+   if(users.error)throw users.error;
+   if(online.error)throw online.error;
+   const total=users.count||0, live=Math.min(online.count||0,total), offline=Math.max(0,total-live);
    document.getElementById('totalUsers').textContent=fmt(total);
-   status.textContent='آمار ثبت‌نام‌ها · آخرین بروزرسانی: '+new Date().toLocaleTimeString('fa-IR');
+   document.getElementById('onlineUsers').textContent=fmt(live);
+   document.getElementById('offlineUsers').textContent=fmt(offline);
+   status.textContent='به‌روزرسانی خودکار هر ۳۰ ثانیه';
   }catch(e){
-   console.warn('Public user stats unavailable',e);
-   status.textContent='اتصال به آمار کاربران برقرار نشد؛ لطفاً بعداً دوباره تلاش کن.';
-   document.getElementById('totalUsers').textContent='—';
+   console.warn('Public presence stats unavailable:',e.message);
+   ['totalUsers','onlineUsers','offlineUsers'].forEach(id=>document.getElementById(id).textContent='—');
+   status.textContent='نمایش آمار آنلاین و آفلاین نیازمند دسترسی عمومی امن به آمار حضور کاربران است.';
   }
  }
  refreshStats();setInterval(refreshStats,30000);

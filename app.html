@@ -1257,6 +1257,15 @@ body{font-family:Roboto,"Vazirmatn",Tahoma,sans-serif!important;-webkit-tap-high
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="manifest" href="./manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Markazi+Text:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* Photo-first messaging: preserve original uploaded image quality */
+#photoBtn{font-size:23px;color:#9fc9f4}
+.media-image{width:auto;max-width:min(100%,560px);max-height:min(72vh,680px);height:auto;object-fit:contain;display:block;border-radius:12px;background:#101923}
+.msg:has(.media-image){max-width:min(92%,600px);padding:5px}
+.msg:has(.media-image) .msgmeta{padding:3px 6px 0}
+@media(max-width:760px){.msg:has(.media-image){max-width:94%}.media-image{max-width:100%;max-height:68vh}}
+</style>
 </head>
  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <body>
@@ -2045,11 +2054,3 @@ if(!window.supabase){toast('بارگذاری سرویس ورود ناموفق ب
 (()=>{const side=document.querySelector('.sidebar'),btn=document.querySelector('#listSearchBtn'),input=document.querySelector('#search');if(!side||!btn||!input)return;btn.addEventListener('click',()=>{const open=side.classList.toggle('search-open');if(open)input.focus();else{input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));}});input.addEventListener('keydown',e=>{if(e.key==='Escape'){side.classList.remove('search-open');input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));}});})();
 </script>
 </body>
-<style>
-/* Photo-first messaging: preserve original uploaded image quality */
-#photoBtn{font-size:23px;color:#9fc9f4}
-.media-image{width:auto;max-width:min(100%,560px);max-height:min(72vh,680px);height:auto;object-fit:contain;display:block;border-radius:12px;background:#101923}
-.msg:has(.media-image){max-width:min(92%,600px);padding:5px}
-.msg:has(.media-image) .msgmeta{padding:3px 6px 0}
-@media(max-width:760px){.msg:has(.media-image){max-width:94%}.media-image{max-width:100%;max-height:68vh}}
-</style>

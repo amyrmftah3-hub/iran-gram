@@ -1805,13 +1805,18 @@ async function uploadAndSendFile(file,kind='media'){
  if(!remoteMode||!currentUser||!c.remote){toast('ارسال فایل فقط در گفت‌وگوی آنلاین فعال است.');return}
  if(c.type==='channels'&&c.memberRole!=='owner'){toast('فقط مدیر کانال می‌تواند در کانال فایل بفرستد.');return}
  if(file.size>50*1024*1024){toast('حجم فایل باید کمتر از ۵۰ مگابایت باشد.');return}
- const allowed=/^(image\/(jpeg|png|webp|gif|avif|heic|heif)|video\/(mp4|webm)|audio\/(mpeg|ogg|mp4|webm)|application\/(pdf|zip)|text\/plain)$/i;
- if(!allowed.test(file.type||'')){toast('این نوع فایل پشتیبانی نمی‌شود.');return}
  const safeName=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'file';
+ const ext=(safeName.split('.').pop()||'').toLowerCase();
+ const extensionTypes={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',gif:'image/gif',avif:'image/avif',heic:'image/heic',heif:'image/heif',mp4:'video/mp4',m4v:'video/mp4',webm:'video/webm',mov:'video/quicktime',3gp:'video/3gpp',mp3:'audio/mpeg',m4a:'audio/mp4',aac:'audio/aac',ogg:'audio/ogg',opus:'audio/ogg',wav:'audio/wav',amr:'audio/amr',pdf:'application/pdf',zip:'application/zip',txt:'text/plain'};
+ let mime=String(file.type||'').split(';')[0].trim().toLowerCase();
+ if(mime==='image/jpg')mime='image/jpeg';
+ if(!mime||mime==='application/octet-stream')mime=extensionTypes[ext]||'';
+ const allowed=/^(image\/(jpeg|png|webp|gif|avif|heic|heif)|video\/(mp4|webm|quicktime|3gpp)|audio\/(mpeg|ogg|mp4|webm|aac|wav|3gpp|amr)|application\/(pdf|zip)|text\/plain)$/i;
+ if(!allowed.test(mime)){toast('این نوع فایل پشتیبانی نمی‌شود. نوع فایل: '+(mime||'ناشناخته'));return}
  const path=c.id+'/'+currentUser.id+'/'+Date.now()+'_'+safeName;
- const {error:uploadError}=await supabaseClient.storage.from('arogram-chat-media').upload(path,file,{upsert:false,contentType:file.type});
+ const {error:uploadError}=await supabaseClient.storage.from('arogram-chat-media').upload(path,file,{upsert:false,contentType:mime});
  if(uploadError){toast('آپلود فایل ناموفق بود: '+uploadError.message);return}
- const body='[['+(kind==='roundvideo'?'roundvideo':'media')+':'+encodeURIComponent(path)+'|'+encodeURIComponent(file.type)+'|'+encodeURIComponent(file.name||safeName)+']]';
+ const body='[['+(kind==='roundvideo'?'roundvideo':'media')+':'+encodeURIComponent(path)+'|'+encodeURIComponent(mime)+'|'+encodeURIComponent(file.name||safeName)+']]';
  const {data:sent,error}=await supabaseClient.from('messages').insert({conversation_id:c.id,sender_id:currentUser.id,body}).select('id,created_at').single();
  if(error){await supabaseClient.storage.from('arogram-chat-media').remove([path]);toast('ثبت پیام فایل ناموفق بود: '+error.message);return}
  c.messages.push({id:sent.id,text:body,mine:true,time:new Date(sent.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[]});save();renderMessages();renderChats();

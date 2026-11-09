@@ -1059,6 +1059,52 @@ html,body{height:100%;overscroll-behavior:none}
 .chat-row-more:active,.chat-row-more:hover{background:#263746;color:#fff}
 .chatrow.swipe-archive::after,.chatrow.swipe-hidden::after{z-index:2}
 @media(max-width:760px){.chat-row-more{opacity:.85;width:28px;flex-basis:28px}}
+
+/* Telegram-accurate mobile shell pass */
+:root{--blue:#3390ec;--blue2:#2b82d9;--bg:#0e1621;--panel:#17212b;--text:#f1f4f6;--muted:#8b9baa;--line:#263442;--chat:#0e1621;--bubble:#182533;--mine:#2b5278}
+.topbar{background:#17212b!important;color:#f1f4f6;height:56px;min-height:56px;padding:4px 10px;gap:8px;border-bottom:1px solid #202b36}
+.topbar-title{display:block!important;flex:1;text-align:right;font-size:18px;font-weight:600;letter-spacing:0}
+.topbar .brand,.topbar .settings-quick{display:none!important}
+.topbar #menuBtn{order:0}
+.topbar #listSearchBtn{order:2;margin-inline-start:auto}
+.searchbox{display:none;padding:7px 10px 8px;background:#17212b;border-bottom:1px solid #202b36}
+.sidebar.search-open .searchbox{display:block}
+.searchbox input{height:40px;border-radius:22px;background:#242f3d;color:#e9edef;padding:0 16px;font-size:14px}
+.searchbox input::placeholder{color:#8b9baa}
+.filters{gap:0;padding:0 8px;min-height:44px;background:#17212b;border-bottom:1px solid #202b36}
+.filter{position:relative;flex:1 0 auto;padding:12px 13px 11px;border-radius:0;background:transparent!important;color:#9aa9b7;font-size:13px;font-weight:500}
+.filter.active{color:#64b5f6;font-weight:600}
+.filter.active:after{content:"";position:absolute;bottom:0;left:10px;right:10px;height:3px;border-radius:3px 3px 0 0;background:#3390ec}
+.stories{background:#17212b;border-bottom:1px solid #202b36;gap:13px;padding:9px 12px 8px}
+.story{color:#d5dde5;font-size:11px}
+.storyring{width:54px;height:54px;padding:2px;background:linear-gradient(135deg,#3390ec,#a855f7,#e6a23c)}
+.storyring span{background:#263442;border:2px solid #17212b;color:#e9edef}
+.chatrow{min-height:72px;padding:8px 12px;gap:11px;background:#17212b;border-bottom:1px solid #202b36}
+.chatrow:active{background:#202d3a}
+.chatrow .avatar{width:52px;height:52px}
+.chathead b{font-size:15px;font-weight:600;color:#f1f4f6}
+.preview{font-size:13px;color:#9aa9b7;line-height:1.35}
+.time{font-size:11px;color:#8b9baa}
+.chat-row-more{opacity:0!important;width:0!important;flex-basis:0!important;padding:0!important;overflow:hidden}
+.chatrow:hover .chat-row-more,.chatrow:focus-within .chat-row-more{opacity:.75!important;width:28px!important;flex-basis:28px!important}
+.bottom-nav{display:none!important}
+.main,.chatview{background:#0e1621}
+.chatheader{background:#17212b;border-bottom:1px solid #202b36}
+.messages{background-color:#0e1621;background-image:radial-gradient(#71869a0b 1px,transparent 1px)}
+.msg{box-shadow:0 1px 1px #0002}
+.composer{background:#17212b;border-top:1px solid #202b36}
+.composefield{background:#242f3d;border:0}
+.composefield textarea{color:#e9edef}
+.round,.send{background:#242f3d;color:#9aa9b7}
+.send{background:#3390ec;color:#fff}
+@media(max-width:760px){
+ .topbar{height:56px;min-height:56px}
+ .filters{min-height:44px}
+ .filter{padding:12px 10px 11px}
+ .stories{min-height:88px}
+ .chatrow{min-height:70px}
+ .chat-row-more{display:none!important}
+}
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -1071,9 +1117,8 @@ html,body{height:100%;overscroll-behavior:none}
 <div class="app" id="app">
 <aside class="sidebar">
  <header class="topbar">
-  <button class="iconbtn" id="menuBtn" title="منو" aria-label="منو">☰</button><button class="iconbtn settings-quick" id="settingsQuickBtn" title="تنظیمات" aria-label="تنظیمات">⚙</button>
-  <div class="brand" aria-label="ایران‌گرام"><img class="logo" src="./icon.svg" alt="نشان ایران‌گرام"></div>
-  <div class="topbar-title">ایران‌گرام</div>
+  <button class="iconbtn" id="menuBtn" title="منو" aria-label="منو">☰</button>
+  <div class="topbar-title">ایران‌گرام</div><button class="iconbtn" id="listSearchBtn" title="جست‌وجو" aria-label="جست‌وجو">⌕</button>
  </header>
  <div class="menu" id="mainMenu">
   <div class="drawer-profile"><div class="drawer-avatar">ای</div><div class="drawer-user"><b id="drawerName">کاربر ایران‌گرام</b><small id="drawerUsername">حساب ایران‌گرام</small></div><button class="drawer-close" id="drawerClose" aria-label="بستن">×</button></div>
@@ -1848,5 +1893,8 @@ if(!window.supabase){toast('بارگذاری سرویس ورود ناموفق ب
 
 <script>
 (()=>{const area=document.getElementById('messages');if(!area)return;let holdTimer=null;let held=false;const closeOthers=(keep)=>area.querySelectorAll('.msg.actions-open').forEach(node=>{if(node!==keep)node.classList.remove('actions-open')});area.addEventListener('click',event=>{if(event.target.closest('button,a,video'))return;const msg=event.target.closest('.msg');if(!msg)return;const opening=!msg.classList.contains('actions-open');closeOthers(msg);msg.classList.toggle('actions-open',opening)});area.addEventListener('contextmenu',event=>{const msg=event.target.closest('.msg');if(!msg)return;event.preventDefault();closeOthers(msg);msg.classList.add('actions-open')});area.addEventListener('touchstart',event=>{const msg=event.target.closest('.msg');if(!msg||event.target.closest('button,a,video'))return;held=false;holdTimer=setTimeout(()=>{held=true;closeOthers(msg);msg.classList.add('actions-open')},480)},{passive:true});['touchend','touchmove','touchcancel'].forEach(name=>area.addEventListener(name,()=>{clearTimeout(holdTimer)},{passive:true}));area.addEventListener('click',event=>{if(event.target.closest('.msgactions button')){const msg=event.target.closest('.msg');if(msg)msg.classList.remove('actions-open')} });})();
+</script>
+<script>
+(()=>{const side=document.querySelector('.sidebar'),btn=document.querySelector('#listSearchBtn'),input=document.querySelector('#search');if(!side||!btn||!input)return;btn.addEventListener('click',()=>{const open=side.classList.toggle('search-open');if(open)input.focus();else{input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));}});input.addEventListener('keydown',e=>{if(e.key==='Escape'){side.classList.remove('search-open');input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));}});})();
 </script>
 </body>

@@ -1282,6 +1282,17 @@ body{font-family:Tahoma,"Vazirmatn","Segoe UI",Arial,sans-serif;letter-spacing:0
 
 
 .voice-message{display:flex;align-items:center;gap:9px;min-width:220px;padding:7px 9px;border-radius:14px;background:#3390ec18}.voice-message audio{width:min(260px,62vw);height:38px}.round-video-message{width:220px;height:220px;max-width:65vw;max-height:65vw;border-radius:50%;overflow:hidden;background:#101923}.round-video-message video{width:100%;height:100%;object-fit:cover;border-radius:50%}#voiceRecordBtn.recording,#videoNoteBtn.recording{background:#d94b59;color:#fff;animation:igRecordPulse 1s infinite}@keyframes igRecordPulse{50%{box-shadow:0 0 0 7px #e34d5940}}
+
+/* Telegram-inspired compact composer */
+.composer{display:flex;align-items:flex-end;gap:7px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:#17212b;border-top:1px solid #263442}
+.composefield{min-height:44px;align-items:flex-end;gap:7px;padding:4px 9px;border:0;border-radius:22px;background:#242f3d;color:#e8eef3}
+.composefield textarea{min-height:34px;max-height:130px;padding:8px 2px;color:#f1f5f8;font-size:15px;line-height:1.45}
+.composefield textarea::placeholder{color:#8797a5}
+.composefield .iconbtn{width:32px;min-width:32px;min-height:34px;padding:3px;color:#8fa1b1!important}
+.composer .round{width:38px;height:40px;min-width:38px;border-radius:50%;background:transparent;color:#9aabba;font-size:20px}
+.composer #photoBtn{color:#8fa1b1}
+.composer .send{width:42px;height:42px;border-radius:50%;background:#3390ec;color:#fff;box-shadow:0 2px 7px #0002}
+@media(max-width:760px){.composer{gap:4px;padding-left:7px;padding-right:7px}.composer .round{width:34px;min-width:34px;height:38px;font-size:18px}.composer .send{width:40px;height:40px;min-width:40px}.composefield{min-width:0}.composefield textarea{font-size:14px}}
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -1331,7 +1342,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
   <div class="drawer-section">حساب کاربری</div>
   <button data-action="profile"><span>👤</span> پروفایل من</button><button data-action="contacts"><span>♙</span> مخاطبین</button><button data-action="saved"><span>🔖</span> پیام‌های ذخیره‌شده</button>
   <div class="drawer-section">ایرانگرام</div>
-  <button data-action="group"><span>👥</span> ساخت گروه</button><button data-action="channel"><span>📢</span> ساخت کانال</button><button data-action="ads"><span>📣</span> تبلیغات</button><button data-action="settings"><span>⚙️</span> تنظیمات</button>
+  <button data-action="group"><span>👥</span> ساخت گروه</button><button data-action="channel"><span>📢</span> ساخت کانال</button><button data-action="bot"><span>🤖</span> ساخت بات</button><button data-action="ads"><span>📣</span> تبلیغات</button><button data-action="settings"><span>⚙️</span> تنظیمات</button>
   <div class="drawer-section">ابزارها</div>
   <button data-action="admin"><span>🛡️</span> مدیریت ایرانگرام</button><button data-action="export"><span>⬇️</span> خروجی پشتیبان</button><button data-action="about"><span>ℹ️</span> درباره ایرانگرام</button><button data-action="logout"><span>🚪</span> خروج از حساب</button>
   <div class="drawer-footer">ایرانگرام · پیام‌رسان فارسی</div>
@@ -1901,6 +1912,20 @@ async function conversationSettingsModal(chat){
  };
 }
 
+
+function createBot(){
+ if(!remoteMode||!currentUser){authModal();toast('برای ساخت بات اول وارد حسابت شو');return}
+ showModal('ساخت بات جدید',`<p class="subtle">برای باتت یک نام و شناسه یکتا انتخاب کن. شناسه باید با حرف انگلیسی شروع شود و فقط حروف، عدد و زیرخط داشته باشد.</p><label>نام بات</label><input id="newBotName" maxlength="48" placeholder="مثلاً بات پشتیبانی"><label>شناسه بات</label><input id="newBotUsername" maxlength="32" dir="ltr" placeholder="MySupportBot"><label>توضیحات</label><textarea id="newBotDescription" maxlength="300" placeholder="این بات چه کاری انجام می‌دهد؟"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveNewBot">ساخت بات</button></div><p class="subtle">فعلاً ساخت و ثبت هویت بات فعال می‌شود؛ توکن امن و API اجرای فرمان‌ها مرحله بعدی است.</p>`);
+ $('#saveNewBot').onclick=async()=>{
+  const name=$('#newBotName').value.trim(),username=$('#newBotUsername').value.trim(),description=$('#newBotDescription').value.trim();
+  if(name.length<2){toast('نام بات حداقل ۲ حرف باشد');return}
+  if(!/^[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(username)){toast('شناسه باید ۵ تا ۳۲ نویسه و با حرف انگلیسی شروع شود');return}
+  const {data,error}=await supabaseClient.from('bots').insert({owner_id:currentUser.id,display_name:name,username,description}).select('id,display_name,username').single();
+  if(error){toast(error.code==='23505'?'این شناسه قبلاً گرفته شده است':'ساخت بات ناموفق بود: '+error.message);return}
+  closeModal();showModal('بات ساخته شد 🤖',`<p><b>${esc(data.display_name)}</b></p><p dir="ltr">@${esc(data.username)}</p><p class="subtle">هویت بات در ایرانگرام ثبت شد. ساخت توکن امن و اتصال API را در مرحله بعد اضافه می‌کنیم.</p><div class="modalactions"><button class="primary" data-close>باشه</button></div>`);
+ };
+}
+
 function createCollection(type){const channel=type==='channels';showModal(channel?'ساخت کانال':'ساخت گروه',`<label>نام ${channel?'کانال':'گروه'}</label><input id="collectionName" placeholder="${channel?'مثلاً اطلاعیه‌های من':'مثلاً خانواده'}"><label>توضیحات</label><textarea id="collectionBio" placeholder="توضیح کوتاه (اختیاری)"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="createCollection">ساخت</button></div><p class="subtle">در حالت آنلاین، کانال و گروه در سرور ساخته می‌شوند.</p>`);$('#createCollection').onclick=async()=>{const name=$('#collectionName').value.trim(),bio=$('#collectionBio').value.trim();if(!name){toast('نام را وارد کن');return}if(remoteMode&&currentUser){const kind=channel?'channel':'group';const {data:conv,error}=await supabaseClient.from('conversations').insert({title:name,type:kind,description:bio,created_by:currentUser.id}).select('id').single();if(error){toast('ساخت ناموفق بود: '+error.message);return}const {error:memberError}=await supabaseClient.from('conversation_members').insert({conversation_id:conv.id,user_id:currentUser.id,role:'owner'});if(memberError){toast('ساخت عضویت ناموفق بود: '+memberError.message);return}if(bio){const {error:msgError}=await supabaseClient.from('messages').insert({conversation_id:conv.id,sender_id:currentUser.id,body:bio});if(msgError){toast('کانال ساخته شد، اما توضیحات ثبت نشد.')}}closeModal();await loadOnlineChats();openChat(conv.id);return}const c={id:uid(),name,type:channel?'channels':'groups',avatar:channel?'📢':'👥',color:channel?'gold':'green',status:channel?'کانال نمایشی':'گروه نمایشی',unread:0,messages:[{id:uid(),text:bio||`به ${name} خوش آمدید.`,mine:false,time:now(),reactions:[]}]};state.chats.unshift(c);save();closeModal();render();openChat(c.id)}}
 function showModal(title,body){$('#modal').innerHTML=`<h3>${title}</h3>${body}`;$('#modalBack').classList.add('open')}
 function closeModal(){$('#modalBack').classList.remove('open');$('#modal').classList.remove('ai-modal')}
@@ -2026,7 +2051,7 @@ const settingsQuickBtn=$('#settingsQuickBtn');if(settingsQuickBtn)settingsQuickB
  else if(action==='profile')profileModal();
 };
 $('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
-$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,saved:()=>showModal('پیام‌های ذخیره‌شده','<p class="subtle">بخش پیام‌های ذخیره‌شده پس از پیاده‌سازی ذخیره‌سازی ابری فعال می‌شود.</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>'),group:()=>createCollection('groups'),channel:()=>createCollection('channels'),settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
+$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,saved:()=>showModal('پیام‌های ذخیره‌شده','<p class="subtle">بخش پیام‌های ذخیره‌شده پس از پیاده‌سازی ذخیره‌سازی ابری فعال می‌شود.</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>'),group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 let suppressChatClick=false;
 $('#chatList').onclick=e=>{
  const actionButton=e.target.closest('[data-chat-actions]');

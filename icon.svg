@@ -1,14 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-<defs>
- <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#06113f"/><stop offset=".48" stop-color="#075cff"/><stop offset="1" stop-color="#001044"/></linearGradient>
- <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#13dfff"/><stop offset=".5" stop-color="#0878ff"/><stop offset="1" stop-color="#00b8ff"/></linearGradient>
- <linearGradient id="plane" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#bdeaff"/></linearGradient>
- <filter id="glow"><feGaussianBlur stdDeviation="9"/></filter>
-</defs>
-<rect width="512" height="512" rx="112" fill="#00103d"/>
-<rect x="43" y="43" width="426" height="426" rx="104" fill="url(#edge)" filter="url(#glow)" opacity=".8"/>
-<rect x="49" y="49" width="414" height="414" rx="98" fill="url(#bg)" stroke="#35caff" stroke-width="5"/>
-<path d="M115 164 Q115 106 174 106 H345 Q391 106 408 144 Q350 220 251 256 Q161 289 112 361Z" fill="#087cff" opacity=".35"/>
-<path d="M154 146 Q154 122 180 132 L376 227 Q397 237 376 250 L180 380 Q154 397 154 369Z" fill="none" stroke="url(#edge)" stroke-width="44" stroke-linejoin="round"/>
-<path d="M151 256 Q153 232 180 225 L391 177 Q416 171 402 197 L308 365 Q294 390 273 371 L226 326 Q210 310 232 294 L352 207 L175 286 Q150 297 151 256Z" fill="url(#plane)"/>
-</svg>
+<defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#20baff"/><stop offset=".52" stop-color="#0865ec"/><stop offset="1" stop-color="#032c87"/></linearGradient><linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#d8edff"/></linearGradient><filter id="s"><feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#00102e" flood-opacity=".55"/></filter></defs>
+<rect width="512" height="512" rx="112" fill="#061638"/><rect x="18" y="18" width="476" height="476" rx="104" fill="url(#b)" stroke="#76d7ff" stroke-width="7"/>
+<path d="M55 365 Q250 445 457 350 L457 420 Q250 510 55 425Z" fill="#fff" opacity=".12"/>
+<g filter="url(#s)"><path d="M105 225 L405 105 Q426 97 416 124 L300 398 Q289 424 269 401 L219 326 L352 188 L194 293Z" fill="url(#p)"/><path d="M219 326 L269 401 Q289 424 300 398 L352 188Z" fill="#9bcfff"/></g>
+<path d="M52 421 Q250 493 460 411 L460 447 Q250 525 52 456Z" fill="#239b58"/><path d="M52 456 Q250 525 460 447 L460 478 Q250 545 52 487Z" fill="#ed3345"/><path d="M52 421 Q250 493 460 411" fill="none" stroke="#fff" stroke-width="8" opacity=".95"/>
+<text x="256" y="473" text-anchor="middle" fill="#fff" font-size="19" font-family="Arial,sans-serif" font-weight="bold">IRAN</text></svg>

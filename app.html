@@ -1053,6 +1053,12 @@ html,body{height:100%;overscroll-behavior:none}
  .main{height:100dvh}
 }
 
+
+.chatrow{position:relative}
+.chat-row-more{flex:0 0 30px;width:30px;height:36px;border-radius:18px;background:transparent;color:#91a2b2;font-size:21px;opacity:.72;z-index:3}
+.chat-row-more:active,.chat-row-more:hover{background:#263746;color:#fff}
+.chatrow.swipe-archive::after,.chatrow.swipe-hidden::after{z-index:2}
+@media(max-width:760px){.chat-row-more{opacity:.85;width:28px;flex-basis:28px}}
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -1183,7 +1189,53 @@ async function openStoryGroup(userId){
   closeModal();await loadStories();toast('داستان حذف شد');
  };
 }
-function renderChats(){let arr=state.chats.filter(c=>{const inFolder=state.filter==='all'?!c.archived&&!c.hidden:state.filter==='archive'?!!c.archived:state.filter==='hidden'?!!c.hidden:state.filter==='unread'?c.unread>0:c.type===state.filter;return inFolder&&(`${c.name} ${c.messages.at(-1)?.text||''}`).toLowerCase().includes(state.query.toLowerCase())});const empty=state.filter==='archive'?'<div class="folder-empty"><span class="folder-icon">📂</span><b>آرشیو هنوز خالیه</b><p>گفت‌وگوها را به بالا بکش تا اینجا نگه‌شان داری.</p></div>':state.filter==='hidden'?'<div class="folder-empty"><span class="folder-icon">🗂️</span><b>پوشه مخفی خالیه</b><p>گفت‌وگوهای مخفی‌شده با کشیدن به پایین اینجا می‌آیند.</p></div>':'<div class="folder-empty"><span class="folder-icon">✈️</span><b>گفت‌وگویی پیدا نشد</b><p>یک گفت‌وگوی تازه بساز و شروع کن.</p></div>';$('#chatList').innerHTML=arr.map(c=>{let m=c.messages.at(-1)||{};return `<div class="chatrow ${state.active===c.id?'selected':''}" data-chat="${c.id}"><div class="avatar ${c.color||''}">${esc(c.avatar||c.name[0])}</div><div class="chatinfo"><div class="chathead"><b>${esc(c.name)}${c.verified?' <span class="verified" title="تأییدشده">✓</span>':''}</b><span class="time">${esc(m.time||'')}</span></div><div class="preview">${c.type==='channels'?'📢 ':''}${esc(m.text||'هنوز پیامی نیست')}</div></div>${c.unread?`<span class="unread">${c.unread}</span>`:''}</div>`}).join('')||empty}
+function renderChats(){
+ const arr=state.chats.filter(c=>{
+  const inFolder=state.filter==='all'?!c.archived&&!c.hidden:
+   state.filter==='archive'?!!c.archived:
+   state.filter==='hidden'?!!c.hidden:
+   state.filter==='unread'?c.unread>0:c.type===state.filter;
+  return inFolder&&(`${c.name} ${c.messages.at(-1)?.text||''}`).toLowerCase().includes(state.query.toLowerCase());
+ });
+ const empty=state.filter==='archive'
+  ?'<div class="folder-empty"><span class="folder-icon">📂</span><b>بایگانی خالی است</b><p>گفت‌وگوها اینجا می‌مانند تا دوباره به فهرست اصلی برگردانده شوند.</p></div>'
+  :state.filter==='hidden'
+  ?'<div class="folder-empty"><span class="folder-icon">🗂️</span><b>پوشه مخفی خالی است</b><p>گفت‌وگوهای مخفی‌شده فقط از فهرست اصلی پنهان می‌شوند.</p></div>'
+  :'<div class="folder-empty"><span class="folder-icon">✈️</span><b>گفت‌وگویی پیدا نشد</b><p>یک گفت‌وگوی تازه بساز و شروع کن.</p></div>';
+ $('#chatList').innerHTML=arr.map(c=>{
+  const m=c.messages.at(-1)||{};
+  const locationAction= c.archived?'بازگردانی از بایگانی':c.hidden?'نمایش در فهرست اصلی':'انتقال به بایگانی / مخفی‌کردن';
+  return `<div class="chatrow ${state.active===c.id?'selected':''}" data-chat="${esc(c.id)}">
+   <div class="avatar ${c.color||''}">${esc(c.avatar||c.name[0])}</div>
+   <div class="chatinfo"><div class="chathead"><b>${esc(c.name)}${c.verified?' <span class="verified" title="تأییدشده">✓</span>':''}</b><span class="time">${esc(m.time||'')}</span></div>
+   <div class="preview">${c.type==='channels'?'📢 ':''}${esc(m.text||'هنوز پیامی نیست')}</div></div>
+   ${c.unread?`<span class="unread">${c.unread}</span>`:''}
+   <button class="chat-row-more" type="button" data-chat-actions="${esc(c.id)}" aria-label="عملیات گفتگو" title="${locationAction}">⋮</button>
+  </div>`;
+ }).join('')||empty;
+}
+async function setChatFolder(chat,folder){
+ if(!chat)return;
+ if(folder==='archive'){chat.archived=!chat.archived;if(chat.archived)chat.hidden=false}
+ else if(folder==='hidden'){chat.hidden=!chat.hidden;if(chat.hidden)chat.archived=false}
+ else if(folder==='restore'){chat.archived=false;chat.hidden=false}
+ save();
+ await persistChatPreference(chat);
+ renderChats();
+ toast(chat.archived?'گفت‌وگو به بایگانی منتقل شد':chat.hidden?'گفت‌وگو مخفی شد':'گفت‌وگو به فهرست اصلی برگشت');
+}
+let activeFolderActionChatId=null;
+function showChatFolderActions(chat){
+ if(!chat)return;
+ activeFolderActionChatId=chat.id;
+ const archiveLabel=chat.archived?'بازگرداندن از بایگانی':'بایگانی کردن';
+ const hiddenLabel=chat.hidden?'نمایش در فهرست اصلی':'مخفی کردن گفتگو';
+ showModal('مدیریت گفتگو',`
+  <p class="subtle">${esc(chat.name)}</p>
+  <button class="secondary chat-folder-action" data-chat-folder-action="archive" style="width:100%;margin:5px 0">${archiveLabel}</button>
+  <button class="secondary chat-folder-action" data-chat-folder-action="hidden" style="width:100%;margin:5px 0">${hiddenLabel}</button>
+  <div class="modalactions"><button class="secondary" data-close>بستن</button></div>`);
+}
 function parseMediaMarker(value){const match=String(value||'').match(/^\[\[media:([^|]+)\|([^|]+)\|([^|]+)\]\]$/);if(!match)return null;try{return {path:decodeURIComponent(match[1]),type:decodeURIComponent(match[2]),name:decodeURIComponent(match[3])}}catch(e){return null}}
 function renderMessageContent(message){const value=typeof message==='string'?message:(message.text||'');const sticker=String(value).match(/^\[\[sticker:(.+)\]\]$/);if(sticker)return '<span class="animated-sticker" role="img" aria-label="استیکر">'+esc(sticker[1])+'</span>';const media=parseMediaMarker(value);if(media){if(!message||typeof message==='string'||!message.mediaUrl)return '<span class="subtle">📎 '+esc(media.name)+' — در حال بارگذاری</span>';if(media.type.startsWith('image/'))return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer"><img class="media-image" src="'+esc(message.mediaUrl)+'" alt="'+esc(media.name)+'"></a>';if(media.type.startsWith('video/'))return '<video class="media-video" controls playsinline preload="metadata" src="'+esc(message.mediaUrl)+'"></video><div class="subtle">'+esc(media.name)+'</div>';return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer" download="'+esc(media.name)+'">📎 '+esc(media.name)+'</a>'}return esc(value)}
 async function refreshMediaUrls(chat){if(!remoteMode||!chat||!chat.remote)return;let changed=false;for(const message of chat.messages){const media=parseMediaMarker(message.text);if(!media||message.mediaUrlExpiresAt>Date.now()+60000)continue;const {data,error}=await supabaseClient.storage.from('arogram-chat-media').createSignedUrl(media.path,3600);if(!error&&data?.signedUrl){message.mediaUrl=data.signedUrl;message.mediaUrlExpiresAt=Date.now()+3500*1000;changed=true}}if(changed&&state.active===chat.id)renderMessages()}
@@ -1672,32 +1724,53 @@ $('#settingsQuickBtn').onclick=()=>settingsModal();$('#audioCallBtn').onclick=()
 $('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
 $('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({profile:profileModal,contacts:newChat,saved:()=>showModal('پیام‌های ذخیره‌شده','<p class="subtle">بخش پیام‌های ذخیره‌شده پس از پیاده‌سازی ذخیره‌سازی ابری فعال می‌شود.</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>'),group:()=>createCollection('groups'),channel:()=>createCollection('channels'),settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایران‌گرام',`<p>ایران‌گرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 let suppressChatClick=false;
-$('#chatList').onclick=e=>{if(suppressChatClick){suppressChatClick=false;e.preventDefault();return}const row=e.target.closest('[data-chat]');if(row)openChat(row.dataset.chat)};
+$('#chatList').onclick=e=>{
+ const actionButton=e.target.closest('[data-chat-actions]');
+ if(actionButton){e.stopPropagation();const chat=state.chats.find(x=>x.id===actionButton.dataset.chatActions);showChatFolderActions(chat);return}
+ if(e.target.closest('[data-chat-folder-action]'))return;
+ if(suppressChatClick){suppressChatClick=false;e.preventDefault();return}
+ const row=e.target.closest('[data-chat]');if(row)openChat(row.dataset.chat);
+};
 let chatTouchStart=null;
 const clearSwipeHint=()=>document.querySelectorAll('.chatrow.swipe-archive,.chatrow.swipe-hidden').forEach(x=>x.classList.remove('swipe-archive','swipe-hidden'));
 $('#chatList').addEventListener('touchstart',e=>{
  suppressChatClick=false;clearSwipeHint();
  const row=e.target.closest('[data-chat]');
- if(row)chatTouchStart={id:row.dataset.chat,y:e.changedTouches[0].clientY,row};
+ if(row&&!e.target.closest('button'))chatTouchStart={id:row.dataset.chat,y:e.changedTouches[0].clientY,row};
 },{passive:true});
 $('#chatList').addEventListener('touchmove',e=>{
  if(!chatTouchStart)return;
  const dy=e.touches[0].clientY-chatTouchStart.y;
- chatTouchStart.row.classList.toggle('swipe-archive',dy < -22);
- chatTouchStart.row.classList.toggle('swipe-hidden',dy > 22);
+ const upward=dy < -22,downward=dy > 22;
+ chatTouchStart.row.classList.toggle('swipe-archive',
+  state.filter==='hidden'?upward:state.filter==='archive'?false:upward);
+ chatTouchStart.row.classList.toggle('swipe-hidden',
+  state.filter==='archive'?downward:state.filter==='hidden'?false:downward);
 },{passive:true});
 $('#chatList').addEventListener('touchend',e=>{
  if(!chatTouchStart)return;
  const gesture=chatTouchStart;const dy=e.changedTouches[0].clientY-gesture.y;
- const c=state.chats.find(x=>x.id===gesture.id);chatTouchStart=null;
- if(!c){clearSwipeHint();return}
- if(dy < -75){
-  suppressChatClick=true;c.archived=true;c.hidden=false;save();persistChatPreference(c);renderChats();toast('گفت‌وگو به آرشیو رفت');
- }else if(dy > 75){
-  suppressChatClick=true;c.hidden=true;c.archived=false;save();persistChatPreference(c);renderChats();toast('گفت‌وگو به پوشه مخفی رفت');
- }else clearSwipeHint();
+ const chat=state.chats.find(x=>x.id===gesture.id);chatTouchStart=null;
+ if(!chat){clearSwipeHint();return}
+ let action=null;
+ if(state.filter==='archive'&&dy>75)action='restore';
+ else if(state.filter==='hidden'&&dy < -75)action='restore';
+ else if(state.filter!=='archive'&&state.filter!=='hidden'&&dy < -75)action='archive';
+ else if(state.filter!=='archive'&&state.filter!=='hidden'&&dy >75)action='hidden';
+ clearSwipeHint();
+ if(action){
+  suppressChatClick=true;
+  setTimeout(()=>{suppressChatClick=false},500);
+  setChatFolder(chat,action);
+ }
 },{passive:true});
 $('#chatList').addEventListener('touchcancel',()=>{chatTouchStart=null;clearSwipeHint()},{passive:true});
+$('#modal').addEventListener('click',e=>{
+ const button=e.target.closest('[data-chat-folder-action]');
+ if(!button)return;
+ const chat=state.chats.find(x=>x.id===activeFolderActionChatId);
+ if(chat){setChatFolder(chat,button.dataset.chatFolderAction);closeModal()}
+});
 async function refreshMessageReactions(messageId){
  const chat=state.chats.find(x=>x.messages.some(m=>m.id===messageId));
  const msg=chat?.messages.find(m=>m.id===messageId);

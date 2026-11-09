@@ -114,6 +114,50 @@ body{background:radial-gradient(ellipse at 78% 5%,#153451 0,transparent 34%),#0b
 
 .showcase-gallery{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;align-items:stretch}.showcase-card{min-width:0;overflow:hidden;border:1px solid #30495e;border-radius:24px;background:linear-gradient(160deg,#172b3c,#101b27);box-shadow:0 18px 44px #0005;transition:transform .22s,border-color .22s}.showcase-card:hover{transform:translateY(-5px);border-color:#579bd1}.showcase-card img{display:block;width:100%;height:auto;aspect-ratio:3/4;object-fit:cover;background:#0e1621}.showcase-caption{display:flex;flex-direction:column;gap:4px;padding:15px 16px 18px}.showcase-caption b{font-family:'Lalezar','Vazirmatn',sans-serif;font-size:20px;font-weight:400;color:#f0f6fb}.showcase-caption span{font-size:12px;color:#9eb1c1;line-height:1.8}.heroimg{background-image:radial-gradient(circle at 24% 18%,#28699a 0,transparent 38%),linear-gradient(135deg,#16334a,#0b1420 72%)!important}@media(max-width:900px){.showcase-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}}@media(max-width:480px){.showcase-gallery{grid-template-columns:1fr;gap:18px}.showcase-card img{aspect-ratio:3/3.4}}
  .heroimg{background-image:url("assets/hero-showcase.svg")!important;background-size:cover!important;background-position:center!important;min-height:470px}.ico img{object-position:center 42%}
+
+/* IranGram premium store-style visual direction */
+:root{--bg:#06152d;--panel:#0d2343;--panel2:#12315a;--line:#234b79;--blue:#087ff0;--gold:#e7c46e}
+html{background:#06152d}
+body{background:radial-gradient(ellipse at 50% 18%,#0758a8 0,transparent 42%),linear-gradient(180deg,#06152d 0%,#071a36 48%,#061225 100%);color:#f5f9ff}
+.wrap{width:min(1320px,94%)}
+.nav{height:74px;border-bottom:1px solid #2d5c8d;background:#06152ddd;backdrop-filter:blur(18px);position:relative;z-index:2}
+.logo{border-radius:50%;background:linear-gradient(145deg,#1ba8ff,#064bb7);border:1px solid #67c5ff;box-shadow:0 0 28px #087ff066}
+.brand{font-size:24px}
+.navlinks{color:#e1efff;gap:30px}
+.btn{border-radius:999px;background:linear-gradient(110deg,#12a8ff,#0759d5);border:1px solid #64c5ff;box-shadow:0 9px 30px #007bff55;padding:13px 25px}
+.btn.secondary{background:#0b2342;border-color:#4a82b7;color:#dceeff}
+.hero{padding:54px 0 38px;grid-template-columns:1fr 1.12fr;gap:28px;min-height:570px}
+.hero h1{font-size:clamp(48px,6vw,76px);line-height:1.2;text-shadow:0 5px 30px #0079ff55}
+.hero h1 span{color:#fff;background:none;-webkit-text-fill-color:#fff;text-shadow:0 0 26px #54aaff}
+.eyebrow{background:#0b3970;border-color:#2f8bdb;color:#bde4ff}
+.lead{font-size:18px;color:#e0edfb;line-height:2}
+.maker{color:#c4ddf6}.maker b{color:#8fd2ff}
+.heroimg{min-height:540px;border:0;border-radius:30px;box-shadow:0 24px 70px #0008;background-color:#08234a;background-size:cover!important;background-position:center!important}
+.stats{margin:0 auto 42px;gap:14px}
+.stat,.feature{background:linear-gradient(145deg,#102e55dd,#0a1e3bdd);border:1px solid #315d8c;box-shadow:inset 0 1px #ffffff12,0 12px 35px #0004;border-radius:22px}
+.section{padding:45px 0}
+.sectionhead h2{font-size:36px;color:#fff}
+.sectionhead p{color:#b8d5f2}
+.grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.feature{min-height:165px;padding:18px 15px;text-align:center}
+.ico{margin:0 auto 10px;background:linear-gradient(145deg,#087fd5,#063b85);border:1px solid #3aaeff;color:#dff5ff}
+.feature h3{color:#fff;font-size:16px}
+.feature p{color:#bdd2e8;font-size:13px}
+.tag{background:#143a62;color:#c7e5ff}
+.tag.live{background:#104b47;color:#9af0d5}
+.showcase-gallery{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.showcase-card{background:linear-gradient(150deg,#102c50,#091a32);border:1px solid #37638f;border-radius:22px;overflow:hidden;box-shadow:0 15px 42px #0006}
+.showcase-card img{width:100%;height:300px;object-fit:cover;display:block}
+.showcase-caption{padding:14px 16px;display:flex;flex-direction:column;gap:3px}
+.showcase-caption b{font-size:18px;color:#fff}
+.showcase-caption span{font-size:13px;color:#b9d4ed}
+.download{background:radial-gradient(ellipse at 50% 0,#0b70ca 0,#0c2c53 48%,#091a31 100%);border:1px solid #3986c4;box-shadow:0 20px 60px #0006}
+.download h2{font-size:38px}
+.footer{border-color:#2b4e75;color:#a9c7e5}
+#live-app>div{border-color:#315d8c!important;box-shadow:0 18px 55px #0008!important}
+@media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.showcase-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{grid-template-columns:1fr 1fr}.heroimg{min-height:440px}}
+@media(max-width:650px){.nav{height:64px}.brand{font-size:20px}.hero{grid-template-columns:1fr;padding:30px 0 22px;gap:18px}.heroimg{min-height:420px;order:2}.hero h1{font-size:48px}.lead{font-size:16px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.showcase-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.showcase-card img{height:230px}.section{padding:34px 0}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:1/-1}}
+
 </style>
 </head>
 <body>

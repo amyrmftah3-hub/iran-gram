@@ -935,6 +935,48 @@ html,body{width:100%;height:100%;background:#0e1621;color:#e9edef;font-family:Va
  .compose-fab{bottom:calc(18px + env(safe-area-inset-bottom));left:16px}
 }
 
+
+/* Telegram-style navigation drawer and full settings center */
+.menu{position:fixed;inset:0 auto 0 0;top:0;left:auto;right:0;width:min(330px,88vw);height:100dvh;min-width:0;overflow-y:auto;padding:0 0 18px;border-radius:0 0 0 0;background:#17212b;border-left:1px solid #263442;box-shadow:-18px 0 50px #0008;z-index:100;transform:translateX(110%);transition:transform .22s ease;display:block;visibility:hidden}
+.menu.open{visibility:visible;transform:translateX(0)}
+.menu.open:before{content:"";position:fixed;inset:0;right:100%;width:100vw;background:#0008;pointer-events:none}
+.drawer-profile{display:flex;align-items:center;gap:12px;padding:26px 18px 22px;background:linear-gradient(135deg,#1b5c8f,#17212b)}
+.drawer-avatar{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#3390ec;color:#fff;font-size:22px;font-weight:700;flex-shrink:0}
+.drawer-user{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}.drawer-user b{font-size:15px}.drawer-user small,.settings-account small{color:#a9bac9;font-size:11px}
+.drawer-close{background:transparent;color:#dce7ef;font-size:27px;padding:4px 9px}
+.drawer-section{padding:15px 18px 5px;color:#7e9aaf;font-size:11px;font-weight:700}
+.menu button:not(.drawer-close){display:flex;align-items:center;gap:14px;width:100%;text-align:right;background:transparent;color:#e7edf2;padding:12px 19px;border-radius:0;font-size:14px}
+.menu button:not(.drawer-close) span{width:22px;text-align:center;font-size:18px}
+.menu button:not(.drawer-close):hover{background:#263746}
+.drawer-footer{border-top:1px solid #263442;margin-top:12px;padding:16px 18px;color:#8295a5;font-size:11px}
+.compose-fab{width:56px;height:56px;border-radius:50%;font-size:27px;display:grid;place-items:center;background:#3390ec!important;color:white!important;box-shadow:0 5px 18px #0006!important;z-index:4}
+.telegram-settings-modal{width:min(900px,96vw)!important;max-height:92dvh!important;padding:0!important;overflow:hidden!important;border:1px solid #2b3945}
+.telegram-settings-modal>h3{padding:18px 20px 0;margin:0!important}
+.settings-shell{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:440px;max-height:70dvh}
+.settings-sidebar{overflow:auto;border-left:1px solid #263442;padding:12px 8px}
+.settings-account{display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 8px 18px;margin-bottom:8px;border-bottom:1px solid #263442}
+.settings-nav{display:flex;align-items:center;gap:12px;width:100%;text-align:right;padding:11px 10px;border-radius:10px;background:transparent;color:#dce6ee;margin:2px 0}
+.settings-nav>span:first-child{font-size:20px;width:26px;text-align:center}
+.settings-nav>span:last-child{display:flex;flex-direction:column;gap:3px}
+.settings-nav b{font-size:12px}.settings-nav small{font-size:10px;color:#91a4b4}
+.settings-nav.active,.settings-nav:hover{background:#263b4d}
+.settings-content{overflow:auto;padding:18px 20px}
+.settings-section-title{display:flex;align-items:center;gap:12px;padding-bottom:15px;margin-bottom:14px;border-bottom:1px solid #263442}
+.settings-section-title>span{font-size:25px}.settings-section-title div{display:flex;flex-direction:column;gap:4px}.settings-section-title b{font-size:17px}.settings-section-title small{font-size:11px;color:#91a4b4}
+.settings-card{background:#1c2a37;border:1px solid #2a3a48;border-radius:13px;padding:14px;margin-bottom:12px}
+.settings-card h4{margin:0 0 10px;color:#7fb8e9;font-size:12px}
+.setting-row{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:13px 2px;background:transparent;color:#e5edf3;border-bottom:1px solid #2a3946;text-align:right;font-size:13px}
+.setting-row:last-child{border-bottom:0}.setting-row b{font-size:11px;color:#8da5b8;font-weight:500}
+.setting-toggle{display:flex!important;align-items:center;justify-content:space-between;gap:12px;margin:0!important;padding:12px 0;border-bottom:1px solid #2a3946;cursor:pointer}
+.setting-toggle:last-child{border-bottom:0}.setting-toggle span{display:flex;flex-direction:column;gap:4px}.setting-toggle b{font-size:12px;color:#e5edf3}.setting-toggle small{font-size:10px;color:#91a4b4}
+.setting-toggle input{position:absolute;opacity:0;pointer-events:none}.setting-toggle i{width:42px;height:24px;border-radius:20px;background:#435362;position:relative;flex-shrink:0;transition:.18s}
+.setting-toggle i:after{content:"";position:absolute;width:18px;height:18px;top:3px;right:3px;border-radius:50%;background:#fff;transition:.18s}
+.setting-toggle input:checked+i{background:#3390ec}.setting-toggle input:checked+i:after{right:21px}
+.setting-field{display:block!important;color:#dce7ef;font-size:12px}.setting-field textarea{display:block;width:100%;margin:8px 0}
+.device-row{display:flex;flex-direction:column;gap:7px;padding:8px 0;color:#e5edf3}.device-row small{color:#91a4b4}.online-dot{color:#56c596;font-size:11px}
+.telegram-settings-modal .modalactions{padding:0 20px 16px;margin-top:0}
+@media(max-width:650px){.settings-shell{grid-template-columns:1fr;max-height:73dvh}.settings-sidebar{display:flex;gap:6px;overflow-x:auto;border-left:0;border-bottom:1px solid #263442;padding:8px}.settings-account{display:none}.settings-nav{width:auto;min-width:105px;flex-direction:column;justify-content:center;text-align:center;padding:8px}.settings-nav>span:last-child{align-items:center}.settings-nav small{display:none}.settings-content{padding:14px}.telegram-settings-modal{width:96vw!important;max-height:94dvh!important}}
+
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -952,7 +994,14 @@ html,body{width:100%;height:100%;background:#0e1621;color:#e9edef;font-family:Va
   <div class="topbar-title">ایران‌گرام</div>
  </header>
  <div class="menu" id="mainMenu">
-  <button data-action="profile">👤 پروفایل من</button><button data-action="group">👥 ساخت گروه</button><button data-action="channel">📢 ساخت کانال</button><button data-action="settings">⚙️ تنظیمات</button><button data-action="ads">📣 تبلیغات</button><button data-action="admin">🛡️ مدیریت ایران‌گرام</button><button data-action="export">⬇️ خروجی پشتیبان</button><button data-action="about">ℹ️ درباره ایران‌گرام</button><button data-action="logout">🚪 خروج از حساب</button>
+  <div class="drawer-profile"><div class="drawer-avatar">ای</div><div class="drawer-user"><b id="drawerName">کاربر ایران‌گرام</b><small id="drawerUsername">حساب ایران‌گرام</small></div><button class="drawer-close" id="drawerClose" aria-label="بستن">×</button></div>
+  <div class="drawer-section">حساب کاربری</div>
+  <button data-action="profile"><span>👤</span> پروفایل من</button><button data-action="contacts"><span>♙</span> مخاطبین</button><button data-action="saved"><span>🔖</span> پیام‌های ذخیره‌شده</button>
+  <div class="drawer-section">ایران‌گرام</div>
+  <button data-action="group"><span>👥</span> ساخت گروه</button><button data-action="channel"><span>📢</span> ساخت کانال</button><button data-action="ads"><span>📣</span> تبلیغات</button><button data-action="settings"><span>⚙️</span> تنظیمات</button>
+  <div class="drawer-section">ابزارها</div>
+  <button data-action="admin"><span>🛡️</span> مدیریت ایران‌گرام</button><button data-action="export"><span>⬇️</span> خروجی پشتیبان</button><button data-action="about"><span>ℹ️</span> درباره ایران‌گرام</button><button data-action="logout"><span>🚪</span> خروج از حساب</button>
+  <div class="drawer-footer">ایران‌گرام · پیام‌رسان فارسی</div>
  </div>
  <div class="searchbox"><input id="search" placeholder="جست‌وجو در پیام‌ها و گفتگوها" autocomplete="off"></div>
  <div class="filters" role="tablist" aria-label="پوشه گفتگوها"><button class="filter active" role="tab" aria-selected="true" data-filter="all">همه چت‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="people">شخصی</button><button class="filter" role="tab" aria-selected="false" data-filter="unread">خوانده‌نشده</button><button class="filter" role="tab" aria-selected="false" data-filter="groups">گروه‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="channels">کانال‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="archive">آرشیو</button><button class="filter" role="tab" aria-selected="false" data-filter="hidden">مخفی</button></div>
@@ -1385,7 +1434,40 @@ function createCollection(type){const channel=type==='channels';showModal(channe
 function showModal(title,body){$('#modal').innerHTML=`<h3>${title}</h3>${body}`;$('#modalBack').classList.add('open')}
 function closeModal(){$('#modalBack').classList.remove('open');$('#modal').classList.remove('ai-modal')}
 function profileModal(){const body='<label>نام نمایشی</label><input id="profileName" value="'+esc(state.profile.name)+'"><label>نام کاربری (بدون @)</label><input id="profileUsername" value="'+esc(state.profile.username||'')+'" placeholder="مثلاً amir_gram" maxlength="32"><small class="subtle">۵ تا ۳۲ نویسه؛ فقط حروف انگلیسی، عدد و زیرخط</small><label>بیو</label><textarea id="profileBio">'+esc(state.profile.bio)+'</textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveProfile">ذخیره</button></div>';showModal('پروفایل من',body);$('#saveProfile').onclick=async()=>{const name=$('#profileName').value.trim()||'کاربر ایران‌گرام',bio=$('#profileBio').value.trim(),username=$('#profileUsername').value.trim().replace(/^@/,'').toLowerCase();if(username&&!/^[a-z][a-z0-9_]{4,31}$/.test(username)){toast('نام کاربری باید ۵ تا ۳۲ نویسه و با حرف انگلیسی شروع شود.');return}if(remoteMode&&currentUser){const {error}=await supabaseClient.from('profiles').update({display_name:name,bio,username:username||null}).eq('id',currentUser.id);if(error){toast(error.code==='23505'?'این نام کاربری قبلاً گرفته شده.':'ذخیره پروفایل ناموفق بود: '+error.message);return}}state.profile.name=name;state.profile.bio=bio;state.profile.username=username;save();closeModal();toast(remoteMode?'پروفایل آنلاین ذخیره شد':'پروفایل روی این دستگاه ذخیره شد')}}
-function settingsModal(){showModal('تنظیمات',`<p>ظاهر برنامه</p><button class="secondary" id="themeToggle" style="width:100%">تغییر حالت روشن / تیره</button><label>متن ویژه هنگام شروع</label><textarea id="customSplashText" placeholder="هر متنی که می‌خواهی در موارد ویژه نمایش داده شود...">${esc(localStorage.getItem('ig_special_splash')||'')}</textarea><div class="subtle">اگر متن ویژه ثبت کنی، در شروع‌های بعدی به‌جای شعر نمایش داده می‌شود. برای برگشت به شعرها، کادر را خالی و ذخیره کن.</div><div class="modalactions"><button class="secondary" id="saveSplashText">ذخیره متن</button><button class="secondary" data-close>بستن</button><button class="primary" id="clearData">بازنشانی داده‌های نمایشی</button></div>`);$('#themeToggle').onclick=()=>{state.profile.theme=state.profile.theme==='dark'?'light':'dark';save();render();settingsModal()};$('#saveSplashText').onclick=()=>{const value=$('#customSplashText').value.trim();if(value)localStorage.setItem('ig_special_splash',value);else localStorage.removeItem('ig_special_splash');toast(value?'متن ویژه ذخیره شد':'نمایش شعرهای متنوع فعال شد');closeModal()};$('#clearData').onclick=()=>{if(confirm('همه گفتگوهای نمایشی ذخیره‌شده روی این دستگاه پاک شوند؟')){state.chats=starter();state.active=null;state.profile={name:'کاربر ایران‌گرام',bio:'سلام! من در ایران‌گرام هستم.',theme:'light'};save();closeModal();$('#chatView').style.display='none';$('#emptyState').style.display='grid';$('#app').classList.remove('chat-open');render();toast('داده‌های نمایشی بازنشانی شد')}}}
+function settingsModal(){
+ const readPrefs=()=>{try{return JSON.parse(localStorage.getItem('ig_settings')||'{}')}catch(e){return {}}};
+ const prefs=readPrefs();
+ const sections=[
+  {id:'general',icon:'🎨',name:'عمومی',desc:'ظاهر، زبان و اندازه متن'},
+  {id:'notifications',icon:'🔔',name:'اعلان‌ها',desc:'پیام‌ها، گروه‌ها و صدا'},
+  {id:'privacy',icon:'🔒',name:'حریم خصوصی و امنیت',desc:'آخرین بازدید، شماره و قفل برنامه'},
+  {id:'chat',icon:'💬',name:'تنظیمات گفتگو',desc:'پس‌زمینه، ارسال و نمایش پیام'},
+  {id:'data',icon:'📦',name:'داده‌ها و حافظه',desc:'مصرف اینترنت و فضای ذخیره‌سازی'},
+  {id:'devices',icon:'💻',name:'دستگاه‌ها',desc:'نشست فعلی و دستگاه‌های متصل'},
+  {id:'help',icon:'❓',name:'راهنما',desc:'پشتیبانی و درباره برنامه'}
+ ];
+ const toggle=(key,label,desc,def=true)=>'<label class="setting-toggle"><span><b>'+label+'</b><small>'+desc+'</small></span><input type="checkbox" data-pref="'+key+'" '+((prefs[key]??def)?'checked':'')+'><i></i></label>';
+ const renderSection=id=>{
+  const title=sections.find(x=>x.id===id)||sections[0];let body='';
+  if(id==='general')body='<div class="settings-card"><h4>ظاهر برنامه</h4><button class="setting-row" id="settingsTheme"><span>🌙 حالت شب / روز</span><b>'+((state.profile.theme==='dark')?'تیره':'روشن')+'　›</b></button><div class="setting-row"><span>زبان برنامه</span><b>فارسی　›</b></div><div class="setting-row"><span>اندازه متن</span><b>معمولی　›</b></div></div><div class="settings-card"><h4>شروع برنامه</h4><label class="setting-field">متن ویژه هنگام شروع<textarea id="customSplashText" placeholder="برای نمایش شعرهای پیش‌فرض خالی بگذار...">'+esc(localStorage.getItem('ig_special_splash')||'')+'</textarea></label><button class="primary" id="saveSplashText">ذخیره متن شروع</button></div>';
+  if(id==='notifications')body='<div class="settings-card"><h4>اعلان‌ها و صدا</h4>'+toggle('notify_private','گفتگوهای خصوصی','اعلان پیام‌های جدید')+toggle('notify_groups','گروه‌ها','اعلان پیام‌های گروهی')+toggle('notify_channels','کانال‌ها','اعلان پست‌های کانال')+toggle('notify_sound','صدای اعلان','پخش صدای اعلان')+toggle('notify_preview','پیش‌نمایش پیام','نمایش متن پیام در اعلان')+'</div><p class="subtle">این گزینه‌ها فعلاً ترجیحات همین دستگاه را ذخیره می‌کنند؛ اتصال اعلان سیستمی به سرویس ارسال اعلان هنوز نیازمند راه‌اندازی جداگانه است.</p>';
+  if(id==='privacy')body='<div class="settings-card"><h4>حریم خصوصی</h4>'+toggle('privacy_phone','نمایش شماره تلفن','نمایش شماره برای دیگران',false)+toggle('privacy_lastseen','نمایش آخرین بازدید','اجازه نمایش وضعیت آنلاین',true)+toggle('privacy_readreceipts','تأیید خواندن پیام','نمایش تیک خوانده‌شدن',true)+toggle('privacy_forward','پیوند به حساب هنگام فوروارد','نمایش نام حساب در پیام فورواردشده',true)+'</div><div class="settings-card"><h4>امنیت</h4><div class="setting-row"><span>قفل برنامه با رمز</span><b>به‌زودی</b></div><div class="setting-row"><span>تأیید دومرحله‌ای</span><b>نیازمند تنظیم سرور</b></div><div class="setting-row"><span>نشست‌های فعال</span><b>دستگاه‌ها　›</b></div></div>';
+  if(id==='chat')body='<div class="settings-card"><h4>گفتگوها</h4>'+toggle('chat_enter_send','ارسال با کلید Enter','برای ارسال پیام از Enter استفاده کن',true)+toggle('chat_animations','انیمیشن‌ها','پخش انیمیشن‌های رابط کاربری',true)+toggle('chat_large_emoji','ایموجی بزرگ','نمایش ایموجی‌های تنها با اندازه بزرگ',true)+toggle('chat_auto_media','پخش خودکار رسانه','پخش خودکار ویدئو و GIF',false)+'</div><div class="settings-card"><h4>مدیریت گفتگو</h4><button class="setting-row" id="settingsExport"><span>⬇️ خروجی گرفتن از اطلاعات</span><b>›</b></button></div>';
+  if(id==='data')body='<div class="settings-card"><h4>مصرف داده و حافظه</h4><div class="setting-row"><span>دانلود خودکار عکس</span><b>فقط وای‌فای</b></div><div class="setting-row"><span>دانلود خودکار ویدئو</span><b>خاموش</b></div><div class="setting-row"><span>پاک‌سازی حافظه موقت</span><b>›</b></div></div><div class="settings-card"><h4>اطلاعات حساب</h4><p class="subtle">'+(remoteMode&&currentUser?'حساب آنلاین متصل است.':'در حالت محلی هستی؛ برای همگام‌سازی وارد حساب شو.')+'</p><button class="setting-row" id="settingsExport2"><span>ساخت فایل پشتیبان</span><b>›</b></button></div>';
+  if(id==='devices')body='<div class="settings-card"><h4>دستگاه فعلی</h4><div class="device-row"><b>📱 این دستگاه</b><small>'+(navigator.userAgent.includes('Android')?'Android':'مرورگر فعلی')+' · نشست کنونی</small><span class="online-dot">فعال</span></div></div><p class="subtle">مدیریت و بستن نشست‌های دیگر تا زمان پیاده‌سازی فهرست نشست‌ها در سرور در دسترس نیست.</p>';
+  if(id==='help')body='<div class="settings-card"><button class="setting-row" id="settingsAbout"><span>ℹ️ درباره ایران‌گرام</span><b>›</b></button><div class="setting-row"><span>نسخه برنامه</span><b>پیش‌نمایش وب</b></div><div class="setting-row"><span>پشتیبانی</span><b>در حال راه‌اندازی</b></div></div>';
+  $('#settingsContent').innerHTML='<div class="settings-section-title"><span>'+title.icon+'</span><div><b>'+title.name+'</b><small>'+title.desc+'</small></div></div>'+body;
+  $('#settingsContent').querySelectorAll('[data-pref]').forEach(input=>input.onchange=()=>{const p=readPrefs();p[input.dataset.pref]=input.checked;localStorage.setItem('ig_settings',JSON.stringify(p));toast('تنظیم ذخیره شد')});
+  const theme=$('#settingsTheme');if(theme)theme.onclick=()=>{state.profile.theme=state.profile.theme==='dark'?'light':'dark';save();document.body.classList.toggle('dark',state.profile.theme==='dark');renderSection('general')};
+  const splash=$('#saveSplashText');if(splash)splash.onclick=()=>{const v=$('#customSplashText').value.trim();if(v)localStorage.setItem('ig_special_splash',v);else localStorage.removeItem('ig_special_splash');setSplashPoem();toast('متن شروع ذخیره شد')};
+  ['settingsExport','settingsExport2'].forEach(k=>{const el=$('#'+k);if(el)el.onclick=exportData});
+  const about=$('#settingsAbout');if(about)about.onclick=()=>{closeModal();showModal('درباره ایران‌گرام','<p>ایران‌گرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">برخی امکانات به اتصال و آزمایش واقعی سرور نیاز دارند.</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>')};
+ };
+ showModal('تنظیمات', '<div class="settings-shell"><div class="settings-sidebar"><div class="settings-account"><div class="drawer-avatar">'+esc((state.profile.name||'ا').slice(0,1))+'</div><b>'+esc(state.profile.name||'کاربر ایران‌گرام')+'</b><small>@'+esc(state.profile.username||'username')+'</small></div>'+sections.map(x=>'<button class="settings-nav '+(x.id==='general'?'active':'')+'" data-settings="'+x.id+'"><span>'+x.icon+'</span><span><b>'+x.name+'</b><small>'+x.desc+'</small></span></button>').join('')+'</div><div class="settings-content" id="settingsContent"></div></div><div class="modalactions"><button class="secondary" data-close>بستن تنظیمات</button></div>');
+ $('#modal').classList.add('telegram-settings-modal');
+ $('#modal').querySelectorAll('[data-settings]').forEach(b=>b.onclick=()=>{$('#modal').querySelectorAll('[data-settings]').forEach(x=>x.classList.toggle('active',x===b));renderSection(b.dataset.settings)});
+ renderSection('general');
+}
 
 let aiMessages=[];
 function loadAIHistory(){try{aiMessages=JSON.parse(localStorage.getItem('ig_ai_history_'+(currentUser?.id||'guest'))||'[]');if(!Array.isArray(aiMessages))aiMessages=[]}catch(e){aiMessages=[]}}
@@ -1460,7 +1542,7 @@ async function adminPanel(){
  $('#createAd').onclick=async()=>{const title=$('#adTitle').value.trim(),url=$('#adUrl').value.trim(),end=$('#adEnd').value;if(!title||!url.startsWith('https://')||!end){toast('عنوان، لینک HTTPS و زمان پایان را کامل کن.');return}const {error}=await supabaseClient.from('advertisements').insert({title,target_url:url,channel_id:$('#adChannel').value||null,starts_at:new Date().toISOString(),ends_at:new Date(end).toISOString(),status:'active',created_by:currentUser.id});if(error){toast('ثبت تبلیغ ناموفق بود: '+error.message);return}toast('تبلیغ ثبت و فعال شد.');adminPanel()};
 }
 
-$('#menuBtn').onclick=()=>$('#mainMenu').classList.toggle('open');
+$('#menuBtn').onclick=()=>$('#mainMenu').classList.toggle('open');$('#drawerClose').onclick=()=>$('#mainMenu').classList.remove('open');$('#drawerName').textContent=state.profile.name||'کاربر ایران‌گرام';$('#drawerUsername').textContent=state.profile.username?'@'+state.profile.username:(currentUser?.email||'حساب ایران‌گرام');
 $('#settingsQuickBtn').onclick=()=>settingsModal();$('#audioCallBtn').onclick=()=>startOutgoingCall('audio');$('#videoCallBtn').onclick=()=>startOutgoingCall('video');$('#endCallBtn').onclick=()=>finishCall(true);$('#muteCallBtn').onclick=()=>{const track=activeCall?.localStream?.getAudioTracks()[0];if(track){track.enabled=!track.enabled;$('#muteCallBtn').textContent=track.enabled?'🎙️':'🔇'}};$('#cameraCallBtn').onclick=()=>{const track=activeCall?.localStream?.getVideoTracks()[0];if(track){track.enabled=!track.enabled;$('#cameraCallBtn').textContent=track.enabled?'📷':'🚫'}};$('#bottomNav').onclick=e=>{
  const button=e.target.closest('[data-nav]');if(!button)return;
  document.querySelectorAll('.bottom-nav-item').forEach(x=>{x.classList.toggle('active',x===button);if(x===button)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});
@@ -1474,7 +1556,7 @@ $('#settingsQuickBtn').onclick=()=>settingsModal();$('#audioCallBtn').onclick=()
  else if(action==='settings')settingsModal();
 };
 $('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
-$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({profile:profileModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایران‌گرام',`<p>ایران‌گرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
+$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({profile:profileModal,contacts:newChat,saved:()=>showModal('پیام‌های ذخیره‌شده','<p class="subtle">بخش پیام‌های ذخیره‌شده پس از پیاده‌سازی ذخیره‌سازی ابری فعال می‌شود.</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>'),group:()=>createCollection('groups'),channel:()=>createCollection('channels'),settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایران‌گرام',`<p>ایران‌گرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 let suppressChatClick=false;
 $('#chatList').onclick=e=>{if(suppressChatClick){suppressChatClick=false;e.preventDefault();return}const row=e.target.closest('[data-chat]');if(row)openChat(row.dataset.chat)};
 let chatTouchStart=null;

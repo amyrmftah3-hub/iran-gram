@@ -1487,7 +1487,7 @@ $('#modal').addEventListener('click',e=>{
  if(e.target.id==='hideChat'){const c=activeChat();c.hidden=!c.hidden;if(c.hidden)c.archived=false;save();persistChatPreference(c);closeModal();renderChats()}
 });
 $('#modalBack').onclick=e=>{if(e.target===$('#modalBack'))closeModal()};
-const splashPoems=['پیام تازه، آغاز راهی تازه؛ دل‌ها نزدیک‌تر از همیشه.','به وقت هم‌صحبتی، فاصله‌ها کوتاه می‌شوند.','هر پیام، پلی کوچک میان دو جهان.','با هم حرف بزنیم؛ دنیا با گفت‌وگو روشن‌تر است.'];$('#splashPoem').textContent=splashPoems[Math.floor(Math.random()*splashPoems.length)];
+setSplashPoem();
 if(!window.supabase){toast('بارگذاری سرویس ورود ناموفق بود. صفحه را تازه‌سازی کن.')}else{initAuth()}
 </script>
 

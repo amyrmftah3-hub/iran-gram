@@ -938,7 +938,7 @@ html,body{width:100%;height:100%;background:#0e1621;color:#e9edef;font-family:Va
 
 /* Telegram-style navigation drawer and full settings center */
 .menu{position:fixed;inset:0 auto 0 0;top:0;left:auto;right:0;width:min(330px,88vw);height:100dvh;min-width:0;overflow-y:auto;padding:0 0 18px;border-radius:0 0 0 0;background:#17212b;border-left:1px solid #263442;box-shadow:-18px 0 50px #0008;z-index:100;transform:translateX(110%);transition:transform .22s ease;display:block;visibility:hidden}
-.menu.open{visibility:visible;transform:translateX(0)}
+.menu.open{visibility:visible;transform:translateX(0);box-shadow:0 0 0 100vmax #0008,-18px 0 50px #0008}
 .menu.open:before{content:"";position:fixed;inset:0;right:100%;width:100vw;background:#0008;pointer-events:none}
 .drawer-profile{display:flex;align-items:center;gap:12px;padding:26px 18px 22px;background:linear-gradient(135deg,#1b5c8f,#17212b)}
 .drawer-avatar{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#3390ec;color:#fff;font-size:22px;font-weight:700;flex-shrink:0}
@@ -1542,7 +1542,7 @@ async function adminPanel(){
  $('#createAd').onclick=async()=>{const title=$('#adTitle').value.trim(),url=$('#adUrl').value.trim(),end=$('#adEnd').value;if(!title||!url.startsWith('https://')||!end){toast('عنوان، لینک HTTPS و زمان پایان را کامل کن.');return}const {error}=await supabaseClient.from('advertisements').insert({title,target_url:url,channel_id:$('#adChannel').value||null,starts_at:new Date().toISOString(),ends_at:new Date(end).toISOString(),status:'active',created_by:currentUser.id});if(error){toast('ثبت تبلیغ ناموفق بود: '+error.message);return}toast('تبلیغ ثبت و فعال شد.');adminPanel()};
 }
 
-$('#menuBtn').onclick=()=>$('#mainMenu').classList.toggle('open');$('#drawerClose').onclick=()=>$('#mainMenu').classList.remove('open');$('#drawerName').textContent=state.profile.name||'کاربر ایران‌گرام';$('#drawerUsername').textContent=state.profile.username?'@'+state.profile.username:(currentUser?.email||'حساب ایران‌گرام');
+$('#menuBtn').onclick=()=>{const opening=!$('#mainMenu').classList.contains('open');$('#mainMenu').classList.toggle('open',opening);if(opening){$('#drawerName').textContent=state.profile.name||'کاربر ایران‌گرام';$('#drawerUsername').textContent=state.profile.username?'@'+state.profile.username:(currentUser?.email||'حساب ایران‌گرام')}};$('#drawerClose').onclick=()=>$('#mainMenu').classList.remove('open');document.addEventListener('click',e=>{if($('#mainMenu').classList.contains('open')&&!$('#mainMenu').contains(e.target)&&!$('#menuBtn').contains(e.target))$('#mainMenu').classList.remove('open')});
 $('#settingsQuickBtn').onclick=()=>settingsModal();$('#audioCallBtn').onclick=()=>startOutgoingCall('audio');$('#videoCallBtn').onclick=()=>startOutgoingCall('video');$('#endCallBtn').onclick=()=>finishCall(true);$('#muteCallBtn').onclick=()=>{const track=activeCall?.localStream?.getAudioTracks()[0];if(track){track.enabled=!track.enabled;$('#muteCallBtn').textContent=track.enabled?'🎙️':'🔇'}};$('#cameraCallBtn').onclick=()=>{const track=activeCall?.localStream?.getVideoTracks()[0];if(track){track.enabled=!track.enabled;$('#cameraCallBtn').textContent=track.enabled?'📷':'🚫'}};$('#bottomNav').onclick=e=>{
  const button=e.target.closest('[data-nav]');if(!button)return;
  document.querySelectorAll('.bottom-nav-item').forEach(x=>{x.classList.toggle('active',x===button);if(x===button)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});

@@ -628,6 +628,43 @@ body,button,input,textarea{font-family:'Vazirmatn','Segoe UI',Tahoma,sans-serif}
 .ai-compose textarea{flex:1;min-height:42px;max-height:110px;resize:vertical;border:0;border-radius:20px;background:#243342;color:#f2f6fa;padding:11px 14px;outline:none}
 .ai-foot{padding:0 14px 10px;margin:0;background:#17212b}
 @media(max-width:600px){.ai-modal{width:100%;max-height:94dvh}.ai-window{min-height:76dvh;max-height:88dvh}.ai-head{padding:11px}.ai-transcript{padding:11px}.ai-head .secondary{font-size:10px}}
+
+/* Native-feeling Eitaa/Telegram-inspired navigation and screen polish */
+.bottom-nav{height:66px;flex:0 0 66px;display:grid;grid-template-columns:repeat(4,1fr);align-items:center;background:#17212b;border-top:1px solid #263442;padding:4px 8px max(4px,env(safe-area-inset-bottom));z-index:5}
+.bottom-nav-item{min-width:0;height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:transparent;color:#91a2b2;border-radius:12px;font-size:10px;font-weight:500;transition:background .15s,color .15s}
+.bottom-nav-item .nav-icon{font-size:21px;line-height:1.1}
+.bottom-nav-item.active{color:#62b5f6;background:#22394b;font-weight:700}
+.bottom-nav-item:active{transform:scale(.97)}
+.sidebar{padding-bottom:0}
+.chats{padding-bottom:88px}
+.compose-fab{bottom:88px}
+.chatheader{box-shadow:0 1px 3px #0002}
+.chatheader .iconbtn{border-radius:50%;width:38px;height:38px;display:grid;place-items:center}
+.messages{scroll-behavior:smooth}
+.msg{max-width:min(82%,560px);padding:9px 12px 7px}
+.msg.mine{border-bottom-right-radius:5px}
+.msg:not(.mine){border-bottom-left-radius:5px}
+.msgactions{opacity:.78;transition:opacity .15s}
+.msg:hover .msgactions{opacity:1}
+.reaction-summary{margin-top:7px}
+.composer{min-height:64px}
+.composefield{min-height:44px}
+@media(max-width:760px){
+ .bottom-nav{position:absolute;bottom:0;right:0;left:0;height:calc(62px + env(safe-area-inset-bottom));padding:3px 8px max(5px,env(safe-area-inset-bottom));background:#17212b}
+ .sidebar{height:100dvh;padding-bottom:calc(62px + env(safe-area-inset-bottom))}
+ .chats{padding-bottom:12px}
+ .compose-fab{bottom:calc(78px + env(safe-area-inset-bottom));left:17px}
+ .stories{flex-shrink:0}
+ .bottom-nav-item{height:50px}
+ .app.chat-open .bottom-nav{display:none}
+ .app.chat-open .sidebar{padding-bottom:0}
+}
+@media(min-width:761px){
+ .bottom-nav{height:68px;flex-basis:68px}
+ .compose-fab{bottom:84px}
+ .sidebar{padding-bottom:0}
+ .chats{padding-bottom:88px}
+}
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -653,6 +690,12 @@ body,button,input,textarea{font-family:'Vazirmatn','Segoe UI',Tahoma,sans-serif}
  <div class="stories" id="stories"></div>
  <div class="chats" id="chatList"></div>
  <button class="compose-fab" id="newBtn" title="گفتگوی جدید" aria-label="گفتگوی جدید">✎</button>
+ <nav class="bottom-nav" id="bottomNav" aria-label="بخش‌های اصلی">
+  <button class="bottom-nav-item active" data-nav="chats" aria-current="page"><span class="nav-icon">☰</span><span>گفتگوها</span></button>
+  <button class="bottom-nav-item" data-nav="contacts"><span class="nav-icon">♙</span><span>مخاطبین</span></button>
+  <button class="bottom-nav-item" data-nav="ai"><span class="nav-icon">✦</span><span>آرو</span></button>
+  <button class="bottom-nav-item" data-nav="settings"><span class="nav-icon">⚙</span><span>تنظیمات</span></button>
+ </nav>
 </aside>
 <main class="main" id="main">
  <div class="empty" id="emptyState"><div class="emptycard"><div class="plane">✈️</div><h2>به ایران‌گرام خوش آمدی</h2><p>یک گفت‌وگو را انتخاب کن یا گفت‌وگوی تازه بساز.<br>نسخه نمایشی پیشرفته با طراحی مناسب گوشی.</p><button class="primary" id="startChat">شروع گفت‌وگو</button><p class="subtle">این نسخه به‌تنهایی پیام‌ها را به دستگاه‌های دیگر ارسال نمی‌کند.</p></div></div>
@@ -1075,7 +1118,19 @@ async function adminPanel(){
 }
 
 $('#menuBtn').onclick=()=>$('#mainMenu').classList.toggle('open');
-$('#settingsQuickBtn').onclick=()=>settingsModal();$('#audioCallBtn').onclick=()=>startOutgoingCall('audio');$('#videoCallBtn').onclick=()=>startOutgoingCall('video');$('#endCallBtn').onclick=()=>finishCall(true);$('#muteCallBtn').onclick=()=>{const track=activeCall?.localStream?.getAudioTracks()[0];if(track){track.enabled=!track.enabled;$('#muteCallBtn').textContent=track.enabled?'🎙️':'🔇'}};$('#cameraCallBtn').onclick=()=>{const track=activeCall?.localStream?.getVideoTracks()[0];if(track){track.enabled=!track.enabled;$('#cameraCallBtn').textContent=track.enabled?'📷':'🚫'}};$('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
+$('#settingsQuickBtn').onclick=()=>settingsModal();$('#audioCallBtn').onclick=()=>startOutgoingCall('audio');$('#videoCallBtn').onclick=()=>startOutgoingCall('video');$('#endCallBtn').onclick=()=>finishCall(true);$('#muteCallBtn').onclick=()=>{const track=activeCall?.localStream?.getAudioTracks()[0];if(track){track.enabled=!track.enabled;$('#muteCallBtn').textContent=track.enabled?'🎙️':'🔇'}};$('#cameraCallBtn').onclick=()=>{const track=activeCall?.localStream?.getVideoTracks()[0];if(track){track.enabled=!track.enabled;$('#cameraCallBtn').textContent=track.enabled?'📷':'🚫'}};$('#bottomNav').onclick=e=>{
+ const button=e.target.closest('[data-nav]');if(!button)return;
+ document.querySelectorAll('.bottom-nav-item').forEach(x=>{x.classList.toggle('active',x===button);if(x===button)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});
+ const action=button.dataset.nav;
+ if(action==='chats'){
+  $('#app').classList.remove('chat-open');state.filter='all';
+  document.querySelectorAll('.filter').forEach(x=>{const active=x.dataset.filter==='all';x.classList.toggle('active',active);x.setAttribute('aria-selected',active?'true':'false')});
+  renderChats();
+ }else if(action==='contacts')newChat();
+ else if(action==='ai')aiAssistantModal();
+ else if(action==='settings')settingsModal();
+};
+$('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
 $('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({ai:aiAssistantModal,profile:profileModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایران‌گرام',`<p>ایران‌گرام یک نمونه اولیه پیام‌رسان با رابط کاربری فارسی است.</p><p class="subtle">برای چت بین کاربران، ورود امن، آپلود واقعی فایل، استوری آنلاین، اعلان‌ها و نسخه اندروید، باید بک‌اند و سرویس‌های مربوطه پیاده‌سازی و متصل شوند.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 let suppressChatClick=false;
 $('#chatList').onclick=e=>{if(suppressChatClick){suppressChatClick=false;e.preventDefault();return}const row=e.target.closest('[data-chat]');if(row)openChat(row.dataset.chat)};

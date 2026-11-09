@@ -1018,12 +1018,11 @@ $('#messages').onclick=async e=>{const b=e.target.closest('button');if(!b)return
  const previous=m.reactions[0]||null;
  m.reactionCounts=m.reactionCounts||{};
  if(remoteMode&&c.remote&&currentUser){
-  const {error:removeError}=await supabaseClient.from('message_reactions').delete().eq('message_id',id).eq('user_id',currentUser.id);
-  if(removeError){toast('تغییر واکنش ناموفق بود: '+removeError.message);return}
-  if(previous!==emoji){
-   const {error:insertError}=await supabaseClient.from('message_reactions').insert({message_id:id,user_id:currentUser.id,reaction:emoji});
-   if(insertError){toast('ثبت واکنش ناموفق بود: '+insertError.message);return}
-  }
+  const {error:reactionError}=await supabaseClient.rpc('set_message_reaction',{
+   p_message_id:id,
+   p_reaction:previous===emoji?null:emoji
+  });
+  if(reactionError){toast('تغییر واکنش ناموفق بود: '+reactionError.message);return}
  }
  if(previous){m.reactionCounts[previous]=Math.max(0,(m.reactionCounts[previous]||1)-1)}
  m.reactions=previous===emoji?[]:[emoji];

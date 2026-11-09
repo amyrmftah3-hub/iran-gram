@@ -1185,6 +1185,73 @@ html,body{height:100%;overscroll-behavior:none}
  .compose-fab{bottom:calc(84px + env(safe-area-inset-bottom))!important;left:15px!important}
 }
 
+
+/* Precision polish pass — spacing, hierarchy, icon rhythm and Android safe areas */
+:root{color-scheme:dark}
+html,body{background:#0e1621!important;overscroll-behavior:none}
+body{font-family:Roboto,"Vazirmatn",Tahoma,sans-serif!important;-webkit-tap-highlight-color:transparent}
+.app{max-width:none!important;width:100%!important;background:#0e1621!important}
+.sidebar{background:#17212b!important;border:0!important}
+.topbar{position:relative!important;z-index:12!important;border-bottom:1px solid #263442!important}
+.topbar-brand{font-size:18px!important;letter-spacing:0!important}
+.topbar-brand img{width:30px!important;height:30px!important;border-radius:50%!important}
+#menuBtn{display:grid!important;place-items:center!important;font-family:Arial,sans-serif!important}
+.searchbox{position:relative!important}
+.searchbox:before{content:"⌕";position:absolute;right:26px;top:8px;z-index:2;color:#8fa2b3;font-size:22px;pointer-events:none}
+.searchbox input{padding-right:43px!important;box-shadow:inset 0 1px 2px #0003!important}
+.filters{border-bottom:1px solid #263442!important}
+.filter{white-space:nowrap!important;transition:background .16s ease,color .16s ease,transform .16s ease!important}
+.filter:active{transform:scale(.96)}
+.stories{min-height:91px!important;border-bottom:1px solid #263442!important}
+.storyring{position:relative!important;border:2px solid transparent!important;background:linear-gradient(135deg,#e2a34c,#d64e89,#7d59df)!important}
+.storyring span{width:100%!important;height:100%!important;border:2px solid #17212b!important}
+.storyring.add{background:#3390ec!important}
+.chats{padding:3px 0 112px!important}
+.chatrow{margin:0!important;padding:9px 14px!important;min-height:75px!important;border:0!important;border-radius:0!important;position:relative!important}
+.chatrow:after{right:80px!important;left:0!important;background:#263442!important}
+.chatrow .avatar{width:54px!important;height:54px!important;border-radius:50%!important;overflow:hidden!important}
+.chathead{min-width:0!important}
+.chathead b{font-size:15px!important;line-height:1.35!important}
+.preview{line-height:1.45!important;max-width:100%!important}
+.time{font-variant-numeric:tabular-nums!important}
+.chatrow:active{background:#202d3a!important}
+.compose-fab{display:grid!important;place-items:center!important;font-size:25px!important;line-height:1!important}
+.bottom-nav{width:calc(100% - 30px)!important;max-width:430px!important;border-radius:22px!important;height:65px!important;background:rgba(31,44,57,.91)!important;border-color:#ffffff18!important}
+.bottom-nav-item{font-family:inherit!important;letter-spacing:0!important}
+.bottom-nav-item .nav-icon{font-family:Arial,sans-serif!important;font-weight:400!important}
+.chatheader{height:62px!important;min-height:62px!important;padding:6px 10px!important;background:#17212b!important;border-bottom:1px solid #263442!important;gap:8px!important}
+.chatheader .backbtn{font-size:28px!important;width:34px!important;min-width:34px!important}
+.chatheader .avatar{width:42px!important;height:42px!important;border-radius:50%!important}
+.chatname{min-width:0!important;flex:1!important}
+.chatname b{font-size:15px!important;line-height:1.25!important}
+.chatname small{font-size:11px!important;color:#8fa1b1!important}
+.chatheader .iconbtn{width:36px!important;height:36px!important;min-width:36px!important;border-radius:50%!important}
+.messages{padding:16px max(12px,calc((100vw - 720px)/2)) 18px!important;gap:8px!important;background-color:#0e1621!important;background-image:radial-gradient(#a5b4c012 .8px,transparent .8px)!important;background-size:20px 20px!important}
+.msg{max-width:min(78%,560px)!important;padding:8px 11px 6px!important;border-radius:12px 12px 12px 3px!important;background:#182533!important;color:#eef4f8!important;font-size:14px!important;line-height:1.55!important}
+.msg.mine{border-radius:12px 12px 3px 12px!important;background:#2b5278!important}
+.msg p{margin:0!important}
+.msgmeta{font-size:10px!important;color:#b7c9d7!important}
+.composer{min-height:62px!important;padding:7px 10px max(8px,env(safe-area-inset-bottom))!important;gap:7px!important;background:#17212b!important;border-top:1px solid #263442!important}
+.composefield{min-height:44px!important;border-radius:24px!important;background:#242f3d!important;padding:4px 12px!important}
+.composefield input,.composefield textarea{font-size:14px!important;color:#edf3f8!important}
+.round{width:39px!important;height:39px!important;min-width:39px!important;border-radius:50%!important;background:transparent!important;color:#9eb0bf!important}
+.send{width:43px!important;height:43px!important;min-width:43px!important;border-radius:50%!important;background:#3390ec!important}
+.modalback{align-items:center!important}
+.modal{border-radius:20px!important;background:#17212b!important;border:1px solid #344454!important}
+.modal h3{font-size:18px!important}
+.modal input,.modal textarea,.modal select{min-height:43px!important;border-radius:11px!important}
+.modal button{min-height:40px!important;border-radius:11px!important}
+.toast{border-radius:13px!important}
+@media(max-width:760px){
+ .chatheader{height:56px!important;min-height:56px!important}
+ .messages{padding:12px 9px!important}
+ .msg{max-width:86%!important}
+ .composer{padding:6px 8px max(8px,env(safe-area-inset-bottom))!important}
+ .bottom-nav{bottom:calc(8px + env(safe-area-inset-bottom))!important}
+ .compose-fab{bottom:calc(84px + env(safe-area-inset-bottom))!important}
+ .modalback{align-items:flex-end!important}
+}
+
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">

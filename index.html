@@ -160,10 +160,11 @@ body{background:radial-gradient(ellipse at 78% 5%,#153451 0,transparent 34%),#0b
  async function refreshStats(){
   const status=document.getElementById('statsStatus');
   try{
-   const {data,error}=await client.from('public_user_stats').select('total_users,online_users').single();
+   const {data,error}=await client.rpc('get_public_user_stats');
    if(error)throw error;
-   const total=Number(data.total_users||0);
-   const online=Math.min(total,Number(data.online_users||0));
+   const stats=(data||[])[0]||{};
+   const total=Number(stats.total_users||0);
+   const online=Math.min(total,Number(stats.online_users||0));
    document.getElementById('totalUsers').textContent=fmt(total);
    document.getElementById('onlineUsers').textContent=fmt(online);
    document.getElementById('offlineUsers').textContent=fmt(Math.max(0,total-online));

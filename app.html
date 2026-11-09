@@ -1105,6 +1105,37 @@ html,body{height:100%;overscroll-behavior:none}
  .chatrow{min-height:70px}
  .chat-row-more{display:none!important}
 }
+
+/* Current Telegram Android-inspired 12.4+ visual system */
+.topbar{height:54px!important;min-height:54px!important;background:rgba(23,33,43,.94)!important;backdrop-filter:blur(22px) saturate(1.5);-webkit-backdrop-filter:blur(22px) saturate(1.5);border:0!important;padding:5px 12px!important}
+.topbar-title{font-size:19px!important;font-weight:650!important}
+#menuBtn{display:grid!important;place-items:center;order:5!important;margin-inline-start:4px;color:#aebdca!important;font-size:25px!important}
+.searchbox{display:block!important;padding:7px 12px 9px!important;background:rgba(23,33,43,.94)!important;border:0!important}
+.searchbox input{height:42px!important;border-radius:13px!important;background:#242f3d!important;padding:0 15px!important;font-size:14px!important}
+.filters{background:rgba(23,33,43,.94)!important;border:0!important;padding:2px 10px 7px!important;gap:7px!important}
+.filter{flex:0 0 auto!important;border:0!important;border-radius:18px!important;padding:8px 14px!important;background:#202e3b!important;color:#aebdca!important;font-size:12px!important}
+.filter.active{background:#3390ec!important;color:#fff!important}
+.stories{background:#17212b!important;border:0!important;padding:8px 12px 10px!important}
+.chats{padding:3px 8px 92px!important;background:#0e1621!important}
+.chatrow{margin:3px 0!important;padding:10px 11px!important;min-height:76px!important;border:1px solid rgba(255,255,255,.035)!important;border-radius:16px!important;background:#17212b!important;gap:11px!important}
+.chatrow:hover,.chatrow.selected{background:#202d3a!important}
+.chatrow .avatar{width:54px!important;height:54px!important}
+.chathead b{font-size:14px!important}
+.preview{font-size:12px!important}
+.bottom-nav{display:flex!important;position:fixed!important;z-index:30!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;left:50%!important;transform:translateX(-50%)!important;width:min(94vw,440px)!important;height:66px!important;padding:6px!important;gap:3px!important;align-items:stretch!important;justify-content:space-around!important;border:1px solid rgba(255,255,255,.10)!important;border-radius:22px!important;background:rgba(35,49,64,.82)!important;box-shadow:0 8px 28px #0006!important;backdrop-filter:blur(24px) saturate(1.7)!important;-webkit-backdrop-filter:blur(24px) saturate(1.7)!important}
+.bottom-nav-item{display:flex!important;flex:1!important;min-width:0!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;border:0!important;border-radius:15px!important;background:transparent!important;color:#9eacb9!important;font-size:10px!important}
+.bottom-nav-item .nav-icon{font-size:21px!important;line-height:1.1!important}
+.bottom-nav-item.active{background:rgba(51,144,236,.18)!important;color:#66b7ff!important;font-weight:600!important}
+.compose-fab{bottom:94px!important;left:16px!important;z-index:29!important}
+.menu{top:58px!important;right:10px!important;left:auto!important;width:min(290px,calc(100vw - 24px))!important;border-radius:16px!important;background:rgba(30,43,56,.96)!important;border:1px solid rgba(255,255,255,.09)!important;box-shadow:0 12px 35px #0008!important;backdrop-filter:blur(24px)!important;-webkit-backdrop-filter:blur(24px)!important}
+@media(max-width:760px){
+ .app{padding-bottom:0!important}
+ .sidebar{height:100dvh!important;padding-bottom:0!important}
+ .chats{padding-bottom:100px!important}
+ .chatrow{border-radius:15px!important}
+ .bottom-nav{display:flex!important}
+ .compose-fab{bottom:94px!important}
+}
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -1117,8 +1148,7 @@ html,body{height:100%;overscroll-behavior:none}
 <div class="app" id="app">
 <aside class="sidebar">
  <header class="topbar">
-  <button class="iconbtn" id="menuBtn" title="منو" aria-label="منو">☰</button>
-  <div class="topbar-title">ایران‌گرام</div><button class="iconbtn" id="listSearchBtn" title="جست‌وجو" aria-label="جست‌وجو">⌕</button>
+  <div class="topbar-title">ایران‌گرام</div><button class="iconbtn" id="menuBtn" title="گزینه‌های بیشتر" aria-label="گزینه‌های بیشتر">⋮</button>
  </header>
  <div class="menu" id="mainMenu">
   <div class="drawer-profile"><div class="drawer-avatar">ای</div><div class="drawer-user"><b id="drawerName">کاربر ایران‌گرام</b><small id="drawerUsername">حساب ایران‌گرام</small></div><button class="drawer-close" id="drawerClose" aria-label="بستن">×</button></div>
@@ -1130,15 +1160,16 @@ html,body{height:100%;overscroll-behavior:none}
   <button data-action="admin"><span>🛡️</span> مدیریت ایران‌گرام</button><button data-action="export"><span>⬇️</span> خروجی پشتیبان</button><button data-action="about"><span>ℹ️</span> درباره ایران‌گرام</button><button data-action="logout"><span>🚪</span> خروج از حساب</button>
   <div class="drawer-footer">ایران‌گرام · پیام‌رسان فارسی</div>
  </div>
- <div class="searchbox"><input id="search" placeholder="جست‌وجو در پیام‌ها و گفتگوها" autocomplete="off"></div>
+ <div class="searchbox"><input id="search" placeholder="جست‌وجو" autocomplete="off"></div>
  <div class="filters" role="tablist" aria-label="پوشه گفتگوها"><button class="filter active" role="tab" aria-selected="true" data-filter="all">همه چت‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="people">شخصی</button><button class="filter" role="tab" aria-selected="false" data-filter="unread">خوانده‌نشده</button><button class="filter" role="tab" aria-selected="false" data-filter="groups">گروه‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="channels">کانال‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="archive">آرشیو</button><button class="filter" role="tab" aria-selected="false" data-filter="hidden">مخفی</button></div>
  <div class="stories" id="stories"></div>
  <div class="chats" id="chatList"></div>
  <button class="compose-fab" id="newBtn" title="گفتگوی جدید" aria-label="گفتگوی جدید">✎</button>
  <nav class="bottom-nav" id="bottomNav" aria-label="بخش‌های اصلی">
-  <button class="bottom-nav-item active" data-nav="chats" aria-current="page"><span class="nav-icon">☰</span><span>گفتگوها</span></button>
+  <button class="bottom-nav-item active" data-nav="chats" aria-current="page"><span class="nav-icon">▤</span><span>گفتگوها</span></button>
   <button class="bottom-nav-item" data-nav="contacts"><span class="nav-icon">♙</span><span>مخاطبین</span></button>
   <button class="bottom-nav-item" data-nav="settings"><span class="nav-icon">⚙</span><span>تنظیمات</span></button>
+  <button class="bottom-nav-item" data-nav="profile"><span class="nav-icon">●</span><span>پروفایل</span></button>
  </nav>
 </aside>
 <main class="main" id="main">
@@ -1765,6 +1796,7 @@ $('#settingsQuickBtn').onclick=()=>settingsModal();$('#audioCallBtn').onclick=()
  }else if(action==='contacts')newChat();
  else if(action==='ai')aiAssistantModal();
  else if(action==='settings')settingsModal();
+ else if(action==='profile')profileModal();
 };
 $('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
 $('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({profile:profileModal,contacts:newChat,saved:()=>showModal('پیام‌های ذخیره‌شده','<p class="subtle">بخش پیام‌های ذخیره‌شده پس از پیاده‌سازی ذخیره‌سازی ابری فعال می‌شود.</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>'),group:()=>createCollection('groups'),channel:()=>createCollection('channels'),settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایران‌گرام',`<p>ایران‌گرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};

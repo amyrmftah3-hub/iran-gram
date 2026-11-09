@@ -1267,13 +1267,13 @@ body{font-family:Roboto,"Vazirmatn",Tahoma,sans-serif!important;-webkit-tap-high
 @media(max-width:760px){.msg:has(.media-image){max-width:94%}.media-image{max-width:100%;max-height:68vh}}
 </style>
 </head>
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
 <body>
 <div class="splash" id="appSplash"><div class="cyrus-mark" role="img" aria-label="نشان کوروش بزرگ"><svg viewBox="0 0 120 120" width="104" height="104" aria-hidden="true"><defs><linearGradient id="cyrusGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0b3"/><stop offset=".55" stop-color="#d5a947"/><stop offset="1" stop-color="#8b5d19"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#071b48" stroke="#23b9ff" stroke-width="3"/><path d="M25 44 33 19 47 31 60 12 73 31 88 19 96 45 84 53 36 53Z" fill="url(#cyrusGold)" stroke="#fff0b3" stroke-width="2"/><path d="M35 49 Q60 35 85 49 L81 80 Q74 100 60 105 Q43 98 38 80Z" fill="url(#cyrusGold)"/><path d="M40 62 Q52 52 69 60 L82 67 70 72 60 69 48 76 39 72Z" fill="#071b48"/><path d="M45 81 Q61 87 77 78 Q74 96 60 99 Q48 94 45 81Z" fill="#071b48"/><path d="M36 52 20 63 30 76 40 70 M84 52 100 63 90 76 80 70" fill="none" stroke="url(#cyrusGold)" stroke-width="6" stroke-linecap="round"/></svg></div><h2>ایرانگرام</h2><p id="splashPoem">...</p><div class="splashbar"><span></span></div></div>
 <div class="app" id="app">
 <aside class="sidebar">
  <header class="topbar">
-  <div class="topbar-brand"><img src="./icon.svg" alt=""><span>آروگرام</span></div><button class="iconbtn" id="menuBtn" title="گزینه‌های بیشتر" aria-label="گزینه‌های بیشتر">⋮</button>
+  <div class="topbar-brand"><img src="./icon.svg" alt=""><span>ایرانگرام</span></div><button class="iconbtn" id="menuBtn" title="گزینه‌های بیشتر" aria-label="گزینه‌های بیشتر">⋮</button>
  </header>
  <div class="menu" id="mainMenu">
   <div class="drawer-profile"><div class="drawer-avatar">ای</div><div class="drawer-user"><b id="drawerName">کاربر ایرانگرام</b><small id="drawerUsername">حساب ایرانگرام</small></div><button class="drawer-close" id="drawerClose" aria-label="بستن">×</button></div>
@@ -1293,7 +1293,7 @@ body{font-family:Roboto,"Vazirmatn",Tahoma,sans-serif!important;-webkit-tap-high
  <nav class="bottom-nav" id="bottomNav" aria-label="بخش‌های اصلی">
   <button class="bottom-nav-item active" data-nav="chats" aria-current="page"><span class="nav-icon">▣</span><span>گفتگوها</span></button>
   <button class="bottom-nav-item" data-nav="contacts"><span class="nav-icon">♙</span><span>مخاطبین</span></button>
-  <button class="bottom-nav-item" data-nav="calls"><span class="nav-icon">☎</span><span>تماس‌ها</span></button>
+  <button class="bottom-nav-item" data-nav="settings"><span class="nav-icon">⚙</span><span>تنظیمات</span></button>
   <button class="bottom-nav-item" data-nav="profile"><span class="nav-icon">●</span><span>پروفایل</span></button>
  </nav>
 </aside>
@@ -1312,7 +1312,7 @@ body{font-family:Roboto,"Vazirmatn",Tahoma,sans-serif!important;-webkit-tap-high
 <script>
 const SUPABASE_URL = 'https://gqitvlgdcrbwejaadorc.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_2NkURiHcD4ceRzqXUNsYlQ_jZzsVbhf';
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_KEY) || null;
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,10);
 const now=()=>new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
@@ -1918,7 +1918,6 @@ $('#settingsQuickBtn').onclick=()=>settingsModal();$('#audioCallBtn').onclick=()
   renderChats();
  }else if(action==='contacts')newChat();
  else if(action==='ai')aiAssistantModal();
- else if(action==='calls'){ $('#app').classList.remove('chat-open'); }
  else if(action==='settings')settingsModal();
  else if(action==='profile')profileModal();
 };
@@ -2044,7 +2043,7 @@ $('#modal').addEventListener('click',e=>{
 });
 $('#modalBack').onclick=e=>{if(e.target===$('#modalBack'))closeModal()};
 setSplashPoem();
-if(!window.supabase){toast('بارگذاری سرویس ورود ناموفق بود. صفحه را تازه‌سازی کن.')}else{initAuth()}
+if(!supabaseClient){render();toast('ورود آنلاین در دسترس نیست؛ حالت نمایشی اجرا شد.')}else{initAuth().catch(error=>{console.error('IranGram startup failed:',error);render();toast('بخشی از اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.')})}
 </script>
 
 <script>

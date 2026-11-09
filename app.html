@@ -2246,6 +2246,7 @@ $('#modal').addEventListener('click',e=>{
 });
 $('#modalBack').onclick=e=>{if(e.target===$('#modalBack'))closeModal()};
 setSplashPoem();
+if(new URLSearchParams(location.search).has('anon'))anonymousSendPage();
 if(!supabaseClient){render();toast('حالت نمایشی اجرا شد؛ برای ورود آنلاین اینترنت را بررسی کن.')}else{initAuth().then(()=>{if(new URLSearchParams(location.search).has('anon'))anonymousSendPage()}).catch(error=>{console.error('IranGram startup failed:',error);render();toast('بخشی از اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.')})}
 </script>
 

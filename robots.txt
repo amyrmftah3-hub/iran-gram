@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://amyrmftah3-hub.github.io/iran-gram/sitemap.xml

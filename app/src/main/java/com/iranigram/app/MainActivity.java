@@ -24,14 +24,23 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         webView = new WebView(this);
-        webView.setBackgroundColor(0xFF0B1220);
+        webView.setBackgroundColor(0xFFFFFFFF);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setAllowFileAccess(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onReceivedError(WebView view, android.webkit.WebResourceRequest request, android.webkit.WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request.isForMainFrame()) {
+                    String fallback = "<!doctype html><html lang='fa' dir='rtl'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>اتصال ایرانگرام</title><body style='margin:0;background:#071a36;color:#fff;font-family:Tahoma,sans-serif;display:grid;min-height:100vh;place-items:center;text-align:center'><main style='padding:28px;max-width:420px'><div style='font-size:48px'>✈️</div><h2>اتصال به ایرانگرام برقرار نشد</h2><p style='line-height:2;color:#c9d9ec'>اینترنت یا دسترسی به سایت موقتاً در دسترس نیست. دوباره تلاش کن.</p><button onclick=\"location.href='https://amyrmftah3-hub.github.io/iran-gram/app.html?v=20261110-fixed1'\" style='border:0;border-radius:24px;padding:13px 28px;background:#168acd;color:white;font-size:16px'>تلاش دوباره</button></main></body></html>";
+                    view.loadDataWithBaseURL("https://amyrmftah3-hub.github.io/iran-gram/", fallback, "text/html", "UTF-8", null);
+                }
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onPermissionRequest(PermissionRequest request) {
@@ -63,7 +72,7 @@ public class MainActivity extends Activity {
         });
         setContentView(webView);
         if (savedInstanceState == null) {
-            webView.loadUrl("https://amyrmftah3-hub.github.io/iran-gram/app.html?v=20261110-releaseprep1");
+            webView.loadUrl("https://amyrmftah3-hub.github.io/iran-gram/app.html?v=20261110-fixed1");
         } else {
             webView.restoreState(savedInstanceState);
         }

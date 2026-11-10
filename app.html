@@ -1314,6 +1314,7 @@ body{font-family:Tahoma,"Vazirmatn","Segoe UI",Arial,sans-serif;letter-spacing:0
  #voiceRecordBtn,#videoNoteBtn{flex-basis:34px!important;width:34px!important;min-width:34px!important;height:38px!important}
  .composer{gap:3px!important;padding-left:5px!important;padding-right:5px!important}
 }
+.reward-card{background:linear-gradient(145deg,#142d4d,#1d5278);border:1px solid #347eb2;border-radius:16px;padding:16px;text-align:center;margin-bottom:14px;color:#fff}.reward-points{font-size:38px;font-weight:800;color:#7dd3fc}.reward-card p{font-size:13px;line-height:1.8;color:#e1f2ff}.reward-video{display:inline-block;color:#fff;text-decoration:none;background:#e53955;padding:10px 15px;border-radius:10px;font-size:13px;margin:4px}.reward-success{background:#153d31;color:#a8f0cd;padding:10px;border-radius:10px;font-size:13px}.reward-redeem{margin-top:15px;padding-top:12px;border-top:1px solid var(--line)}.reward-redeem .primary{width:100%;margin-top:12px}
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -1391,6 +1392,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
 
 .ad-request-row{padding:12px;margin:9px 0;border:1px solid var(--line);border-radius:13px;background:var(--panel);overflow-wrap:anywhere}.ad-request-row .subtle{margin:7px 0}
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
 <body>
@@ -1406,7 +1408,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
   <div class="drawer-section">حساب کاربری</div>
   <button data-action="profile"><span>👤</span> پروفایل من</button><button data-action="contacts"><span>♙</span> مخاطبین</button><button data-action="saved"><span>🔖</span> پیام‌های ذخیره‌شده</button>
   <div class="drawer-section">ایرانگرام</div>
-  <button data-action="group"><span>👥</span> ساخت گروه</button><button data-action="channel"><span>📢</span> ساخت کانال</button><button data-action="bot"><span>🤖</span> ساخت بات</button><button data-action="anonymous"><span>🕵️</span> پیام‌های ناشناس</button><button data-action="ads"><span>📣</span> تبلیغات</button><button data-action="adrequest"><span>📝</span> ثبت تبلیغ</button><button data-action="settings"><span>⚙️</span> تنظیمات</button>
+  <button data-action="group"><span>👥</span> ساخت گروه</button><button data-action="channel"><span>📢</span> ساخت کانال</button><button data-action="bot"><span>🤖</span> ساخت بات</button><button data-action="anonymous"><span>🕵️</span> پیام‌های ناشناس</button><button data-action="ads"><span>📣</span> تبلیغات</button><button data-action="rewards"><span>🎁</span> جایزه و امتیازها</button><button data-action="adrequest"><span>📝</span> ثبت تبلیغ</button><button data-action="settings"><span>⚙️</span> تنظیمات</button>
   <div class="drawer-section">ابزارها</div>
   <button data-action="admin"><span>🛡️</span> مدیریت ایرانگرام</button><button data-action="export"><span>⬇️</span> خروجی پشتیبان</button><button data-action="about"><span>ℹ️</span> درباره ایرانگرام</button><button data-action="logout"><span>🚪</span> خروج از حساب</button>
   <div class="drawer-footer">ایرانگرام · پیام‌رسان فارسی</div>
@@ -1457,6 +1459,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
 </script>
 <script>
 const SUPABASE_URL = 'https://gqitvlgdcrbwejaadorc.supabase.co';
+const GOOGLE_OAUTH_CLIENT_ID = ''; // Set after creating a Google OAuth Web client ID.
 const SUPABASE_KEY = 'sb_publishable_2NkURiHcD4ceRzqXUNsYlQ_jZzsVbhf';
 const supabaseClient = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_KEY) || null;
 const $=s=>document.querySelector(s);
@@ -1693,6 +1696,60 @@ async function loadOnlineChats(){
  if(state.active)openChatNoFocus();else{$('#chatView').style.display='none';$('#emptyState').style.display='grid'}
 }
 async function recordChannelActivity(channelId){if(!remoteMode||!currentUser||!channelId)return;const {error}=await supabaseClient.rpc('record_channel_activity',{p_channel_id:channelId});if(error){console.warn('Channel activity update failed',error.message);return}const {data}=await supabaseClient.rpc('get_channel_verification_status');const status=(data||[]).find(x=>x.channel_id===channelId),c=state.chats.find(x=>x.id===channelId);if(status&&c){c.verified=status.is_verified;c.active_users_30d=status.active_users_30d;renderChats()}}
+
+async function youtubeRewardModal(){
+ if(!remoteMode||!currentUser){authModal();return}
+ const [{data:account},{data:claim}]=await Promise.all([
+  supabaseClient.from('reward_accounts').select('points').eq('user_id',currentUser.id).maybeSingle(),
+  supabaseClient.from('youtube_reward_claims').select('user_id').eq('user_id',currentUser.id).maybeSingle()
+ ]);
+ const points=Number(account?.points||0),claimed=!!claim;
+ const redeem=points>=100?'<div class="reward-redeem"><label>عنوان تبلیغ</label><input id="rewardAdTitle" maxlength="60" placeholder="مثلاً کانال من"><label>لینک تبلیغ (باید با https شروع شود)</label><input id="rewardAdUrl" type="url" placeholder="https://..."><button class="primary" id="redeemRewardBtn">تبدیل ۱۰۰ امتیاز به یک روز تبلیغ</button></div>':'<p class="subtle">برای ثبت تبلیغ رایگان، باید حداقل ۱۰۰ امتیاز داشته باشی.</p>';
+ showModal('🎁 جایزه و امتیازهای ایرانگرام',`
+  <div class="reward-card">
+   <div class="reward-points">${points}</div><b>امتیاز تو</b>
+   <p>با اشتراک کانال Manager_MT در یوتیوب، ۱۰۰ امتیاز هدیه بگیر.</p>
+   <a class="reward-video" href="https://youtube.com/shorts/sAm-iPBjSoo" target="_blank" rel="noopener noreferrer">▶ تماشای ویدئوی Manager_MT</a>
+   <p class="subtle">هر ۱۰۰ امتیاز = یک روز تبلیغ رایگان در ایرانگرام</p>
+  </div>
+  ${claimed?'<p class="reward-success">✓ جایزه اشتراک قبلاً برای این حساب ثبت شده است.</p>':'<button class="primary" id="claimYoutubeReward" ${!GOOGLE_OAUTH_CLIENT_ID?'disabled':''}>بررسی اشتراک و دریافت ۱۰۰ امتیاز</button>'}
+  ${!GOOGLE_OAUTH_CLIENT_ID&&!claimed?'<p class="subtle">اتصال امن گوگل هنوز نیاز به شناسه OAuth دارد؛ بعد از تنظیم آن این دکمه فعال می‌شود.</p>':''}
+  ${redeem}
+  <div class="modalactions"><button class="secondary" data-close>بستن</button></div>
+  <p class="subtle" id="rewardHint" role="status"></p>
+ `);
+ const claimButton=$('#claimYoutubeReward');
+ if(claimButton)claimButton.onclick=()=>{
+  if(!window.google?.accounts?.oauth2){$('#rewardHint').textContent='سرویس ورود گوگل بارگذاری نشد؛ صفحه را تازه کن.';return}
+  claimButton.disabled=true;claimButton.textContent='در انتظار تأیید گوگل...';
+  const tokenClient=google.accounts.oauth2.initTokenClient({
+   client_id:GOOGLE_OAUTH_CLIENT_ID,
+   scope:'https://www.googleapis.com/auth/youtube.readonly',
+   callback:async response=>{
+    if(response.error||!response.access_token){$('#rewardHint').textContent='اجازه دسترسی به یوتیوب داده نشد.';claimButton.disabled=false;claimButton.textContent='بررسی اشتراک و دریافت ۱۰۰ امتیاز';return}
+    claimButton.textContent='در حال بررسی اشتراک...';
+    const {data,error}=await supabaseClient.functions.invoke('youtube-reward',{body:{googleAccessToken:response.access_token}});
+    if(error){$('#rewardHint').textContent='خطا در بررسی: '+(error.message||'دوباره تلاش کن');claimButton.disabled=false;claimButton.textContent='تلاش دوباره';return}
+    if(data?.success){toast(data.message||'امتیازها به‌روزرسانی شد.');youtubeRewardModal();return}
+    $('#rewardHint').textContent=data?.message||'اشتراک تأیید نشد.';
+    claimButton.disabled=false;claimButton.textContent='بررسی دوباره اشتراک';
+   }
+  });
+  tokenClient.requestAccessToken({prompt:'consent'});
+ };
+ const redeemButton=$('#redeemRewardBtn');
+ if(redeemButton)redeemButton.onclick=async()=>{
+  const title=$('#rewardAdTitle').value.trim(),targetUrl=$('#rewardAdUrl').value.trim();
+  if(title.length<2||title.length>60){toast('عنوان تبلیغ باید بین ۲ تا ۶۰ نویسه باشد.');return}
+  let parsed;try{parsed=new URL(targetUrl)}catch(e){toast('لینک تبلیغ معتبر نیست.');return}
+  if(parsed.protocol!=='https:'){toast('لینک تبلیغ باید HTTPS باشد.');return}
+  redeemButton.disabled=true;redeemButton.textContent='در حال ثبت تبلیغ...';
+  const {data,error}=await supabaseClient.rpc('redeem_ad_points',{p_title:title,p_target_url:parsed.href});
+  if(error){toast(error.message==='not_enough_points'?'امتیاز کافی نداری.':'ثبت تبلیغ ناموفق بود: '+error.message);redeemButton.disabled=false;redeemButton.textContent='تبدیل ۱۰۰ امتیاز به یک روز تبلیغ';return}
+  closeModal();toast('تبلیغ یک‌روزه‌ات فعال شد 🎉');await loadAdBanner();youtubeRewardModal();
+ };
+}
+
 async function startOnline(){
  const {data,error}=await supabaseClient.auth.getUser();
  if(error||!data.user){authModal();return}
@@ -2198,7 +2255,7 @@ const settingsQuickBtn=$('#settingsQuickBtn');if(settingsQuickBtn)settingsQuickB
  else if(action==='profile')profileModal();
 };
 $('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
-$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
+$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 let suppressChatClick=false;
 $('#chatList').onclick=e=>{
  const actionButton=e.target.closest('[data-chat-actions]');

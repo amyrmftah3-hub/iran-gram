@@ -1730,10 +1730,20 @@ async function youtubeRewardModal(){
   closeModal();toast('تبلیغ یک‌روزه‌ات فعال شد 🎉');await loadAdBanner();youtubeRewardModal();
  };
 }
+async function ensureOfficialChannelMembership(){
+ if(!currentUser||!remoteMode)return;
+ const officialId='e39f6339-049e-462a-8bbe-c9bfaff04278';
+ const {data:existing,error:lookupError}=await supabaseClient.from('conversation_members').select('role').eq('conversation_id',officialId).eq('user_id',currentUser.id).maybeSingle();
+ if(lookupError){console.warn('Official channel membership check failed',lookupError.message);return}
+ if(existing)return;
+ const {error}=await supabaseClient.from('conversation_members').insert({conversation_id:officialId,user_id:currentUser.id,role:'member'});
+ if(error)console.warn('Could not join official channel automatically',error.message);
+}
 async function startOnline(){
  const {data,error}=await supabaseClient.auth.getUser();
  if(error||!data.user){authModal();return}
  currentUser=data.user;remoteMode=true;
+ await ensureOfficialChannelMembership();
  await updateMyPresence(true);
  if(presenceHeartbeat)clearInterval(presenceHeartbeat);
  presenceHeartbeat=setInterval(()=>{if(document.visibilityState==='visible')updateMyPresence(true)},45000);

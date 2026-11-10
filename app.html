@@ -1387,6 +1387,8 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
 .ad-banner-icon{width:27px;height:27px;flex:0 0 27px;border-radius:9px;display:grid;place-items:center;background:#3390ec26;color:#7fc2ff}
 .ad-banner-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:700}.ad-banner-open{font-size:10px;color:#8fc7ff;white-space:nowrap}
 #requestAdName,#requestAdUrl,#requestAdDuration{width:100%;margin:5px 0 12px}
+
+.ad-request-row{padding:12px;margin:9px 0;border:1px solid var(--line);border-radius:13px;background:var(--panel);overflow-wrap:anywhere}.ad-request-row .subtle{margin:7px 0}
 </style>
 </head>
  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
@@ -2145,24 +2147,39 @@ async function advertisementsModal(){
 
 async function adminPanel(){
  if(!isPrimaryAdmin()){toast('فقط حساب مدیر اصلی اجازه ورود دارد.');return}
- const [usersResult,channelsResult,adsResult]=await Promise.all([
+ const [usersResult,channelsResult,adsResult,requestsResult]=await Promise.all([
   supabaseClient.from('profiles').select('id,display_name').order('display_name').limit(300),
   supabaseClient.from('conversations').select('id,title').eq('type','channel').order('title').limit(300),
-  supabaseClient.from('advertisements').select('id,title,status,ends_at').order('created_at',{ascending:false}).limit(50)
+  supabaseClient.from('advertisements').select('id,title,status,ends_at').order('created_at',{ascending:false}).limit(50),
+  supabaseClient.from('ad_requests').select('id,requester_id,display_name,target_url,duration_days,status,created_at').order('created_at',{ascending:false}).limit(50)
  ]);
- if(usersResult.error||channelsResult.error||adsResult.error){toast('بارگذاری پنل مدیریت کامل نشد: '+(usersResult.error||channelsResult.error||adsResult.error).message);return}
+ if(usersResult.error||channelsResult.error||adsResult.error||requestsResult.error){toast('بارگذاری پنل مدیریت کامل نشد: '+(usersResult.error||channelsResult.error||adsResult.error||requestsResult.error).message);return}
  const userOptions=(usersResult.data||[]).map(u=>'<option value="'+u.id+'">'+esc(u.display_name)+'</option>').join('');
  const channelOptions=(channelsResult.data||[]).map(c=>'<option value="'+c.id+'">'+esc(c.title)+'</option>').join('');
  const adRows=(adsResult.data||[]).map(a=>'<p class="subtle">• '+esc(a.title)+' — '+esc(a.status)+' — '+new Date(a.ends_at).toLocaleDateString('fa-IR')+'</p>').join('')||'<p class="subtle">هنوز تبلیغی ثبت نشده.</p>';
+ const requestRows=(requestsResult.data||[]).map(a=>'<article class="ad-request-row"><b>'+esc(a.display_name)+'</b><p class="subtle">'+esc(a.target_url)+'<br>مدت: '+a.duration_days+' روز · '+esc(a.status)+' · '+new Date(a.created_at).toLocaleString('fa-IR')+'</p>'+(a.status==='pending'?'<div class="modalactions"><button class="primary" data-ad-approve="'+a.id+'">تأیید و انتشار</button><button class="secondary" data-ad-reject="'+a.id+'">رد درخواست</button></div>':'')+'</article>').join('')||'<p class="subtle">درخواستی ثبت نشده.</p>';
  showModal('مدیریت ایرانگرام',`<p class="subtle">مدیر اصلی: amyrmftah3@gmail.com</p>
  <h4>تیک آبی کاربران</h4><label>انتخاب کاربر</label><select id="adminUser"><option value="">انتخاب کن</option>${userOptions}</select><div class="modalactions"><button class="primary" id="giveUserTick">دادن تیک آبی</button><button class="secondary" id="removeUserTick">برداشتن تیک</button></div>
  <h4>تیک آبی کانال</h4><label>انتخاب کانال</label><select id="adminChannel"><option value="">انتخاب کن</option>${channelOptions}</select><div class="modalactions"><button class="primary" id="giveChannelTick">دادن تیک</button><button class="secondary" id="removeChannelTick">برداشتن تیک دستی</button></div><p class="subtle">شرط خودکار: حداقل ۱۵٬۰۰۰ کاربر فعال یکتا در ۳۰ روز گذشته.</p>
  <h4>تبلیغ کانال</h4><label>عنوان تبلیغ</label><input id="adTitle" placeholder="مثلاً کانال فناوری"><label>لینک مقصد (HTTPS)</label><input id="adUrl" type="url" placeholder="https://..."><label>کانال ایرانگرام (اختیاری)</label><select id="adChannel"><option value="">فقط لینک خارجی</option>${channelOptions}</select><label>پایان تبلیغ</label><input id="adEnd" type="datetime-local"><button class="primary" id="createAd" style="width:100%;margin-top:10px">ثبت و فعال‌سازی تبلیغ</button>
- <h4>تبلیغات ثبت‌شده</h4>${adRows}<div class="modalactions"><button class="secondary" data-close>بستن</button></div>`);
+ <h4>درخواست‌های تبلیغ (خصوصی)</h4><div id="adRequestsList">${requestRows}</div><h4>تبلیغات ثبت‌شده</h4>${adRows}<div class="modalactions"><button class="secondary" data-close>بستن</button></div>`);
  const setTick=async(kind,enabled)=>{const id=kind==='user'?$('#adminUser').value:$('#adminChannel').value;if(!id){toast('ابتدا یک مورد انتخاب کن.');return}const table=kind==='user'?'user_verification_overrides':'channel_verification_overrides',key=kind==='user'?'user_id':'channel_id';const {error}=await supabaseClient.from(table).upsert({[key]:id,is_verified:enabled,reason:enabled?'تأیید توسط مدیر اصلی': 'لغو تیک دستی',updated_by:currentUser.id},{onConflict:key});if(error){toast('ثبت تیک ناموفق بود: '+error.message);return}toast(enabled?'تیک آبی ثبت شد.':'تیک دستی برداشته شد.');await loadOnlineChats();adminPanel()};
  $('#giveUserTick').onclick=()=>setTick('user',true);$('#removeUserTick').onclick=()=>setTick('user',false);
  $('#giveChannelTick').onclick=()=>setTick('channel',true);$('#removeChannelTick').onclick=()=>setTick('channel',false);
- $('#createAd').onclick=async()=>{const title=$('#adTitle').value.trim(),url=$('#adUrl').value.trim(),end=$('#adEnd').value;if(!title||!url.startsWith('https://')||!end){toast('عنوان، لینک HTTPS و زمان پایان را کامل کن.');return}const {error}=await supabaseClient.from('advertisements').insert({title,target_url:url,channel_id:$('#adChannel').value||null,starts_at:new Date().toISOString(),ends_at:new Date(end).toISOString(),status:'active',created_by:currentUser.id});if(error){toast('ثبت تبلیغ ناموفق بود: '+error.message);return}toast('تبلیغ ثبت و فعال شد.');adminPanel()};
+ $('#createAd').onclick=async()=>{const title=$('#adTitle').value.trim(),url=$('#adUrl').value.trim(),end=$('#adEnd').value;if(!title||!url.startsWith('https://')||!end||new Date(end)<=new Date()){toast('عنوان، لینک HTTPS و زمان پایان آینده را کامل کن.');return}const {error}=await supabaseClient.from('advertisements').insert({title,target_url:url,channel_id:$('#adChannel').value||null,starts_at:new Date().toISOString(),ends_at:new Date(end).toISOString(),status:'active',created_by:currentUser.id});if(error){toast('ثبت تبلیغ ناموفق بود: '+error.message);return}toast('تبلیغ ثبت و فعال شد.');adminPanel()};
+ $('#adRequestsList').onclick=async e=>{
+  const approve=e.target.closest('[data-ad-approve]'),reject=e.target.closest('[data-ad-reject]');if(!approve&&!reject)return;
+  const id=approve?approve.dataset.adApprove:reject.dataset.adReject;
+  const req=(requestsResult.data||[]).find(x=>x.id===id);if(!req)return;
+  if(approve){
+   const starts=new Date(),ends=new Date(starts.getTime()+req.duration_days*86400000);
+   const {error:insertError}=await supabaseClient.from('advertisements').insert({title:req.display_name,target_url:req.target_url,starts_at:starts.toISOString(),ends_at:ends.toISOString(),status:'active',created_by:currentUser.id});
+   if(insertError){toast('انتشار تبلیغ ناموفق بود: '+insertError.message);return}
+  }
+  const {error:updateError}=await supabaseClient.from('ad_requests').update({status:approve?'approved':'rejected',reviewed_at:new Date().toISOString()}).eq('id',id);
+  if(updateError){toast('ثبت نتیجه درخواست ناموفق بود: '+updateError.message);return}
+  toast(approve?'درخواست تأیید و تبلیغ منتشر شد.':'درخواست رد شد.');await loadAdBanner();adminPanel();
+ };
 }
 
 $('#menuBtn').onclick=()=>{const opening=!$('#mainMenu').classList.contains('open');$('#mainMenu').classList.toggle('open',opening);if(opening){$('#drawerName').textContent=state.profile.name||'کاربر ایرانگرام';$('#drawerUsername').textContent=state.profile.username?'@'+state.profile.username:(currentUser?.email||'حساب ایرانگرام')}};$('#drawerClose').onclick=()=>$('#mainMenu').classList.remove('open');document.addEventListener('click',e=>{if($('#mainMenu').classList.contains('open')&&!$('#mainMenu').contains(e.target)&&!$('#menuBtn').contains(e.target))$('#mainMenu').classList.remove('open')});

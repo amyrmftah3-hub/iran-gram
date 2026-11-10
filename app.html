@@ -1684,40 +1684,36 @@ async function recordChannelActivity(channelId){if(!remoteMode||!currentUser||!c
 
 async function youtubeRewardModal(){
  if(!remoteMode||!currentUser){authModal();return}
- const [{data:account},{data:claim},{data:submissions}]=await Promise.all([
+ const [{data:account},{data:claims},{data:submissions}]=await Promise.all([
   supabaseClient.from('reward_accounts').select('points').eq('user_id',currentUser.id).maybeSingle(),
-  supabaseClient.from('youtube_reward_claims').select('user_id').eq('user_id',currentUser.id).maybeSingle(),
-  supabaseClient.from('youtube_reward_submissions').select('id,status,created_at,admin_note').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(1)
+  supabaseClient.from('creator_reward_claims').select('platform').eq('user_id',currentUser.id),
+  supabaseClient.from('youtube_reward_submissions').select('id,platform,status,created_at,admin_note').eq('user_id',currentUser.id).order('created_at',{ascending:false})
  ]);
- const points=Number(account?.points||0),claimed=!!claim,last=(submissions||[])[0],pending=last?.status==='pending';
+ const points=Number(account?.points||0),claimed=new Set((claims||[]).map(x=>x.platform)),rows=submissions||[];
+ const latest=p=>rows.find(x=>x.platform===p),pending=p=>latest(p)?.status==='pending';
+ const rewardCard=(platform,title,url,label)=>{
+  const done=claimed.has(platform),last=latest(platform),wait=last?.status==='pending';
+  const status=done?'<p class="reward-success">✓ جایزه این پلتفرم قبلاً دریافت شده است.</p>':wait?'<p class="reward-pending">⏳ تصویر ارسال شد و منتظر بررسی مدیر است.</p>':last?.status==='rejected'?'<p class="reward-rejected">درخواست قبلی رد شد؛ تصویر واضح‌تری بفرست.</p>':'';
+  const form=!done&&!wait?'<div class="reward-submit"><label>تصویر صفحهٔ دنبال‌کردن '+title+'</label><input id="'+platform+'ProofFile" type="file" accept="image/jpeg,image/png,image/webp"><small class="subtle">تصویر باید نام صفحه و وضعیت دنبال‌کردن را نشان بدهد؛ فقط مدیر آن را می‌بیند.</small><button class="primary" data-submit-reward="'+platform+'">ارسال برای بررسی مدیر</button></div>':'';
+  return '<section class="reward-card" style="margin:12px 0"><b>'+title+' · ۱۰۰ امتیاز</b><p>صفحه را دنبال کن و تصویر تأیید را بفرست.</p><a class="reward-video" href="'+url+'" target="_blank" rel="noopener noreferrer">'+label+' ↗</a>'+status+form+'</section>';
+ };
  const redeem=points>=100?'<div class="reward-redeem"><label>عنوان تبلیغ</label><input id="rewardAdTitle" maxlength="60" placeholder="مثلاً کانال من"><label>لینک تبلیغ (باید با https شروع شود)</label><input id="rewardAdUrl" type="url" placeholder="https://..."><button class="primary" id="redeemRewardBtn">تبدیل ۱۰۰ امتیاز به یک روز تبلیغ</button></div>':'<p class="subtle">برای ثبت تبلیغ رایگان، باید حداقل ۱۰۰ امتیاز داشته باشی.</p>';
- const submissionStatus=claimed?'<p class="reward-success">✓ جایزه ۱۰۰ امتیازی قبلاً به این حساب تعلق گرفته است.</p>':pending?'<p class="reward-pending">⏳ تصویر اشتراک ارسال شد و منتظر بررسی مدیر است.</p>':last?.status==='rejected'?'<p class="reward-rejected">درخواست قبلی تأیید نشد. می‌توانی تصویر واضح‌تری بفرستی.</p>':'';
- showModal('🎁 جایزه و امتیازهای ایرانگرام',`
-  <div class="reward-card">
-   <div class="reward-points">${points}</div><b>امتیاز تو</b>
-   <p>با اشتراک کانال Manager_MT در یوتیوب، ۱۰۰ امتیاز هدیه بگیر.</p>
-   <a class="reward-video" href="https://youtube.com/shorts/sAm-iPBjSoo" target="_blank" rel="noopener noreferrer">▶ تماشای ویدئوی Manager_MT</a>
-   <p class="subtle">هر ۱۰۰ امتیاز = یک روز تبلیغ رایگان در ایرانگرام</p>
-  </div>
-  ${submissionStatus}
-  ${!claimed&&!pending?'<div class="reward-submit"><label>تصویر صفحهٔ اشتراک کانال در یوتیوب</label><input id="youtubeProofFile" type="file" accept="image/jpeg,image/png,image/webp"><small class="subtle">تصویر باید واضح باشد و نام Manager_MT و وضعیت اشتراک را نشان بدهد. تصویر فقط برای مدیر قابل مشاهده است.</small><button class="primary" id="submitYoutubeProof">ارسال برای بررسی مدیر</button></div>':''}
-  ${redeem}
-  <div class="modalactions"><button class="secondary" data-close>بستن</button></div>
-  <p class="subtle" id="rewardHint" role="status"></p>
- `);
- const submit=$('#submitYoutubeProof');
- if(submit)submit.onclick=async()=>{
-  const file=$('#youtubeProofFile').files?.[0];
-  if(!file){toast('اول تصویر اشتراک را انتخاب کن.');return}
+ showModal('🎁 جایزه و امتیازهای ایرانگرام',`<div class="reward-card"><div class="reward-points">${points}</div><b>امتیاز تو</b><p>هر دنبال‌کردن تأییدشده ۱۰۰ امتیاز دارد؛ هر ۱۰۰ امتیاز = یک روز تبلیغ رایگان.</p></div>
+ ${rewardCard('youtube','یوتیوب','https://youtube.com/shorts/sAm-iPBjSoo','▶ تماشای ویدئوی Manager_MT')}
+ ${rewardCard('aparat','آپارات','https://www.aparat.com/ridam_toPAHLAVI/short-videos','▶ دیدن ویدئوهای آپارات')}
+ ${redeem}<div class="modalactions"><button class="secondary" data-close>بستن</button></div><p class="subtle" id="rewardHint" role="status"></p>`);
+ $('#modal').querySelectorAll('[data-submit-reward]').forEach(submit=>submit.onclick=async()=>{
+  const platform=submit.dataset.submitReward,file=$('#'+platform+'ProofFile').files?.[0];
+  if(!file){toast('اول تصویر را انتخاب کن.');return}
   if(!/^image\/(jpeg|png|webp)$/i.test(file.type)||file.size>5*1024*1024){toast('فقط تصویر JPG، PNG یا WEBP تا ۵ مگابایت مجاز است.');return}
   submit.disabled=true;submit.textContent='در حال ارسال تصویر...';
-  const path=currentUser.id+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+(file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg');
+  const path=currentUser.id+'/'+platform+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+(file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg');
   const upload=await supabaseClient.storage.from('youtube-reward-proof').upload(path,file,{contentType:file.type,upsert:false});
   if(upload.error){submit.disabled=false;submit.textContent='ارسال برای بررسی مدیر';toast('آپلود تصویر ناموفق بود: '+upload.error.message);return}
-  const {error}=await supabaseClient.from('youtube_reward_submissions').insert({user_id:currentUser.id,proof_path:path});
-  if(error){await supabaseClient.storage.from('youtube-reward-proof').remove([path]);submit.disabled=false;submit.textContent='ارسال برای بررسی مدیر';toast('ثبت درخواست ناموفق بود: '+error.message);return}
+  const {error}=await supabaseClient.from('youtube_reward_submissions').insert({user_id:currentUser.id,proof_path:path,platform});
+  if(error){await supabaseClient.storage.from('youtube-reward-proof').remove([path]);submit.disabled=false;submit.textContent='ارسال برای بررسی مدیر';toast(error.code==='23505'?'برای این پلتفرم درخواست در انتظار بررسی داری.':'ثبت درخواست ناموفق بود: '+error.message);return}
   toast('تصویر برای بررسی مدیر ارسال شد.');youtubeRewardModal();
- };
+ });
  const redeemButton=$('#redeemRewardBtn');
  if(redeemButton)redeemButton.onclick=async()=>{
   const title=$('#rewardAdTitle').value.trim(),targetUrl=$('#rewardAdUrl').value.trim();
@@ -1725,7 +1721,7 @@ async function youtubeRewardModal(){
   let parsed;try{parsed=new URL(targetUrl)}catch(e){toast('لینک تبلیغ معتبر نیست.');return}
   if(parsed.protocol!=='https:'){toast('لینک تبلیغ باید HTTPS باشد.');return}
   redeemButton.disabled=true;redeemButton.textContent='در حال ثبت تبلیغ...';
-  const {data,error}=await supabaseClient.rpc('redeem_ad_points',{p_title:title,p_target_url:parsed.href});
+  const {error}=await supabaseClient.rpc('redeem_ad_points',{p_title:title,p_target_url:parsed.href});
   if(error){toast(error.message==='not_enough_points'?'امتیاز کافی نداری.':'ثبت تبلیغ ناموفق بود: '+error.message);redeemButton.disabled=false;redeemButton.textContent='تبدیل ۱۰۰ امتیاز به یک روز تبلیغ';return}
   closeModal();toast('تبلیغ یک‌روزه‌ات فعال شد 🎉');await loadAdBanner();youtubeRewardModal();
  };
@@ -2216,7 +2212,7 @@ async function adminPanel(){
  $('#giveChannelTick').onclick=()=>setTick('channel',true);$('#removeChannelTick').onclick=()=>setTick('channel',false);
  $('#createAd').onclick=async()=>{const title=$('#adTitle').value.trim(),url=$('#adUrl').value.trim(),end=$('#adEnd').value;if(!title||!url.startsWith('https://')||!end||new Date(end)<=new Date()){toast('عنوان، لینک HTTPS و زمان پایان آینده را کامل کن.');return}const {error}=await supabaseClient.from('advertisements').insert({title,target_url:url,channel_id:$('#adChannel').value||null,starts_at:new Date().toISOString(),ends_at:new Date(end).toISOString(),status:'active',created_by:currentUser.id});if(error){toast('ثبت تبلیغ ناموفق بود: '+error.message);return}toast('تبلیغ ثبت و فعال شد.');adminPanel()};
  
- const rewardResult=await supabaseClient.from('youtube_reward_submissions').select('id,user_id,proof_path,status,created_at').eq('status','pending').order('created_at',{ascending:true}).limit(50);
+ const rewardResult=await supabaseClient.from('youtube_reward_submissions').select('id,user_id,proof_path,status,created_at,platform').eq('status','pending').order('created_at',{ascending:true}).limit(50);
  if(rewardResult.error){toast('دریافت درخواست‌های جایزه ناموفق بود: '+rewardResult.error.message)}
  else{
   const rewardItems=rewardResult.data||[],rewardUserIds=[...new Set(rewardItems.map(x=>x.user_id))];
@@ -2224,9 +2220,9 @@ async function adminPanel(){
   const rewardNames=new Map((rewardProfiles.data||[]).map(x=>[x.id,x.display_name||'کاربر']));
   const rewardCards=await Promise.all(rewardItems.map(async item=>{
    const signed=await supabaseClient.storage.from('youtube-reward-proof').createSignedUrl(item.proof_path,1800);
-   return '<article class="ad-request-row"><b>'+esc(rewardNames.get(item.user_id)||'کاربر')+'</b><p class="subtle">'+new Date(item.created_at).toLocaleString('fa-IR')+'</p>'+(signed.data?.signedUrl?'<a href="'+esc(signed.data.signedUrl)+'" target="_blank" rel="noopener noreferrer">مشاهده تصویر اشتراک ↗</a>':'<p class="subtle">تصویر در دسترس نیست.</p>')+'<div class="modalactions"><button class="primary" data-reward-approve="'+item.id+'">تأیید و اعطای ۱۰۰ امتیاز</button><button class="secondary" data-reward-reject="'+item.id+'">رد درخواست</button></div></article>';
+   return '<article class="ad-request-row"><b>'+esc(rewardNames.get(item.user_id)||'کاربر')+' · '+(item.platform==='aparat'?'آپارات':'یوتیوب')+'</b><p class="subtle">'+new Date(item.created_at).toLocaleString('fa-IR')+'</p>'+(signed.data?.signedUrl?'<a href="'+esc(signed.data.signedUrl)+'" target="_blank" rel="noopener noreferrer">مشاهده تصویر تأیید ↗</a>':'<p class="subtle">تصویر در دسترس نیست.</p>')+'<div class="modalactions"><button class="primary" data-reward-approve="'+item.id+'">تأیید و اعطای ۱۰۰ امتیاز</button><button class="secondary" data-reward-reject="'+item.id+'">رد درخواست</button></div></article>';
   }));
-  $('#modal').insertAdjacentHTML('beforeend','<h4>بررسی اشتراک یوتیوب (جایزه ۱۰۰ امتیازی)</h4><div id="youtubeRewardReviewRows">'+(rewardCards.join('')||'<p class="subtle">درخواست در انتظاری وجود ندارد.</p>')+'</div>');
+  $('#modal').insertAdjacentHTML('beforeend','<h4>بررسی درخواست‌های جایزه (هرکدام ۱۰۰ امتیاز)</h4><div id="youtubeRewardReviewRows">'+(rewardCards.join('')||'<p class="subtle">درخواست در انتظاری وجود ندارد.</p>')+'</div>');
   $('#youtubeRewardReviewRows').onclick=async e=>{
    const approve=e.target.closest('[data-reward-approve]'),reject=e.target.closest('[data-reward-reject]');if(!approve&&!reject)return;
    const button=approve||reject,id=button.dataset.rewardApprove||button.dataset.rewardReject;

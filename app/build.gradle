@@ -1,5 +1,7 @@
 plugins { id 'com.android.application' }
 
+def releaseStoreFile = System.getenv('ANDROID_KEYSTORE_FILE')
+
 android {
     namespace 'com.iranigram.app'
     compileSdk 35
@@ -10,6 +12,25 @@ android {
         targetSdk 34
         versionCode 4
         versionName '1.0.3'
+    }
+
+    signingConfigs {
+        release {
+            if (releaseStoreFile) {
+                storeFile file(releaseStoreFile)
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (releaseStoreFile) {
+                signingConfig signingConfigs.release
+            }
+        }
     }
 }
 

@@ -1378,6 +1378,15 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
 .saved-message small{color:var(--muted);font-size:11px}.saved-message p{white-space:pre-wrap;line-height:1.75;margin:8px 0 12px;overflow-wrap:anywhere}
 @media(max-width:760px){.messages{padding:12px 9px 16px;gap:9px}.msg{max-width:88%;padding:9px 10px 7px}.msgactions{gap:3px}.msgactions .tiny{font-size:10px;min-height:28px;padding:4px 7px}.composer{gap:5px;padding-left:7px;padding-right:7px}.round{width:35px;height:38px;min-width:35px}.send{width:40px;height:40px;min-width:40px}.composefield{min-height:42px;padding-left:10px;padding-right:10px}}
 @media(min-width:761px){.chatview{min-height:0}.messages{padding-left:max(22px,8%);padding-right:max(22px,8%)}.msg:hover{box-shadow:0 4px 18px #0003}}
+
+.ad-banner{margin:8px 12px 10px;padding:9px;border:1px solid #3390ec40;border-radius:14px;background:linear-gradient(120deg,#172b3b,#17212b 65%,#1b2a37);overflow:hidden}
+.ad-banner[hidden]{display:none!important}.ad-banner-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;color:#b9dfff;font-size:12px;font-weight:700}
+.ad-banner-head button{border:0;border-radius:9px;padding:5px 9px;background:#3390ec;color:white;font-size:11px}
+.ad-banner-list{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}.ad-banner-list::-webkit-scrollbar{display:none}
+.ad-banner-item{flex:0 0 min(84%,280px);min-width:0;display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid #ffffff12;border-radius:11px;background:#ffffff08;color:#edf6ff;text-decoration:none}
+.ad-banner-icon{width:27px;height:27px;flex:0 0 27px;border-radius:9px;display:grid;place-items:center;background:#3390ec26;color:#7fc2ff}
+.ad-banner-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:700}.ad-banner-open{font-size:10px;color:#8fc7ff;white-space:nowrap}
+#requestAdName,#requestAdUrl,#requestAdDuration{width:100%;margin:5px 0 12px}
 </style>
 </head>
  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
@@ -1394,12 +1403,13 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
   <div class="drawer-section">حساب کاربری</div>
   <button data-action="profile"><span>👤</span> پروفایل من</button><button data-action="contacts"><span>♙</span> مخاطبین</button><button data-action="saved"><span>🔖</span> پیام‌های ذخیره‌شده</button>
   <div class="drawer-section">ایرانگرام</div>
-  <button data-action="group"><span>👥</span> ساخت گروه</button><button data-action="channel"><span>📢</span> ساخت کانال</button><button data-action="bot"><span>🤖</span> ساخت بات</button><button data-action="anonymous"><span>🕵️</span> پیام‌های ناشناس</button><button data-action="ads"><span>📣</span> تبلیغات</button><button data-action="settings"><span>⚙️</span> تنظیمات</button>
+  <button data-action="group"><span>👥</span> ساخت گروه</button><button data-action="channel"><span>📢</span> ساخت کانال</button><button data-action="bot"><span>🤖</span> ساخت بات</button><button data-action="anonymous"><span>🕵️</span> پیام‌های ناشناس</button><button data-action="ads"><span>📣</span> تبلیغات</button><button data-action="adrequest"><span>📝</span> ثبت تبلیغ</button><button data-action="settings"><span>⚙️</span> تنظیمات</button>
   <div class="drawer-section">ابزارها</div>
   <button data-action="admin"><span>🛡️</span> مدیریت ایرانگرام</button><button data-action="export"><span>⬇️</span> خروجی پشتیبان</button><button data-action="about"><span>ℹ️</span> درباره ایرانگرام</button><button data-action="logout"><span>🚪</span> خروج از حساب</button>
   <div class="drawer-footer">ایرانگرام · پیام‌رسان فارسی</div>
  </div>
  <div class="searchbox"><input id="search" placeholder="جست‌وجو" autocomplete="off"></div>
+ <div id="adBanner" class="ad-banner" hidden aria-label="تبلیغات"></div>
  <div class="filters" role="tablist" aria-label="پوشه گفتگوها"><button class="filter active" role="tab" aria-selected="true" data-filter="all">همه چت‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="people">شخصی</button><button class="filter" role="tab" aria-selected="false" data-filter="unread">خوانده‌نشده</button><button class="filter" role="tab" aria-selected="false" data-filter="groups">گروه‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="channels">کانال‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="archive">آرشیو</button><button class="filter" role="tab" aria-selected="false" data-filter="hidden">مخفی</button></div>
  <div class="stories" id="stories"></div>
  <div class="chats" id="chatList"></div>
@@ -1676,7 +1686,7 @@ async function loadOnlineChats(){
   }
  }
  if(!state.chats.some(c=>c.id===state.active))state.active=null;
- renderChats();
+ renderChats();loadAdBanner();
  if(state.active)openChatNoFocus();else{$('#chatView').style.display='none';$('#emptyState').style.display='grid'}
 }
 async function recordChannelActivity(channelId){if(!remoteMode||!currentUser||!channelId)return;const {error}=await supabaseClient.rpc('record_channel_activity',{p_channel_id:channelId});if(error){console.warn('Channel activity update failed',error.message);return}const {data}=await supabaseClient.rpc('get_channel_verification_status');const status=(data||[]).find(x=>x.channel_id===channelId),c=state.chats.find(x=>x.id===channelId);if(status&&c){c.verified=status.is_verified;c.active_users_30d=status.active_users_30d;renderChats()}}
@@ -2098,6 +2108,33 @@ function isPrimaryAdmin(){return !!currentUser&&String(currentUser.email||'').to
 const cyrusVerses=['به نام خرد، راه روشن شود؛ دل از مهر ایران گلشن شود.','جهان را به داد و خرد زنده دار؛ به نیکی بمان و بدی را سپار.','نه از تخت ماند و نه از تاج و گنج؛ آن‌چه بماند، نیکی‌ست و رنجِ گنج.','چراغ دانایی افروز و بس؛ که تاریکی از روشنایی شکست.','به فرهنگ و آزادی آباد شو؛ به مهر و به دانش، دلشاد شو.','اگر نام نیکو بجویی به جهان؛ به کردار نیکو بمان جاودان.','دلیر آن‌که با دانش و داد زیست؛ نه آن‌کس که تنها به شمشیر ایست.','ز خاک وطن، جوانه امید خیزد؛ به دست خرد، فردا پدید آید.','به هر جا که مهر است، ایران همان‌جاست؛ شکوهش به اندیشه و انسان‌گرایی‌ست.','جهان خانه مردم است و بس؛ به داد و مدارا بمان هم‌نفس.'];function setSplashPoem(){const special=localStorage.getItem('ig_special_splash');const el=document.getElementById('splashPoem');if(el)el.textContent=special||cyrusVerses[Math.floor(Math.random()*cyrusVerses.length)];}setSplashPoem();
 
 
+async function requestAdModal(){
+ if(!remoteMode||!currentUser){toast('برای ثبت تبلیغ ابتدا وارد حسابت شو.');authModal();return}
+ showModal('ثبت تبلیغ در ایرانگرام',`<p class="subtle">اطلاعات تبلیغت رو بفرست؛ درخواست به‌صورت خصوصی برای مدیر تبلیغات ارسال می‌شه و بعد از بررسی، در نوار بالای گفتگوها نمایش داده می‌شه.</p>
+ <label>اسم نمایشی تبلیغ (نام کانال یا پروفایل)</label><input id="requestAdName" maxlength="60" placeholder="مثلاً کانال تکنولوژی">
+ <label>لینک کانال یا پروفایل</label><input id="requestAdUrl" type="url" inputmode="url" placeholder="https://...">
+ <label>مدت نمایش تبلیغ</label><select id="requestAdDuration"><option value="1">۱ روز</option><option value="3">۳ روز</option><option value="7" selected>۷ روز</option><option value="14">۱۴ روز</option><option value="30">۳۰ روز</option></select>
+ <p class="subtle">ارسال درخواست رایگان است؛ هزینه و شرایط احتمالی تبلیغ را مدیر با شما هماهنگ می‌کند.</p>
+ <div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="sendAdRequest">ارسال درخواست</button></div>`);
+ $('#sendAdRequest').onclick=async()=>{
+  const name=$('#requestAdName').value.trim(),url=$('#requestAdUrl').value.trim(),days=Number($('#requestAdDuration').value);
+  let parsed;try{parsed=new URL(url)}catch(e){toast('لینک معتبر وارد کن.');return}
+  if(name.length<2||name.length>60||parsed.protocol!=='https:'||![1,3,7,14,30].includes(days)){toast('اسم، لینک HTTPS و مدت تبلیغ رو درست وارد کن.');return}
+  const button=$('#sendAdRequest');button.disabled=true;button.textContent='در حال ارسال...';
+  const {error}=await supabaseClient.from('ad_requests').insert({requester_id:currentUser.id,display_name:name,target_url:parsed.href,duration_days:days});
+  if(error){button.disabled=false;button.textContent='ارسال درخواست';toast('ارسال درخواست ناموفق بود: '+error.message);return}
+  closeModal();toast('درخواست تبلیغ خصوصی برای مدیر ارسال شد.');
+ };
+}
+async function loadAdBanner(){
+ const el=$('#adBanner');if(!el)return;
+ if(!remoteMode||!currentUser){el.hidden=true;el.innerHTML='';return}
+ const {data,error}=await supabaseClient.from('advertisements').select('id,title,target_url,ends_at').eq('status','active').lte('starts_at',new Date().toISOString()).gt('ends_at',new Date().toISOString()).order('created_at',{ascending:false}).limit(5);
+ if(error){console.warn('Ad banner unavailable:',error.message);el.hidden=true;return}
+ if(!data||!data.length){el.hidden=true;el.innerHTML='';return}
+ el.innerHTML='<div class="ad-banner-head"><span>📣 پیشنهادهای تبلیغاتی</span><button type="button" data-ad-register>ثبت تبلیغ</button></div><div class="ad-banner-list">'+data.map(a=>'<a class="ad-banner-item" href="'+esc(a.target_url)+'" target="_blank" rel="noopener noreferrer"><span class="ad-banner-icon">✦</span><span class="ad-banner-title">'+esc(a.title)+'</span><span class="ad-banner-open">مشاهده ↗</span></a>').join('')+'</div>';
+ el.hidden=false;
+}
 async function advertisementsModal(){
  if(!remoteMode){toast('برای دیدن تبلیغات وارد حساب شو.');return}
  const {data,error}=await supabaseClient.from('advertisements').select('id,title,target_url,ends_at').eq('status','active').lte('starts_at',new Date().toISOString()).gt('ends_at',new Date().toISOString()).order('created_at',{ascending:false});
@@ -2143,7 +2180,7 @@ const settingsQuickBtn=$('#settingsQuickBtn');if(settingsQuickBtn)settingsQuickB
  else if(action==='profile')profileModal();
 };
 $('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
-$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
+$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 let suppressChatClick=false;
 $('#chatList').onclick=e=>{
  const actionButton=e.target.closest('[data-chat-actions]');
@@ -2191,6 +2228,7 @@ $('#chatList').addEventListener('touchend',e=>{
 },{passive:true});
 $('#chatList').addEventListener('touchcancel',()=>{chatTouchStart=null;clearSwipeHint()},{passive:true});
 $('#modal').addEventListener('click',async e=>{
+ const adRegister=e.target.closest('[data-ad-register]');if(adRegister){requestAdModal();return}
  const folderButton=e.target.closest('[data-chat-folder-action]');
  if(folderButton){const chat=state.chats.find(x=>x.id===activeFolderActionChatId);if(chat){setChatFolder(chat,folderButton.dataset.chatFolderAction);closeModal()}return}
  const deleteSaved=e.target.closest('[data-saved-delete]');

@@ -1426,7 +1426,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
  </nav>
 </aside>
 <main class="main" id="main">
- <div class="empty" id="emptyState"><div class="emptycard"><div class="plane">✈️</div><h2>به ایرانگرام خوش آمدی</h2><p>یک گفت‌وگو را انتخاب کن یا گفت‌وگوی تازه بساز.<br>نسخه نمایشی پیشرفته با طراحی مناسب گوشی.</p><button class="primary" id="startChat">شروع گفت‌وگو</button><p class="subtle">این نسخه به‌تنهایی پیام‌ها را به دستگاه‌های دیگر ارسال نمی‌کند.</p></div></div>
+ <div class="empty" id="emptyState"><div class="emptycard"><div class="plane">✈️</div><h2>به ایرانگرام خوش آمدی</h2><p>برای شروع پیام‌رسانی، وارد حساب کاربری‌ات شو یا حساب تازه بساز.</p><button class="primary" id="startChat">ورود به ایرانگرام</button><p class="subtle">گفت‌وگوها و پیام‌ها پس از ورود، بین دستگاه‌ها همگام می‌شوند.</p></div></div>
  <section class="chatview" id="chatView" style="display:none">
   <header class="chatheader"><button class="iconbtn backbtn" id="backBtn" style="color:var(--text)">‹</button><div class="avatar" id="headAvatar">ای</div><div class="chatname"><b id="headName">گفت‌وگو</b><small id="headStatus">نمایشی</small></div><button class="iconbtn callbtn" id="audioCallBtn" title="تماس صوتی" aria-label="تماس صوتی">☎</button><button class="iconbtn callbtn" id="videoCallBtn" title="تماس تصویری" aria-label="تماس تصویری">▣</button><button class="iconbtn" id="chatSearchBtn" style="color:var(--text)" title="جست‌وجوی پیام">⌕</button><button class="iconbtn" id="chatMoreBtn" style="color:var(--text)" title="گزینه‌ها">⋮</button></header>
   <div class="messages" id="messages"></div>
@@ -1463,13 +1463,7 @@ const supabaseClient = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_KE
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,10);
 const now=()=>new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
-const starter=()=>[
-{id:'official',name:'کانال رسمی ایرانگرام',type:'channels',avatar:'ای',color:'gold',status:'کانال رسمی',unread:0,messages:[{id:uid(),text:'به کانال رسمی ایرانگرام خوش آمدید 💙\\nبرای پیام‌رسانی واقعی، وارد حساب کاربری‌ات شو.',mine:false,time:'۱۲:۰۰',reactions:[]}]},
-{id:'nilo',name:'نیلوفر',type:'people',avatar:'ن',color:'purple',status:'آخرین بازدید اخیراً',unread:1,messages:[{id:uid(),text:'سلام! به ایرانگرام خوش اومدی 😊',mine:false,time:'۱۱:۴۵',reactions:[]}]},
-{id:'friends',name:'گروه دوستان',type:'groups',avatar:'👥',color:'green',status:'گروه نمایشی',unread:0,messages:[{id:uid(),text:'اینجا می‌تونی گفت‌وگوی گروهی رو امتحان کنی.',mine:false,time:'دیروز',reactions:[]}]},
-{id:'news',name:'خبرهای ایرانگرام',type:'channels',avatar:'📣',color:'',status:'کانال نمایشی',unread:0,messages:[{id:uid(),text:'خبرها و اطلاعیه‌های آزمایشی در این بخش قرار می‌گیرند.',mine:false,time:'دیروز',reactions:[]}]},
-{id:'saved',name:'پیام‌های ذخیره‌شده',type:'people',avatar:'★',color:'gold',status:'فضای شخصی روی این دستگاه',unread:0,messages:[{id:uid(),text:'پیام‌ها یا یادداشت‌های مهمت را اینجا نگه دار.',mine:false,time:'',reactions:[]}]}
-];
+const starter=()=>[];
 let state={profile:{name:'کاربر ایرانگرام',bio:'سلام! من در ایرانگرام هستم.',theme:'dark'},chats:starter(),active:null,filter:'all',query:'',reply:null};
 try{const s=JSON.parse(localStorage.getItem('iranGramPro'));if(s&&s.chats&&s.profile)state={...state,...s}}catch(e){}
 function save(){try{localStorage.setItem('iranGramPro',JSON.stringify(state))}catch(e){}}
@@ -1528,7 +1522,7 @@ async function openStoryGroup(userId){
  if(!items.length)return;
  const story=items[0];
  if(!story.signedUrl){toast('دریافت فایل داستان ناموفق بود');return}
- const media=story.media_type.startsWith('video/')?`<video src="${esc(story.signedUrl)}" controls autoplay playsinline style="width:100%;max-height:58vh;border-radius:14px;background:#000"></video>`:`<img src="${esc(story.signedUrl)}" alt="داستان" style="width:100%;max-height:58vh;object-fit:contain;border-radius:14px;background:#000">`;
+ const media=(story.media_type==='video'||story.media_type.startsWith('video/'))?`<video src="${esc(story.signedUrl)}" controls autoplay playsinline style="width:100%;max-height:58vh;border-radius:14px;background:#000"></video>`:`<img src="${esc(story.signedUrl)}" alt="داستان" style="width:100%;max-height:58vh;object-fit:contain;border-radius:14px;background:#000">`;
  const own=story.user_id===currentUser?.id;
  showModal(esc(story.profileName||story.username||'داستان'),`<div style="text-align:center">${media}<p>${esc(story.caption||'')}</p><small class="subtle">این داستان پس از ۲۴ ساعت ناپدید می‌شود.</small></div><div class="modalactions"><button class="secondary" data-close>بستن</button>${own?'<button class="primary" id="deleteOwnStory">حذف داستان</button>':''}</div>`);
  if(own)$('#deleteOwnStory').onclick=async()=>{
@@ -1603,11 +1597,6 @@ async function refreshMediaUrls(chat){
  finally{mediaRefreshInFlight.delete(chat.id)}
  if(changed&&state.active===chat.id)renderMessages();
 }
-function officialDemoReactionCounts(messageId){
- let seed=Array.from(String(messageId||'official')).reduce((n,ch)=>(n*31+ch.charCodeAt(0))>>>0,7);
- const emojis=['❤️','🔥','👍','😂','🚀','👏'];
- return emojis.map((emoji,i)=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return {emoji,count:1200+(seed%8800)}})
-}
 function renderMessages(){
  const c=activeChat();if(!c)return;
  const visibleMessages=c.messages.slice(-30);
@@ -1616,14 +1605,12 @@ function renderMessages(){
  `<div class="daylabel">امروز</div>`+
  visibleMessages.map(m=>{
   const realRows=Object.entries(m.reactionCounts||{}).filter(([emoji,count])=>count>0);
-  const demoRows=c.id==='e39f6339-049e-462a-8bbe-c9bfaff04278'?officialDemoReactionCounts(m.id):[];
   return `<article class="msg ${m.mine?'mine':''}" data-msg="${m.id}">
    ${m.reply?(()=>{const replied=c.messages.find(x=>x.id===m.reply);return replied?`<div class="reply-quote" style="border-right:3px solid #3390ec;padding:5px 8px;margin-bottom:7px;background:#3390ec18;border-radius:6px;font-size:11px;color:inherit"><b>پاسخ به پیام</b><div>${esc(String(replied.text||'').slice(0,100))}</div></div>`:''})():''}
    <p>${renderMessageContent(m)}</p>
    ${c.type==="channels"?`<span class="channel-author">${esc(m.senderName||(m.mine?currentDisplayName:"کاربر"))}</span>`:(m.mine?`<span class="msg-signature">— ${esc(m.senderName||currentDisplayName)}</span>`:"")}
    <div class="msgmeta"><span>${esc(m.time||'')}</span>${m.mine?'<span>✓✓</span>':''}</div>
    ${realRows.length?`<div class="reaction-summary" aria-label="واکنش‌های واقعی">${realRows.map(([emoji,count])=>`<button class="reaction-chip ${m.reactions?.includes(emoji)?"is-liked":""}" data-react="${m.id}" data-emoji="${emoji}" aria-pressed="${m.reactions?.includes(emoji)?"true":"false"}"><span>${emoji}</span><b>${count.toLocaleString("fa-IR")}</b></button>`).join('')}</div>`:''}
-   ${demoRows.length?`<div class="demo-reaction-block"><div class="reaction-summary">${demoRows.map(row=>`<span class="reaction-chip demo-chip"><span>${row.emoji}</span><b>${row.count.toLocaleString("fa-IR")}</b></span>`).join('')}</div></div>`:''}
    <div class="msgactions">${["👍","❤️","😂","🔥","👏","🚀"].map(em=>`<button class="tiny reaction-btn ${m.reactions?.includes(em)?"is-liked":""}" data-react="${m.id}" data-emoji="${em}" aria-label="واکنش ${em}" aria-pressed="${m.reactions?.includes(em)?"true":"false"}">${em}</button>`).join('')}
    ${m.mine?`<button class="tiny" data-edit="${m.id}">ویرایش</button><button class="tiny" data-delete="${m.id}">حذف</button>`:''}
    <button class="tiny" data-reply="${m.id}">پاسخ</button><button class="tiny" data-pin="${m.id}">${c.pinnedMessageId===m.id?'برداشتن سنجاق':'📌 سنجاق'}</button><button class="tiny" data-forward="${m.id}">فوروارد</button><button class="tiny" data-copy="${m.id}">کپی</button><button class="tiny" data-save="${m.id}">ذخیره</button></div>
@@ -1889,7 +1876,7 @@ async function finishCall(notify=true){
 
 async function initAuth(){
  const {data}=await supabaseClient.auth.getSession();
- if(data.session){await startOnline()}else{render();toast('خوش آمدی! برای پیام‌رسانی آنلاین از منوی بالا وارد حسابت شو.')}
+ if(data.session){await startOnline()}else{state.chats=[];state.active=null;save();render();authModal()}
  document.addEventListener('visibilitychange',()=>{if(currentUser&&remoteMode)updateMyPresence(document.visibilityState==='visible')});
  supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){if(presenceHeartbeat)clearInterval(presenceHeartbeat);presenceHeartbeat=null;currentUser=null;remoteMode=false;state.chats=[];state.active=null;authModal()}});
 }
@@ -1917,7 +1904,7 @@ async function uploadAndSendFile(file,kind='media'){
  c.messages.push({id:sent.id,text:body,mine:true,time:new Date(sent.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[]});save();renderMessages();renderChats();
 }
 
-async function sendMessage(){const input=$('#messageInput'),text=input.value.trim();if(!text)return;let c=activeChat();if(!c){toast('اول یک گفت‌وگو انتخاب کن');return}if(remoteMode&&c.remote){const {data:sent,error}=await supabaseClient.from('messages').insert({conversation_id:c.id,sender_id:currentUser.id,body:text,reply_to_id:state.reply||null}).select('id,created_at').single();if(error){toast('ارسال ناموفق بود: '+error.message);return}c.messages.push({id:sent.id,text,mine:true,time:new Date(sent.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:state.reply||null});}else{toast('این چت هنوز به حساب آنلاین وصل نیست؛ پیام فقط روی همین گوشی می‌مونه.');c.messages.push({id:uid(),text,mine:true,time:now(),reactions:[],reply:state.reply});}state.reply=null;input.value='';input.style.height='auto';save();renderChats();renderMessages()}
+async function sendMessage(){const input=$('#messageInput'),text=input.value.trim();if(!text)return;const c=activeChat();if(!c){toast('اول یک گفت‌وگو انتخاب کن');return}if(!remoteMode||!currentUser||!c.remote){authModal();toast('برای ارسال پیام واقعی، اول وارد حساب آنلاین شو');return}const {data:sent,error}=await supabaseClient.from('messages').insert({conversation_id:c.id,sender_id:currentUser.id,body:text,reply_to_id:state.reply||null}).select('id,created_at').single();if(error){toast('ارسال ناموفق بود: '+error.message);return}c.messages.push({id:sent.id,text,mine:true,time:new Date(sent.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:state.reply||null});state.reply=null;input.value='';input.style.height='auto';save();renderChats();renderMessages()}
 async function browsePublicChannels(){
  if(!remoteMode||!currentUser){toast('برای دیدن کانال‌های عمومی اول وارد حسابت شو');return}
  showModal('یافتن کانال‌های عمومی','<label>نام کانال (اختیاری)</label><input id="publicChannelQuery" placeholder="نام کانال را بنویس"><div id="publicChannelResults" style="margin-top:12px"></div><div class="modalactions"><button class="secondary" data-close>بستن</button><button class="primary" id="searchPublicChannels">جست‌وجو</button></div>');
@@ -1942,6 +1929,7 @@ async function browsePublicChannels(){
  await run();
 }
 function newChat(){
+ if(!remoteMode||!currentUser){authModal();return}
  showModal('گفت‌وگوی تازه','<label>نام کاربری یا نام نمایشی دقیق مخاطب</label><input id="newName" placeholder="مثلاً @username یا سارا"><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="createChat">ساخت گفت‌وگو</button></div><button class="secondary" id="browsePublicChannels" style="width:100%;margin-top:8px">یافتن کانال‌های عمومی</button><p class="subtle">برای گفت‌وگوی آنلاین، مخاطب باید قبلاً حساب ساخته باشد.</p>');
  $('#browsePublicChannels').onclick=browsePublicChannels;
  $('#createChat').onclick=async()=>{
@@ -1966,8 +1954,7 @@ function newChat(){
    if(memberError){toast('افزودن مخاطب ناموفق بود: '+memberError.message);return}
    closeModal();await loadOnlineChats();openChat(conv.id);return;
   }
-  const c={id:uid(),name:term,type:'people',avatar:term[0],status:'گفت‌وگوی نمایشی',unread:0,messages:[]};
-  state.chats.unshift(c);save();closeModal();render();openChat(c.id);
+  authModal();
  };
 }
 async function addConversationMember(chatId){
@@ -2046,7 +2033,7 @@ function createBot(){
  };
 }
 
-function createCollection(type){const channel=type==='channels';showModal(channel?'ساخت کانال':'ساخت گروه',`<label>نام ${channel?'کانال':'گروه'}</label><input id="collectionName" placeholder="${channel?'مثلاً اطلاعیه‌های من':'مثلاً خانواده'}"><label>توضیحات</label><textarea id="collectionBio" placeholder="توضیح کوتاه (اختیاری)"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="createCollection">ساخت</button></div><p class="subtle">در حالت آنلاین، کانال و گروه در سرور ساخته می‌شوند.</p>`);$('#createCollection').onclick=async()=>{const name=$('#collectionName').value.trim(),bio=$('#collectionBio').value.trim();if(!name){toast('نام را وارد کن');return}if(remoteMode&&currentUser){const kind=channel?'channel':'group';const {data:conv,error}=await supabaseClient.from('conversations').insert({title:name,type:kind,description:bio,created_by:currentUser.id}).select('id').single();if(error){toast('ساخت ناموفق بود: '+error.message);return}const {error:memberError}=await supabaseClient.from('conversation_members').insert({conversation_id:conv.id,user_id:currentUser.id,role:'owner'});if(memberError){toast('ساخت عضویت ناموفق بود: '+memberError.message);return}if(bio){const {error:msgError}=await supabaseClient.from('messages').insert({conversation_id:conv.id,sender_id:currentUser.id,body:bio});if(msgError){toast('کانال ساخته شد، اما توضیحات ثبت نشد.')}}closeModal();await loadOnlineChats();openChat(conv.id);return}const c={id:uid(),name,type:channel?'channels':'groups',avatar:channel?'📢':'👥',color:channel?'gold':'green',status:channel?'کانال نمایشی':'گروه نمایشی',unread:0,messages:[{id:uid(),text:bio||`به ${name} خوش آمدید.`,mine:false,time:now(),reactions:[]}]};state.chats.unshift(c);save();closeModal();render();openChat(c.id)}}
+function createCollection(type){if(!remoteMode||!currentUser){authModal();return}const channel=type==='channels';showModal(channel?'ساخت کانال':'ساخت گروه',`<label>نام ${channel?'کانال':'گروه'}</label><input id="collectionName" placeholder="${channel?'مثلاً اطلاعیه‌های من':'مثلاً خانواده'}"><label>توضیحات</label><textarea id="collectionBio" placeholder="توضیح کوتاه (اختیاری)"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="createCollection">ساخت</button></div><p class="subtle">در حالت آنلاین، کانال و گروه در سرور ساخته می‌شوند.</p>`);$('#createCollection').onclick=async()=>{const name=$('#collectionName').value.trim(),bio=$('#collectionBio').value.trim();if(!name){toast('نام را وارد کن');return}if(remoteMode&&currentUser){const kind=channel?'channel':'group';const {data:conv,error}=await supabaseClient.from('conversations').insert({title:name,type:kind,description:bio,created_by:currentUser.id}).select('id').single();if(error){toast('ساخت ناموفق بود: '+error.message);return}const {error:memberError}=await supabaseClient.from('conversation_members').insert({conversation_id:conv.id,user_id:currentUser.id,role:'owner'});if(memberError){toast('ساخت عضویت ناموفق بود: '+memberError.message);return}if(bio){const {error:msgError}=await supabaseClient.from('messages').insert({conversation_id:conv.id,sender_id:currentUser.id,body:bio});if(msgError){toast('کانال ساخته شد، اما توضیحات ثبت نشد.')}}closeModal();await loadOnlineChats();openChat(conv.id);return}authModal();return}}
 function showModal(title,body){$('#modal').innerHTML=`<h3>${title}</h3>${body}`;$('#modalBack').classList.add('open')}
 
 async function savedMessagesModal(){
@@ -2428,7 +2415,7 @@ $('#modal').addEventListener('click',e=>{
 $('#modalBack').onclick=e=>{if(e.target===$('#modalBack'))closeModal()};
 setSplashPoem();
 if(new URLSearchParams(location.search).has('anon'))anonymousSendPage();
-if(!supabaseClient){render();toast('حالت نمایشی اجرا شد؛ برای ورود آنلاین اینترنت را بررسی کن.')}else{initAuth().then(()=>{if(new URLSearchParams(location.search).has('anon'))anonymousSendPage()}).catch(error=>{console.error('IranGram startup failed:',error);render();toast('بخشی از اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.')})}
+if(!supabaseClient){state.chats=[];state.active=null;save();render();authModal()}else{initAuth().then(()=>{if(new URLSearchParams(location.search).has('anon'))anonymousSendPage()}).catch(error=>{console.error('IranGram startup failed:',error);render();toast('بخشی از اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.')})}
 </script>
 
 <script>

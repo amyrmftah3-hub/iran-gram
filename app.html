@@ -2026,16 +2026,48 @@ async function conversationSettingsModal(chat){
 }
 
 
-function createBot(){
- if(!remoteMode||!currentUser){authModal();toast('برای ساخت بات اول وارد حسابت شو');return}
- showModal('ساخت بات جدید',`<p class="subtle">برای باتت یک نام و شناسه یکتا انتخاب کن. شناسه باید با حرف انگلیسی شروع شود و فقط حروف، عدد و زیرخط داشته باشد.</p><label>نام بات</label><input id="newBotName" maxlength="48" placeholder="مثلاً بات پشتیبانی"><label>شناسه بات</label><input id="newBotUsername" maxlength="32" dir="ltr" placeholder="MySupportBot"><label>توضیحات</label><textarea id="newBotDescription" maxlength="300" placeholder="این بات چه کاری انجام می‌دهد؟"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveNewBot">ساخت بات</button></div><p class="subtle">فعلاً ساخت و ثبت هویت بات فعال می‌شود؛ توکن امن و API اجرای فرمان‌ها مرحله بعدی است.</p>`);
- $('#saveNewBot').onclick=async()=>{
-  const name=$('#newBotName').value.trim(),username=$('#newBotUsername').value.trim(),description=$('#newBotDescription').value.trim();
-  if(name.length<2){toast('نام بات حداقل ۲ حرف باشد');return}
-  if(!/^[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(username)){toast('شناسه باید ۵ تا ۳۲ نویسه و با حرف انگلیسی شروع شود');return}
-  const {data,error}=await supabaseClient.from('bots').insert({owner_id:currentUser.id,display_name:name,username,description}).select('id,display_name,username').single();
-  if(error){toast(error.code==='23505'?'این شناسه قبلاً گرفته شده است':'ساخت بات ناموفق بود: '+error.message);return}
-  closeModal();showModal('بات ساخته شد 🤖',`<p><b>${esc(data.display_name)}</b></p><p dir="ltr">@${esc(data.username)}</p><p class="subtle">هویت بات در ایرانگرام ثبت شد. ساخت توکن امن و اتصال API را در مرحله بعد اضافه می‌کنیم.</p><div class="modalactions"><button class="primary" data-close>باشه</button></div>`);
+async function createBot(){
+ if(!remoteMode||!currentUser){authModal();toast('برای مدیریت بات‌ها اول وارد حسابت شو');return}
+ showModal('🤖 بات‌ساز ایرانگرام',`<p class="subtle">بات‌هایت را بساز و فرمان‌ها و پاسخ‌های آماده‌شان را تنظیم کن.</p><div id="myBotsList" class="settings-list"><p class="subtle">در حال دریافت بات‌ها…</p></div><div class="modalactions"><button class="primary" id="openCreateBot">＋ ساخت بات جدید</button><button class="secondary" data-close>بستن</button></div>`);
+ const list=$('#myBotsList');
+ const refresh=async()=>{
+  const {data,error}=await supabaseClient.from('bots').select('id,display_name,username,description,is_active,created_at').eq('owner_id',currentUser.id).order('created_at',{ascending:false});
+  if(error){list.innerHTML='<p class="subtle">دریافت بات‌ها ناموفق بود: '+esc(error.message)+'</p>';return}
+  list.innerHTML=(data||[]).length?(data||[]).map(b=>`<div class="setting-row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div style="flex:1;min-width:130px"><b>${esc(b.display_name)}</b><div class="subtle" dir="ltr">@${esc(b.username)}</div></div><button class="secondary" data-manage-bot="${b.id}">مدیریت فرمان‌ها</button><button class="secondary" data-toggle-bot="${b.id}" data-active="${b.is_active}">${b.is_active?'خاموش‌کردن':'روشن‌کردن'}</button></div>`).join(''):'<p class="subtle">هنوز باتی نساختی. اولین باتت را بساز.</p>';
+  list.querySelectorAll('[data-manage-bot]').forEach(b=>b.onclick=()=>manageBotCommands((data||[]).find(x=>x.id===b.dataset.manageBot)));
+  list.querySelectorAll('[data-toggle-bot]').forEach(b=>b.onclick=async()=>{const {error}=await supabaseClient.from('bots').update({is_active:b.dataset.active!=='true'}).eq('id',b.dataset.toggleBot).eq('owner_id',currentUser.id);if(error){toast('تغییر وضعیت بات ناموفق بود');return}refresh();});
+ };
+ await refresh();
+ $('#openCreateBot').onclick=()=>{
+  showModal('ساخت بات جدید',`<p class="subtle">شناسه یکتا با حروف انگلیسی، عدد و زیرخط؛ شروع با حرف انگلیسی.</p><label>نام بات</label><input id="newBotName" maxlength="48" placeholder="مثلاً بات پشتیبانی"><label>شناسه بات</label><input id="newBotUsername" maxlength="32" dir="ltr" placeholder="MySupportBot"><label>توضیحات</label><textarea id="newBotDescription" maxlength="300" placeholder="این بات چه کاری انجام می‌دهد؟"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveNewBot">ساخت بات</button></div>`);
+  $('#saveNewBot').onclick=async()=>{
+   const name=$('#newBotName').value.trim(),username=$('#newBotUsername').value.trim(),description=$('#newBotDescription').value.trim();
+   if(name.length<2){toast('نام بات حداقل ۲ حرف باشد');return}
+   if(!/^[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(username)){toast('شناسه باید ۵ تا ۳۲ نویسه و با حرف انگلیسی شروع شود');return}
+   const {data,error}=await supabaseClient.from('bots').insert({owner_id:currentUser.id,display_name:name,username,description}).select('id,display_name,username').single();
+   if(error){toast(error.code==='23505'?'این شناسه قبلاً گرفته شده است':'ساخت بات ناموفق بود: '+error.message);return}
+   toast('بات ساخته شد 🤖');await createBot();
+  };
+ };
+}
+async function manageBotCommands(bot){
+ if(!bot)return;
+ showModal('فرمان‌های بات · '+esc(bot.display_name),`<p class="subtle">برای هر فرمان یک پاسخ آماده تعیین کن. نمونه: /start</p><div id="botCommandList" class="settings-list"><p class="subtle">در حال دریافت…</p></div><hr><label>فرمان</label><input id="botCommandName" dir="ltr" maxlength="33" placeholder="/start"><label>توضیح فرمان</label><input id="botCommandDesc" maxlength="120" placeholder="شروع کار با بات"><label>متن پاسخ</label><textarea id="botCommandReply" maxlength="2000" placeholder="سلام! به بات من خوش اومدی."></textarea><div class="modalactions"><button class="secondary" data-close>بستن</button><button class="primary" id="saveBotCommand">ذخیره فرمان</button></div>`);
+ const list=$('#botCommandList');
+ const refresh=async()=>{
+  const {data,error}=await supabaseClient.from('bot_commands').select('id,command,description,response_text').eq('bot_id',bot.id).order('created_at');
+  if(error){list.innerHTML='<p class="subtle">خطا در دریافت فرمان‌ها: '+esc(error.message)+'</p>';return}
+  list.innerHTML=(data||[]).length?(data||[]).map(c=>`<div class="setting-row"><div style="display:flex;align-items:center;gap:8px"><b dir="ltr">${esc(c.command)}</b><button class="tiny" data-del-command="${c.id}">حذف</button></div><div class="subtle">${esc(c.description)}</div><p style="white-space:pre-wrap;margin:6px 0">${esc(c.response_text)}</p></div>`).join(''):'<p class="subtle">هنوز فرمانی ثبت نشده.</p>';
+  list.querySelectorAll('[data-del-command]').forEach(b=>b.onclick=async()=>{const {error}=await supabaseClient.from('bot_commands').delete().eq('id',b.dataset.delCommand).eq('bot_id',bot.id);if(error){toast('حذف فرمان ناموفق بود');return}refresh();});
+ };
+ await refresh();
+ $('#saveBotCommand').onclick=async()=>{
+  const command=$('#botCommandName').value.trim(),description=$('#botCommandDesc').value.trim(),response_text=$('#botCommandReply').value.trim();
+  if(!/^\/[a-zA-Z][a-zA-Z0-9_]{0,31}$/.test(command)){toast('فرمان باید مثل /start و با حروف انگلیسی باشد');return}
+  if(!response_text){toast('متن پاسخ را بنویس');return}
+  const {error}=await supabaseClient.from('bot_commands').insert({bot_id:bot.id,command,description,response_text});
+  if(error){toast(error.code==='23505'?'این فرمان قبلاً ثبت شده':'ذخیره فرمان ناموفق بود: '+error.message);return}
+  $('#botCommandName').value='';$('#botCommandDesc').value='';$('#botCommandReply').value='';toast('فرمان ذخیره شد');refresh();
  };
 }
 

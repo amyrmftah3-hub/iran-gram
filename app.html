@@ -1471,7 +1471,7 @@ async function createStory(){
   const up=await supabaseClient.storage.from('arogram-stories').upload(path,file,{contentType:file.type,upsert:false});
   if(up.error){toast('آپلود داستان ناموفق بود: '+up.error.message);return}
   const expires=new Date(Date.now()+24*60*60*1000).toISOString();
-  const ins=await supabaseClient.from('stories').insert({user_id:currentUser.id,media_path:path,media_type:file.type,caption:caption.slice(0,300),expires_at:expires});
+  const ins=await supabaseClient.from('stories').insert({user_id:currentUser.id,media_path:path,media_type:file.type.startsWith('video/')?'video':'image',caption:caption.slice(0,300),expires_at:expires});
   if(ins.error){await supabaseClient.storage.from('arogram-stories').remove([path]);toast('ثبت داستان ناموفق بود: '+ins.error.message);return}
   await loadStories();toast('داستانت تا ۲۴ ساعت نمایش داده می‌شود');
  };

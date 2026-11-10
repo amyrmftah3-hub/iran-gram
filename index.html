@@ -238,7 +238,7 @@ body{background:radial-gradient(ellipse at 75% 20%,#0754a6 0,transparent 42%),li
 <main>
 <section class="wrap hero poster-hero"><div class="hero-copy"><img class="app-icon" src="icon.svg" alt="نشان رسمی ایرانگرام"><div class="eyebrow">پیام‌رسان ایرانی، سریع و مدرن</div><h1>ایرانگرام</h1><h2>پیام‌رسان ایرانی، امن و قدرتمند</h2><p class="lead">ایرانگرام (IranGram) یک پیام‌رسان فارسی مستقل برای چت آنلاین، گفت‌وگوی خصوصی، گروه، کانال، استوری و ارسال رسانه است. اگر دنبال تجربه‌ای فارسی و ساده شبیه پیام‌رسان‌های مدرن از جمله تلگرام هستی، ایرانگرام را بشناس.</p><p class="note">ایرانگرام محصولی مستقل است و ارتباط رسمی با تلگرام ندارد.</p><div class="actions"><a class="btn download-btn" href="https://github.com/amyrmftah3-hub/iran-gram/actions/workflows/build-apk.yml">مشاهده وضعیت ساخت اندروید</a><a class="btn secondary" href="app.html?v=b5bc2b2">▣ ورود به نسخه وب</a></div><div class="maker">سازنده و توسعه‌دهنده: <b>امیررضا مفتاح</b><small>Manager_MT</small></div></div><div class="hero-art"><img src="assets/hero-showcase.svg" alt="پیش‌نمایش گرافیکی ایرانگرام"></div></section>
 <section class="wrap quick-features"><article>◉<b>استوری‌های جذاب</b><span>لحظه‌های روزمره</span></article><article>☎<b>ارتباط و گفتگو</b><span>پیام‌رسانی آنلاین</span></article><article>♧<b>گروه‌ها و کانال‌ها</b><span>فضای مشترک برای گفتگو و انتشار محتوا</span></article><article>♙<b>حریم خصوصی</b><span>کنترل حساب و گفتگو</span></article><article>▣<b>رسانه و فایل</b><span>اشتراک‌گذاری محتوا</span></article></section>
-<section class="wrap live-panel" id="liveStats"><div class="live-title"><span>آمار کاربران ایرانگرام</span><span class="refresh-mark">⟳</span></div><div class="live-cards"><article><span class="live-dot green"></span><b id="onlineUsers">…</b><span>کاربران آنلاین</span></article><article><span class="live-dot blue"></span><b id="offlineUsers">…</b><span>کاربران آفلاین</span></article><article><span class="live-dot purple"></span><b id="totalUsers">…</b><span>مجموع کاربران</span></article></div><p id="statsStatus">در حال دریافت آمار زنده…</p></section>
+<section class="wrap live-panel" id="liveStats"><div class="live-title"><span>آمار کاربران ایرانگرام</span><span class="refresh-mark">⟳</span></div><div class="live-cards"><article><span class="live-dot purple"></span><b id="totalUsers">…</b><span>کاربران ثبت‌نام‌شده</span></article><article><span class="live-dot green"></span><b>چت آنلاین</b><span>گفت‌وگوی خصوصی</span></article><article><span class="live-dot blue"></span><b>گروه و کانال</b><span>ارتباط جمعی</span></article></div><p id="statsStatus">در حال دریافت آمار زنده…</p></section>
 <section class="section wrap" id="features"><div class="sectionhead"><h2>امکانات ایرانگرام</h2><p>قابلیت‌های موجود و مسیر توسعه، شفاف و بدون وعده غیرواقعی</p></div><div class="grid">
 <article class="feature"><div class="ico"><img src="assets/showcase-chats.svg" alt="گفت‌وگوی خصوصی ایرانگرام"></div><h3>گفت‌وگوی خصوصی</h3><p>چت آنلاین بین حساب‌های کاربری، ارسال و مدیریت پیام‌ها.</p><span class="tag live">فعال</span></article>
 <article class="feature"><div class="ico"><img src="assets/showcase-chat.svg" alt="گروه ایرانگرام"></div><h3>گروه‌ها</h3><p>ساخت گروه، افزودن اعضا و گفت‌وگوی جمعی.</p><span class="tag live">فعال</span></article>
@@ -285,22 +285,14 @@ body{background:radial-gradient(ellipse at 75% 20%,#0754a6 0,transparent 42%),li
  async function refreshStats(){
   const status=document.getElementById('statsStatus');
   try{
-   const now=new Date(Date.now()-180000).toISOString();
-   const [users,online]=await Promise.all([
-    client.from('profiles').select('id',{count:'exact',head:true}),
-    client.from('user_presence').select('user_id',{count:'exact',head:true}).gt('last_seen_at',now)
-   ]);
-   if(users.error)throw users.error;
-   if(online.error)throw online.error;
-   const total=users.count||0, live=Math.min(online.count||0,total), offline=Math.max(0,total-live);
-   document.getElementById('totalUsers').textContent=fmt(total);
-   document.getElementById('onlineUsers').textContent=fmt(live);
-   document.getElementById('offlineUsers').textContent=fmt(offline);
-   status.textContent='به‌روزرسانی خودکار هر ۳۰ ثانیه';
+   const {data,error}=await client.from('site_stats').select('total_users').eq('id',1).single();
+   if(error)throw error;
+   document.getElementById('totalUsers').textContent=fmt(data?.total_users||0);
+   status.textContent='تعداد کاربران از آمار کلی و بدون نمایش اطلاعات شخصی دریافت می‌شود.';
   }catch(e){
-   console.warn('Public presence stats unavailable:',e.message);
-   ['totalUsers','onlineUsers','offlineUsers'].forEach(id=>document.getElementById(id).textContent='—');
-   status.textContent='نمایش آمار آنلاین و آفلاین نیازمند دسترسی عمومی امن به آمار حضور کاربران است.';
+   console.warn('Public aggregate stats unavailable:',e.message);
+   document.getElementById('totalUsers').textContent='—';
+   status.textContent='آمار کاربران موقتاً در دسترس نیست.';
   }
  }
  refreshStats();setInterval(refreshStats,30000);

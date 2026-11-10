@@ -26,10 +26,10 @@ jobs:
           import re
           from pathlib import Path
           html = Path('app.html').read_text(encoding='utf-8')
-          scripts = re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', html, re.S | re.I)
+          scripts = re.findall(r'<script(?![^>]*\\bsrc=)[^>]*>(.*?)</script>', html, re.S | re.I)
           if not scripts:
               raise SystemExit('No inline application script found')
-          Path('/tmp/iran-gram-inline.js').write_text('\n'.join(scripts), encoding='utf-8')
+          Path('/tmp/iran-gram-inline.js').write_text('\\n'.join(scripts), encoding='utf-8')
           PY
           node --check /tmp/iran-gram-inline.js
       - name: Set up Java
@@ -39,8 +39,27 @@ jobs:
           java-version: '17'
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-      - name: Build debug APK
-        run: gradle --no-daemon assembleDebug assembleRelease
+      - name: Restore Android release keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "Missing GitHub Actions secret: ANDROID_KEYSTORE_BASE64"
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/iran-gram-release.jks"
+          chmod 600 "$RUNNER_TEMP/iran-gram-release.jks"
+      - name: Build signed release and debug APKs
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/iran-gram-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          gradle --no-daemon assembleDebug assembleRelease
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
@@ -48,10 +67,10 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
-      - name: Upload unsigned release APK (not store-ready)
+      - name: Upload signed release APK
         uses: actions/upload-artifact@v4
         with:
-          name: IranGram-Android-RELEASE-UNSIGNED
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          name: IranGram-Android-RELEASE-SIGNED
+          path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30

@@ -2220,6 +2220,29 @@ async function adminPanel(){
  $('#giveUserTick').onclick=()=>setTick('user',true);$('#removeUserTick').onclick=()=>setTick('user',false);
  $('#giveChannelTick').onclick=()=>setTick('channel',true);$('#removeChannelTick').onclick=()=>setTick('channel',false);
  $('#createAd').onclick=async()=>{const title=$('#adTitle').value.trim(),url=$('#adUrl').value.trim(),end=$('#adEnd').value;if(!title||!url.startsWith('https://')||!end||new Date(end)<=new Date()){toast('عنوان، لینک HTTPS و زمان پایان آینده را کامل کن.');return}const {error}=await supabaseClient.from('advertisements').insert({title,target_url:url,channel_id:$('#adChannel').value||null,starts_at:new Date().toISOString(),ends_at:new Date(end).toISOString(),status:'active',created_by:currentUser.id});if(error){toast('ثبت تبلیغ ناموفق بود: '+error.message);return}toast('تبلیغ ثبت و فعال شد.');adminPanel()};
+ 
+ const rewardResult=await supabaseClient.from('youtube_reward_submissions').select('id,user_id,proof_path,status,created_at').eq('status','pending').order('created_at',{ascending:true}).limit(50);
+ if(rewardResult.error){toast('دریافت درخواست‌های جایزه ناموفق بود: '+rewardResult.error.message)}
+ else{
+  const rewardItems=rewardResult.data||[],rewardUserIds=[...new Set(rewardItems.map(x=>x.user_id))];
+  const rewardProfiles=rewardUserIds.length?await supabaseClient.from('profiles').select('id,display_name').in('id',rewardUserIds):{data:[]};
+  const rewardNames=new Map((rewardProfiles.data||[]).map(x=>[x.id,x.display_name||'کاربر']));
+  const rewardCards=await Promise.all(rewardItems.map(async item=>{
+   const signed=await supabaseClient.storage.from('youtube-reward-proof').createSignedUrl(item.proof_path,1800);
+   return '<article class="ad-request-row"><b>'+esc(rewardNames.get(item.user_id)||'کاربر')+'</b><p class="subtle">'+new Date(item.created_at).toLocaleString('fa-IR')+'</p>'+(signed.data?.signedUrl?'<a href="'+esc(signed.data.signedUrl)+'" target="_blank" rel="noopener noreferrer">مشاهده تصویر اشتراک ↗</a>':'<p class="subtle">تصویر در دسترس نیست.</p>')+'<div class="modalactions"><button class="primary" data-reward-approve="'+item.id+'">تأیید و اعطای ۱۰۰ امتیاز</button><button class="secondary" data-reward-reject="'+item.id+'">رد درخواست</button></div></article>';
+  }));
+  $('#modal').insertAdjacentHTML('beforeend','<h4>بررسی اشتراک یوتیوب (جایزه ۱۰۰ امتیازی)</h4><div id="youtubeRewardReviewRows">'+(rewardCards.join('')||'<p class="subtle">درخواست در انتظاری وجود ندارد.</p>')+'</div>');
+  $('#youtubeRewardReviewRows').onclick=async e=>{
+   const approve=e.target.closest('[data-reward-approve]'),reject=e.target.closest('[data-reward-reject]');if(!approve&&!reject)return;
+   const button=approve||reject,id=button.dataset.rewardApprove||button.dataset.rewardReject;
+   button.disabled=true;button.textContent='در حال ثبت...';
+   const {data,error}=await supabaseClient.rpc('review_youtube_reward_submission',{p_submission_id:id,p_approve:!!approve,p_note:null});
+   if(error){toast('ثبت نتیجه بررسی ناموفق بود: '+error.message);button.disabled=false;button.textContent=approve?'تأیید و اعطای ۱۰۰ امتیاز':'رد درخواست';return}
+   const result=Array.isArray(data)?data[0]:data;
+   toast(result?.updated_status==='approved'?'۱۰۰ امتیاز به کاربر داده شد.':'درخواست رد شد.');
+   adminPanel();
+  };
+ }
  $('#adRequestsList').onclick=async e=>{
   const approve=e.target.closest('[data-ad-approve]'),reject=e.target.closest('[data-ad-reject]');if(!approve&&!reject)return;
   const id=approve?approve.dataset.adApprove:reject.dataset.adReject;

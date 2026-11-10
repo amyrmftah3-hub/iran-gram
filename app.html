@@ -1346,6 +1346,38 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
 .msg:has(.media-image){max-width:min(92%,600px);padding:5px}
 .msg:has(.media-image) .msgmeta{padding:3px 6px 0}
 @media(max-width:760px){.msg:has(.media-image){max-width:94%}.media-image{max-width:100%;max-height:68vh}}
+
+/* IranGram conversation polish: compact Telegram-like rhythm on mobile and desktop */
+.chatview{background:#0e1621}
+.chatheader{position:relative;z-index:2;box-shadow:0 2px 12px #0002}
+.chatname{overflow:hidden}.chatname b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.messages{scroll-behavior:smooth;overscroll-behavior:contain;gap:10px}
+.daylabel{position:sticky;top:4px;z-index:1;align-self:center;backdrop-filter:blur(12px);background:#263746d9;border:1px solid #ffffff12;padding:5px 13px}
+.msg{max-width:min(76%,560px);padding:10px 12px 7px;border:1px solid #ffffff08;transition:transform .16s ease,box-shadow .16s ease}
+.msg.mine{border-bottom-right-radius:5px}.msg:not(.mine){border-bottom-left-radius:5px}
+.msg p{line-height:1.72;word-break:break-word}
+.msgmeta{font-variant-numeric:tabular-nums;opacity:.82}
+.msgactions{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;padding-top:5px;border-top:1px solid #ffffff0b}
+.msgactions .tiny{min-height:27px;padding:4px 8px;border:1px solid #ffffff0a;border-radius:9px;transition:background .15s ease,color .15s ease}
+.msgactions .tiny:active,.msgactions .tiny:hover{background:#3390ec;color:#fff}
+.reaction-summary{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.reaction-chip{border:1px solid #ffffff18;background:#ffffff0c;color:inherit;border-radius:14px;padding:3px 8px}
+.reply-quote{max-width:100%;overflow:hidden}
+.composer{align-items:center;gap:7px;padding:9px 10px calc(9px + env(safe-area-inset-bottom));background:#17212b}
+.composefield{min-height:44px;align-items:center;padding:5px 12px;box-shadow:inset 0 0 0 1px #ffffff06}
+.composefield textarea{min-height:32px;max-height:112px;padding:7px 0;font-size:14px}
+.round{width:39px;height:39px;min-width:39px;border:1px solid #ffffff0a;display:inline-grid;place-items:center}
+.send{width:42px;height:42px;min-width:42px;box-shadow:0 3px 12px #3390ec40;transition:transform .15s ease,background .15s ease}
+.send:active{transform:scale(.94)}
+.chatrow{transition:background .16s ease}
+.chat-row-more{opacity:.72}.chat-row-more:active{opacity:1;background:#3390ec;color:#fff}
+.modalback{backdrop-filter:blur(5px);z-index:80}
+.modal{border:1px solid #ffffff12;box-shadow:0 20px 70px #0008;border-radius:20px}
+.modalactions>*{min-height:42px}
+.saved-message{padding:12px;margin:10px 0;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.saved-message small{color:var(--muted);font-size:11px}.saved-message p{white-space:pre-wrap;line-height:1.75;margin:8px 0 12px;overflow-wrap:anywhere}
+@media(max-width:760px){.messages{padding:12px 9px 16px;gap:9px}.msg{max-width:88%;padding:9px 10px 7px}.msgactions{gap:3px}.msgactions .tiny{font-size:10px;min-height:28px;padding:4px 7px}.composer{gap:5px;padding-left:7px;padding-right:7px}.round{width:35px;height:38px;min-width:35px}.send{width:40px;height:40px;min-width:40px}.composefield{min-height:42px;padding-left:10px;padding-right:10px}}
+@media(min-width:761px){.chatview{min-height:0}.messages{padding-left:max(22px,8%);padding-right:max(22px,8%)}.msg:hover{box-shadow:0 4px 18px #0003}}
 </style>
 </head>
  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
@@ -1580,7 +1612,7 @@ function renderMessages(){
    ${demoRows.length?`<div class="demo-reaction-block"><div class="reaction-summary">${demoRows.map(row=>`<span class="reaction-chip demo-chip"><span>${row.emoji}</span><b>${row.count.toLocaleString("fa-IR")}</b></span>`).join('')}</div></div>`:''}
    <div class="msgactions">${["👍","❤️","😂","🔥","👏","🚀"].map(em=>`<button class="tiny reaction-btn ${m.reactions?.includes(em)?"is-liked":""}" data-react="${m.id}" data-emoji="${em}" aria-label="واکنش ${em}" aria-pressed="${m.reactions?.includes(em)?"true":"false"}">${em}</button>`).join('')}
    ${m.mine?`<button class="tiny" data-edit="${m.id}">ویرایش</button><button class="tiny" data-delete="${m.id}">حذف</button>`:''}
-   <button class="tiny" data-reply="${m.id}">پاسخ</button><button class="tiny" data-pin="${m.id}">${c.pinnedMessageId===m.id?'برداشتن سنجاق':'📌 سنجاق'}</button><button class="tiny" data-forward="${m.id}">فوروارد</button><button class="tiny" data-copy="${m.id}">کپی</button></div>
+   <button class="tiny" data-reply="${m.id}">پاسخ</button><button class="tiny" data-pin="${m.id}">${c.pinnedMessageId===m.id?'برداشتن سنجاق':'📌 سنجاق'}</button><button class="tiny" data-forward="${m.id}">فوروارد</button><button class="tiny" data-copy="${m.id}">کپی</button><button class="tiny" data-save="${m.id}">ذخیره</button></div>
   </article>`
  }).join('');
  $('#messages').scrollTop=$('#messages').scrollHeight;
@@ -1954,6 +1986,16 @@ function createBot(){
 function createCollection(type){const channel=type==='channels';showModal(channel?'ساخت کانال':'ساخت گروه',`<label>نام ${channel?'کانال':'گروه'}</label><input id="collectionName" placeholder="${channel?'مثلاً اطلاعیه‌های من':'مثلاً خانواده'}"><label>توضیحات</label><textarea id="collectionBio" placeholder="توضیح کوتاه (اختیاری)"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="createCollection">ساخت</button></div><p class="subtle">در حالت آنلاین، کانال و گروه در سرور ساخته می‌شوند.</p>`);$('#createCollection').onclick=async()=>{const name=$('#collectionName').value.trim(),bio=$('#collectionBio').value.trim();if(!name){toast('نام را وارد کن');return}if(remoteMode&&currentUser){const kind=channel?'channel':'group';const {data:conv,error}=await supabaseClient.from('conversations').insert({title:name,type:kind,description:bio,created_by:currentUser.id}).select('id').single();if(error){toast('ساخت ناموفق بود: '+error.message);return}const {error:memberError}=await supabaseClient.from('conversation_members').insert({conversation_id:conv.id,user_id:currentUser.id,role:'owner'});if(memberError){toast('ساخت عضویت ناموفق بود: '+memberError.message);return}if(bio){const {error:msgError}=await supabaseClient.from('messages').insert({conversation_id:conv.id,sender_id:currentUser.id,body:bio});if(msgError){toast('کانال ساخته شد، اما توضیحات ثبت نشد.')}}closeModal();await loadOnlineChats();openChat(conv.id);return}const c={id:uid(),name,type:channel?'channels':'groups',avatar:channel?'📢':'👥',color:channel?'gold':'green',status:channel?'کانال نمایشی':'گروه نمایشی',unread:0,messages:[{id:uid(),text:bio||`به ${name} خوش آمدید.`,mine:false,time:now(),reactions:[]}]};state.chats.unshift(c);save();closeModal();render();openChat(c.id)}}
 function showModal(title,body){$('#modal').innerHTML=`<h3>${title}</h3>${body}`;$('#modalBack').classList.add('open')}
 
+async function savedMessagesModal(){
+ let rows=[];
+ if(remoteMode&&currentUser){
+  const {data,error}=await supabaseClient.from('saved_messages').select('id,body,conversation_id,saved_at').eq('user_id',currentUser.id).order('saved_at',{ascending:false}).limit(100);
+  if(error){showModal('پیام‌های ذخیره‌شده','<p class="subtle">دریافت پیام‌های ذخیره‌شده ناموفق بود: '+esc(error.message)+'</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>');return}
+  rows=data||[];
+ }else{try{rows=JSON.parse(localStorage.getItem('ig_saved_messages')||'[]')}catch(e){rows=[]}}
+ const html=rows.map(x=>'<article class="saved-message"><small>'+esc(x.conversation||'پیام ذخیره‌شده')+' · '+esc(new Date(x.saved_at).toLocaleString('fa-IR'))+'</small><p>'+esc(x.body||'')+'</p><button class="secondary" data-saved-delete="'+esc(x.id)+'">حذف از ذخیره‌شده‌ها</button></article>').join('');
+ showModal('پیام‌های ذخیره‌شده','<p class="subtle">پیام‌هایی که ذخیره می‌کنی اینجا نگه‌داری می‌شوند.</p><div id="savedMessageRows">'+(html||'<p class="subtle">هنوز پیامی ذخیره نکردی.</p>')+'</div><div class="modalactions"><button class="primary" data-close>بستن</button></div>');
+}
 async function anonymousInboxModal(){
  if(!remoteMode||!currentUser){authModal();toast('برای ساخت صندوق ناشناس اول وارد حسابت شو');return}
  const link=location.origin+location.pathname+'?anon='+encodeURIComponent(currentUser.id);
@@ -2101,7 +2143,7 @@ const settingsQuickBtn=$('#settingsQuickBtn');if(settingsQuickBtn)settingsQuickB
  else if(action==='profile')profileModal();
 };
 $('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
-$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,saved:()=>showModal('پیام‌های ذخیره‌شده','<p class="subtle">بخش پیام‌های ذخیره‌شده پس از پیاده‌سازی ذخیره‌سازی ابری فعال می‌شود.</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>'),group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
+$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 let suppressChatClick=false;
 $('#chatList').onclick=e=>{
  const actionButton=e.target.closest('[data-chat-actions]');
@@ -2148,11 +2190,16 @@ $('#chatList').addEventListener('touchend',e=>{
  }
 },{passive:true});
 $('#chatList').addEventListener('touchcancel',()=>{chatTouchStart=null;clearSwipeHint()},{passive:true});
-$('#modal').addEventListener('click',e=>{
- const button=e.target.closest('[data-chat-folder-action]');
- if(!button)return;
- const chat=state.chats.find(x=>x.id===activeFolderActionChatId);
- if(chat){setChatFolder(chat,button.dataset.chatFolderAction);closeModal()}
+$('#modal').addEventListener('click',async e=>{
+ const folderButton=e.target.closest('[data-chat-folder-action]');
+ if(folderButton){const chat=state.chats.find(x=>x.id===activeFolderActionChatId);if(chat){setChatFolder(chat,folderButton.dataset.chatFolderAction);closeModal()}return}
+ const deleteSaved=e.target.closest('[data-saved-delete]');
+ if(deleteSaved){
+  const id=deleteSaved.dataset.savedDelete;
+  if(remoteMode&&currentUser){const {error}=await supabaseClient.from('saved_messages').delete().eq('id',id).eq('user_id',currentUser.id);if(error){toast('حذف پیام ذخیره‌شده ناموفق بود: '+error.message);return}}
+  else{const list=JSON.parse(localStorage.getItem('ig_saved_messages')||'[]').filter(x=>x.id!==id);localStorage.setItem('ig_saved_messages',JSON.stringify(list))}
+  toast('پیام از ذخیره‌شده‌ها حذف شد');savedMessagesModal();
+ }
 });
 async function refreshMessageReactions(messageId){
  const chat=state.chats.find(x=>x.messages.some(m=>m.id===messageId));
@@ -2167,7 +2214,7 @@ async function refreshMessageReactions(messageId){
  }
  return true;
 }
-$('#messages').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const c=activeChat();if(!c)return;if(b.dataset.jumpPinned){document.querySelector('[data-msg="'+CSS.escape(b.dataset.jumpPinned)+'"]')?.scrollIntoView({behavior:'smooth',block:'center'});return}const id=b.dataset.react||b.dataset.edit||b.dataset.delete||b.dataset.reply||b.dataset.pin||b.dataset.forward||b.dataset.copy;const m=c.messages.find(x=>x.id===id);if(!m)return;if(b.dataset.react!==undefined){
+$('#messages').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const c=activeChat();if(!c)return;if(b.dataset.jumpPinned){document.querySelector('[data-msg="'+CSS.escape(b.dataset.jumpPinned)+'"]')?.scrollIntoView({behavior:'smooth',block:'center'});return}const id=b.dataset.react||b.dataset.edit||b.dataset.delete||b.dataset.reply||b.dataset.pin||b.dataset.forward||b.dataset.copy||b.dataset.save;const m=c.messages.find(x=>x.id===id);if(!m)return;if(b.dataset.save!==undefined){if(remoteMode&&currentUser&&c.remote){const {error}=await supabaseClient.from('saved_messages').insert({user_id:currentUser.id,conversation_id:c.id,original_message_id:m.id,body:m.text||''});if(error){toast(error.code==='23505'?'این پیام قبلاً ذخیره شده است':'ذخیره پیام ناموفق بود: '+error.message);return}}else{const list=JSON.parse(localStorage.getItem('ig_saved_messages')||'[]');if(list.some(x=>x.id===m.id)){toast('این پیام قبلاً ذخیره شده است');return}list.unshift({id:m.id,conversation:c.name,body:m.text||'',saved_at:new Date().toISOString()});localStorage.setItem('ig_saved_messages',JSON.stringify(list))}toast('پیام به ذخیره‌شده‌ها اضافه شد')}else if(b.dataset.react!==undefined){
  const emoji=b.dataset.emoji||'❤️';
  m.reactions=Array.isArray(m.reactions)?m.reactions:[];
  const previous=m.reactions[0]||null;

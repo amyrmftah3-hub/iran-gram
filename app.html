@@ -2435,15 +2435,24 @@ $('#modal').addEventListener('click',e=>{
 $('#modalBack').onclick=e=>{if(e.target===$('#modalBack'))closeModal()};
 setSplashPoem();
 render();
-loadSupabaseSdk().then(()=>{
+function finishSplash(){
+ const splash=$('#appSplash');
+ if(splash){splash.style.animation='none';splash.style.opacity='0';splash.style.visibility='hidden'}
+}
+const startupTask=loadSupabaseSdk().then(()=>{
  supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
  return initAuth();
 }).then(()=>{
  if(new URLSearchParams(location.search).has('anon'))anonymousSendPage();
+});
+const startupTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('زمان اتصال به سرویس آنلاین بیش از حد طول کشید. اتصال اینترنت یا Supabase را بررسی کن.')),20000));
+Promise.race([startupTask,startupTimeout]).then(()=>{
+ finishSplash();
 }).catch(error=>{
  console.error('IranGram startup failed:',error);
+ finishSplash();
  authModal();
- toast('اتصال آنلاین برقرار نشد؛ می‌توانی دوباره صفحه را تازه‌سازی کنی.');
+ toast(error&&error.message?error.message:'اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.');
 });
 </script>
 

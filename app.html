@@ -2438,23 +2438,26 @@ setSplashPoem();
 render();
 function finishSplash(){
  const splash=$('#appSplash');
- if(splash){splash.style.animation='none';splash.style.opacity='0';splash.style.visibility='hidden'}
+ if(splash){splash.style.animation='none';splash.style.opacity='0';splash.style.visibility='hidden';splash.style.pointerEvents='none'}
 }
-const startupTask=loadSupabaseSdk().then(()=>{
- supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
- return initAuth();
-}).then(()=>{
- if(new URLSearchParams(location.search).has('anon'))anonymousSendPage();
-});
-const startupTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('زمان اتصال به سرویس آنلاین بیش از حد طول کشید. اتصال اینترنت یا Supabase را بررسی کن.')),20000));
-Promise.race([startupTask,startupTimeout]).then(()=>{
- finishSplash();
-}).catch(error=>{
- console.error('IranGram startup failed:',error);
- finishSplash();
- authModal();
- toast(error&&error.message?error.message:'اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.');
-});
+// نمایش خود برنامه نباید منتظر پاسخ Supabase یا بارگذاری CDN بماند.
+finishSplash();
+setTimeout(finishSplash,1200);
+(async()=>{
+ try{
+  const sdkTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('بارگذاری سرویس ورود بیش از حد طول کشید. اینترنت را بررسی کن و دوباره تلاش کن.')),12000));
+  await Promise.race([loadSupabaseSdk(),sdkTimeout]);
+  if(!window.supabase?.createClient)throw new Error('کتابخانه ورود آنلاین در دسترس نیست.');
+  supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  await initAuth();
+  if(new URLSearchParams(location.search).has('anon'))anonymousSendPage();
+ }catch(error){
+  console.error('IranGram startup failed:',error);
+  finishSplash();
+  authModal();
+  toast(error&&error.message?error.message:'اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.');
+ }
+})();
 </script>
 
 <script>

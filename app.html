@@ -1456,11 +1456,28 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
  window.addEventListener('unhandledrejection',function(e){var r=e.reason;report(r&&(r.stack||r.message)||r||'خطای درخواست آنلاین')});
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
 <script>
 const SUPABASE_URL = 'https://gqitvlgdcrbwejaadorc.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_2NkURiHcD4ceRzqXUNsYlQ_jZzsVbhf';
-const supabaseClient = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_KEY) || null;
+let supabaseClient = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_KEY) || null;
+function loadSupabaseSdk(){
+ if(window.supabase?.createClient)return Promise.resolve(window.supabase);
+ return new Promise((resolve,reject)=>{
+  const urls=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0','https://unpkg.com/@supabase/supabase-js@2.119.0'];
+  let index=0;
+  const next=()=>{
+   if(index>=urls.length){reject(new Error('کتابخانه اتصال آنلاین بارگذاری نشد'));return;}
+   const script=document.createElement('script');
+   script.src=urls[index++];script.async=true;
+   let settled=false;
+   const timeout=setTimeout(()=>{if(settled)return;settled=true;script.remove();next()},7000);
+   script.onload=()=>{if(settled)return;settled=true;clearTimeout(timeout);if(window.supabase?.createClient)resolve(window.supabase);else next()};
+   script.onerror=()=>{if(settled)return;settled=true;clearTimeout(timeout);next()};
+   document.head.appendChild(script);
+  };
+  next();
+ });
+}
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,10);
 const now=()=>new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
@@ -2453,8 +2470,17 @@ $('#modal').addEventListener('click',e=>{
 });
 $('#modalBack').onclick=e=>{if(e.target===$('#modalBack'))closeModal()};
 setSplashPoem();
-if(new URLSearchParams(location.search).has('anon'))anonymousSendPage();
-if(!supabaseClient){state.chats=[];state.active=null;save();render();authModal()}else{initAuth().then(()=>{if(new URLSearchParams(location.search).has('anon'))anonymousSendPage()}).catch(error=>{console.error('IranGram startup failed:',error);render();toast('بخشی از اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.')})}
+render();
+loadSupabaseSdk().then(()=>{
+ supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+ return initAuth();
+}).then(()=>{
+ if(new URLSearchParams(location.search).has('anon'))anonymousSendPage();
+}).catch(error=>{
+ console.error('IranGram startup failed:',error);
+ authModal();
+ toast('اتصال آنلاین برقرار نشد؛ می‌توانی دوباره صفحه را تازه‌سازی کنی.');
+});
 </script>
 
 <script>

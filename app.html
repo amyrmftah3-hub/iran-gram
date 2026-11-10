@@ -1314,7 +1314,7 @@ body{font-family:Tahoma,"Vazirmatn","Segoe UI",Arial,sans-serif;letter-spacing:0
  #voiceRecordBtn,#videoNoteBtn{flex-basis:34px!important;width:34px!important;min-width:34px!important;height:38px!important}
  .composer{gap:3px!important;padding-left:5px!important;padding-right:5px!important}
 }
-.reward-card{background:linear-gradient(145deg,#142d4d,#1d5278);border:1px solid #347eb2;border-radius:16px;padding:16px;text-align:center;margin-bottom:14px;color:#fff}.reward-points{font-size:38px;font-weight:800;color:#7dd3fc}.reward-card p{font-size:13px;line-height:1.8;color:#e1f2ff}.reward-video{display:inline-block;color:#fff;text-decoration:none;background:#e53955;padding:10px 15px;border-radius:10px;font-size:13px;margin:4px}.reward-success{background:#153d31;color:#a8f0cd;padding:10px;border-radius:10px;font-size:13px}.reward-redeem{margin-top:15px;padding-top:12px;border-top:1px solid var(--line)}.reward-redeem .primary{width:100%;margin-top:12px}
+.reward-card{background:linear-gradient(145deg,#142d4d,#1d5278);border:1px solid #347eb2;border-radius:16px;padding:16px;text-align:center;margin-bottom:14px;color:#fff}.reward-points{font-size:38px;font-weight:800;color:#7dd3fc}.reward-card p{font-size:13px;line-height:1.8;color:#e1f2ff}.reward-video{display:inline-block;color:#fff;text-decoration:none;background:#e53955;padding:10px 15px;border-radius:10px;font-size:13px;margin:4px}.reward-success{background:#153d31;color:#a8f0cd;padding:10px;border-radius:10px;font-size:13px}.reward-pending{background:#493a16;color:#ffe6a1;padding:10px;border-radius:10px;font-size:13px}.reward-rejected{background:#4b2228;color:#ffd3d7;padding:10px;border-radius:10px;font-size:13px}.reward-submit{padding:12px;border:1px solid var(--line);border-radius:12px;margin:12px 0}.reward-submit input{margin:8px 0}.reward-submit button{width:100%;margin-top:10px}.reward-redeem{margin-top:15px;padding-top:12px;border-top:1px solid var(--line)}.reward-redeem .primary{width:100%;margin-top:12px}
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -1699,12 +1699,14 @@ async function recordChannelActivity(channelId){if(!remoteMode||!currentUser||!c
 
 async function youtubeRewardModal(){
  if(!remoteMode||!currentUser){authModal();return}
- const [{data:account},{data:claim}]=await Promise.all([
+ const [{data:account},{data:claim},{data:submissions}]=await Promise.all([
   supabaseClient.from('reward_accounts').select('points').eq('user_id',currentUser.id).maybeSingle(),
-  supabaseClient.from('youtube_reward_claims').select('user_id').eq('user_id',currentUser.id).maybeSingle()
+  supabaseClient.from('youtube_reward_claims').select('user_id').eq('user_id',currentUser.id).maybeSingle(),
+  supabaseClient.from('youtube_reward_submissions').select('id,status,created_at,admin_note').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(1)
  ]);
- const points=Number(account?.points||0),claimed=!!claim;
+ const points=Number(account?.points||0),claimed=!!claim,last=(submissions||[])[0],pending=last?.status==='pending';
  const redeem=points>=100?'<div class="reward-redeem"><label>عنوان تبلیغ</label><input id="rewardAdTitle" maxlength="60" placeholder="مثلاً کانال من"><label>لینک تبلیغ (باید با https شروع شود)</label><input id="rewardAdUrl" type="url" placeholder="https://..."><button class="primary" id="redeemRewardBtn">تبدیل ۱۰۰ امتیاز به یک روز تبلیغ</button></div>':'<p class="subtle">برای ثبت تبلیغ رایگان، باید حداقل ۱۰۰ امتیاز داشته باشی.</p>';
+ const submissionStatus=claimed?'<p class="reward-success">✓ جایزه ۱۰۰ امتیازی قبلاً به این حساب تعلق گرفته است.</p>':pending?'<p class="reward-pending">⏳ تصویر اشتراک ارسال شد و منتظر بررسی مدیر است.</p>':last?.status==='rejected'?'<p class="reward-rejected">درخواست قبلی تأیید نشد. می‌توانی تصویر واضح‌تری بفرستی.</p>':'';
  showModal('🎁 جایزه و امتیازهای ایرانگرام',`
   <div class="reward-card">
    <div class="reward-points">${points}</div><b>امتیاز تو</b>
@@ -1712,30 +1714,24 @@ async function youtubeRewardModal(){
    <a class="reward-video" href="https://youtube.com/shorts/sAm-iPBjSoo" target="_blank" rel="noopener noreferrer">▶ تماشای ویدئوی Manager_MT</a>
    <p class="subtle">هر ۱۰۰ امتیاز = یک روز تبلیغ رایگان در ایرانگرام</p>
   </div>
-  ${claimed?'<p class="reward-success">✓ جایزه اشتراک قبلاً برای این حساب ثبت شده است.</p>':'<button class="primary" id="claimYoutubeReward" ${!GOOGLE_OAUTH_CLIENT_ID?'disabled':''}>بررسی اشتراک و دریافت ۱۰۰ امتیاز</button>'}
-  ${!GOOGLE_OAUTH_CLIENT_ID&&!claimed?'<p class="subtle">اتصال امن گوگل هنوز نیاز به شناسه OAuth دارد؛ بعد از تنظیم آن این دکمه فعال می‌شود.</p>':''}
+  ${submissionStatus}
+  ${!claimed&&!pending?'<div class="reward-submit"><label>تصویر صفحهٔ اشتراک کانال در یوتیوب</label><input id="youtubeProofFile" type="file" accept="image/jpeg,image/png,image/webp"><small class="subtle">تصویر باید واضح باشد و نام Manager_MT و وضعیت اشتراک را نشان بدهد. تصویر فقط برای مدیر قابل مشاهده است.</small><button class="primary" id="submitYoutubeProof">ارسال برای بررسی مدیر</button></div>':''}
   ${redeem}
   <div class="modalactions"><button class="secondary" data-close>بستن</button></div>
   <p class="subtle" id="rewardHint" role="status"></p>
  `);
- const claimButton=$('#claimYoutubeReward');
- if(claimButton)claimButton.onclick=()=>{
-  if(!window.google?.accounts?.oauth2){$('#rewardHint').textContent='سرویس ورود گوگل بارگذاری نشد؛ صفحه را تازه کن.';return}
-  claimButton.disabled=true;claimButton.textContent='در انتظار تأیید گوگل...';
-  const tokenClient=google.accounts.oauth2.initTokenClient({
-   client_id:GOOGLE_OAUTH_CLIENT_ID,
-   scope:'https://www.googleapis.com/auth/youtube.readonly',
-   callback:async response=>{
-    if(response.error||!response.access_token){$('#rewardHint').textContent='اجازه دسترسی به یوتیوب داده نشد.';claimButton.disabled=false;claimButton.textContent='بررسی اشتراک و دریافت ۱۰۰ امتیاز';return}
-    claimButton.textContent='در حال بررسی اشتراک...';
-    const {data,error}=await supabaseClient.functions.invoke('youtube-reward',{body:{googleAccessToken:response.access_token}});
-    if(error){$('#rewardHint').textContent='خطا در بررسی: '+(error.message||'دوباره تلاش کن');claimButton.disabled=false;claimButton.textContent='تلاش دوباره';return}
-    if(data?.success){toast(data.message||'امتیازها به‌روزرسانی شد.');youtubeRewardModal();return}
-    $('#rewardHint').textContent=data?.message||'اشتراک تأیید نشد.';
-    claimButton.disabled=false;claimButton.textContent='بررسی دوباره اشتراک';
-   }
-  });
-  tokenClient.requestAccessToken({prompt:'consent'});
+ const submit=$('#submitYoutubeProof');
+ if(submit)submit.onclick=async()=>{
+  const file=$('#youtubeProofFile').files?.[0];
+  if(!file){toast('اول تصویر اشتراک را انتخاب کن.');return}
+  if(!/^image\/(jpeg|png|webp)$/i.test(file.type)||file.size>5*1024*1024){toast('فقط تصویر JPG، PNG یا WEBP تا ۵ مگابایت مجاز است.');return}
+  submit.disabled=true;submit.textContent='در حال ارسال تصویر...';
+  const path=currentUser.id+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+(file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg');
+  const upload=await supabaseClient.storage.from('youtube-reward-proof').upload(path,file,{contentType:file.type,upsert:false});
+  if(upload.error){submit.disabled=false;submit.textContent='ارسال برای بررسی مدیر';toast('آپلود تصویر ناموفق بود: '+upload.error.message);return}
+  const {error}=await supabaseClient.from('youtube_reward_submissions').insert({user_id:currentUser.id,proof_path:path});
+  if(error){await supabaseClient.storage.from('youtube-reward-proof').remove([path]);submit.disabled=false;submit.textContent='ارسال برای بررسی مدیر';toast('ثبت درخواست ناموفق بود: '+error.message);return}
+  toast('تصویر برای بررسی مدیر ارسال شد.');youtubeRewardModal();
  };
  const redeemButton=$('#redeemRewardBtn');
  if(redeemButton)redeemButton.onclick=async()=>{
@@ -1749,7 +1745,6 @@ async function youtubeRewardModal(){
   closeModal();toast('تبلیغ یک‌روزه‌ات فعال شد 🎉');await loadAdBanner();youtubeRewardModal();
  };
 }
-
 async function startOnline(){
  const {data,error}=await supabaseClient.auth.getUser();
  if(error||!data.user){authModal();return}

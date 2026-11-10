@@ -1690,7 +1690,7 @@ async function loadOnlineChats(){
   const verifiedSet=new Set((verifiedUsers||[]).map(x=>x.user_id));
   const statusMap=new Map((channelStatus||[]).map(x=>[x.channel_id,x]));
   for(const c of state.chats){
-   if(c.id==='e39f6339-049e-462a-8bbe-c9bfaff04278'){const realMemberCount=(members||[]).filter(m=>m.conversation_id===c.id).length;c.realMemberCount=realMemberCount;c.status='۱۳۶k عضو';}
+   if(c.id==='e39f6339-049e-462a-8bbe-c9bfaff04278'){const realMemberCount=(members||[]).filter(m=>m.conversation_id===c.id).length;c.realMemberCount=realMemberCount;c.status=realMemberCount.toLocaleString('fa-IR')+' عضو';}
    const st=statusMap.get(c.id);if(st){c.verified=st.is_verified;c.active_users_30d=st.active_users_30d}
    if(c.type==='people'){const peer=(members||[]).find(m=>m.conversation_id===c.id&&m.user_id!==currentUser.id);if(peer){c.recipientUserId=peer.user_id;c.verified=verifiedSet.has(peer.user_id)}}
   }

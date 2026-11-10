@@ -63,7 +63,7 @@ public class MainActivity extends Activity {
         });
         setContentView(webView);
         if (savedInstanceState == null) {
-            webView.loadUrl("https://amyrmftah3-hub.github.io/iran-gram/app.html");
+            webView.loadUrl("https://amyrmftah3-hub.github.io/iran-gram/app.html?v=20261110-79368b7");
         } else {
             webView.restoreState(savedInstanceState);
         }

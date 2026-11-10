@@ -2163,41 +2163,6 @@ function settingsModal(){
  renderSection('general');
 }
 
-let aiMessages=[];
-function loadAIHistory(){try{aiMessages=JSON.parse(localStorage.getItem('ig_ai_history_'+(currentUser?.id||'guest'))||'[]');if(!Array.isArray(aiMessages))aiMessages=[]}catch(e){aiMessages=[]}}
-function saveAIHistory(){localStorage.setItem('ig_ai_history_'+(currentUser?.id||'guest'),JSON.stringify(aiMessages.slice(-40)))}
-function renderAIHistory(){
- const box=$('#aiTranscript');if(!box)return;
- box.innerHTML=aiMessages.map(m=>`<div class="ai-bubble ${m.role==='user'?'user':'assistant'}"><small>${m.role==='user'?'شما':'آرو • هوش مصنوعی'}</small><div>${esc(m.text).replace(/\n/g,'<br>')}</div></div>`).join('')||'<div class="ai-empty"><div>✦</div><b>سلام! من دستیار هوشمند ایرانگرامم</b><p>هر سوالی داری بپرس؛ از درس و برنامه‌نویسی تا ایده‌پردازی.</p></div>';
- box.scrollTop=box.scrollHeight;
-}
-function aiAssistantModal(){
- if(!remoteMode||!currentUser){authModal();toast('برای گفت‌وگو با هوش مصنوعی اول وارد حسابت شو.');return}
- loadAIHistory();
- showModal('گفت‌وگو با هوش مصنوعی',`<div class="ai-window"><div class="ai-head"><div class="ai-avatar">✦</div><div><b>آرو</b><small>دستیار هوشمند ایرانگرام</small></div><button class="secondary" id="aiClear" type="button">گفت‌وگوی تازه</button></div><div id="aiTranscript" class="ai-transcript"></div><div id="aiStatus" class="ai-status">پاسخ‌گویی هوشمند پس از تنظیم کلید سرویس فعال می‌شود.</div><div class="ai-compose"><textarea id="aiInput" rows="1" placeholder="پیامت رو برای آرو بنویس..."></textarea><button class="send" id="aiSend" type="button">➤</button></div><p class="subtle ai-foot">گفت‌وگو روی همین دستگاه ذخیره می‌شود. پاسخ هوشمند به اتصال سرویس نیاز دارد.</p></div>`);
- $('#modal').classList.add('ai-modal');renderAIHistory();
- $('#aiClear').onclick=()=>{if(!confirm('گفت‌وگوی هوش مصنوعی پاک شود؟'))return;aiMessages=[];saveAIHistory();renderAIHistory();$('#aiStatus').textContent='گفت‌وگوی تازه آماده است.'};
- const send=async()=>{
-  const input=$('#aiInput'),button=$('#aiSend');const text=input.value.trim();if(!text)return;
-  aiMessages.push({role:'user',text});input.value='';saveAIHistory();renderAIHistory();button.disabled=true;button.textContent='…';$('#aiStatus').textContent='آرو در حال فکر کردن است…';
-  try{
-   const {data,error}=await supabaseClient.functions.invoke('iran-gram-ai',{body:{messages:aiMessages.slice(-16).map(m=>({role:m.role,text:m.text}))}});
-   if(error){let detail='';try{detail=await error.context?.text?.()}catch(e){}throw new Error(detail||error.message||'ارتباط با هوش مصنوعی برقرار نشد')}
-   if(!data?.reply)throw new Error(data?.error||'پاسخی از هوش مصنوعی دریافت نشد');
-   aiMessages.push({role:'assistant',text:data.reply});saveAIHistory();$('#aiStatus').textContent='آرو آماده پاسخ‌گویی است.';
-  }catch(err){
-   const message=String(err.message||err);
-   const notConfigured=/GEMINI_API_KEY|AI_NOT_CONFIGURED|not configured/i.test(message);
-   aiMessages.push({role:'assistant',text:notConfigured?'برای فعال‌شدن هوش مصنوعی، باید کلید Gemini را با نام GEMINI_API_KEY در بخش Edge Functions → Secrets پروژه Supabase ثبت کنیم. کلید را داخل کد برنامه قرار نده؛ باید محرمانه بماند.':'فعلاً نتونستم وصل بشم. لطفاً کمی بعد دوباره امتحان کن. ('+message.slice(0,180)+')'});
-   saveAIHistory();$('#aiStatus').textContent=notConfigured?'نیاز به تنظیم امن کلید سرویس':'خطا در اتصال';
-  }finally{button.disabled=false;button.textContent='➤';renderAIHistory()}
- };
- $('#aiSend').onclick=send;
- $('#aiInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
-}
-
-function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iran-gram-backup.json';a.click();URL.revokeObjectURL(a.href);toast('فایل پشتیبان آماده شد')}
-
 function isPrimaryAdmin(){return !!currentUser&&String(currentUser.email||'').toLowerCase()==='amyrmftah3@gmail.com'&&!!currentUser.email_confirmed_at}
 
 
@@ -2309,7 +2274,6 @@ const settingsQuickBtn=$('#settingsQuickBtn');if(settingsQuickBtn)settingsQuickB
   document.querySelectorAll('.filter').forEach(x=>{const active=x.dataset.filter==='all';x.classList.toggle('active',active);x.setAttribute('aria-selected',active?'true':'false')});
   renderChats();
  }else if(action==='contacts')newChat();
- else if(action==='ai')aiAssistantModal();
  else if(action==='settings')settingsModal();
  else if(action==='profile')profileModal();
 };

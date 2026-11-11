@@ -1885,11 +1885,11 @@ function startIncomingCallPolling(){
 async function receiveIncomingCall(row){
  if(!row||row.callee_id!==currentUser.id||incomingCallSeenIds.has(row.id))return;
  incomingCallSeenIds.add(row.id);
- if(activeCall){const temp={id:row.id,peerId:row.caller_id};const previous=activeCall;activeCall=temp;await sendCallSignal('busy',{});activeCall=previous;return}
+ if(activeCall||pendingIncomingCall){const temp={id:row.id,peerId:row.caller_id};const previous=activeCall;activeCall=temp;try{await sendCallSignal('busy',{})}catch(error){console.error('Could not mark incoming call busy:',error)}finally{activeCall=previous}return}
  const {data:profile}=await supabaseClient.from('profiles').select('display_name').eq('id',row.caller_id).maybeSingle();
  pendingIncomingCall=row;
  showModal('تماس ورودی',`<div style="text-align:center;padding:12px"><div style="font-size:44px">📞</div><b>${esc(profile?.display_name||'کاربر ایرانگرام')}</b><p class="subtle">${row.call_type==='video'?'تماس تصویری':'تماس صوتی'}</p></div><div class="modalactions"><button class="secondary" id="rejectIncoming">رد تماس</button><button class="primary" id="acceptIncoming">پاسخ دادن</button></div>`);
- $('#rejectIncoming').onclick=async()=>{const incoming=pendingIncomingCall;pendingIncomingCall=null;closeModal();activeCall={id:incoming.id,peerId:incoming.caller_id};await sendCallSignal('reject',{});activeCall=null};
+ $('#rejectIncoming').onclick=async()=>{const incoming=pendingIncomingCall;pendingIncomingCall=null;closeModal();const previous=activeCall;activeCall={id:incoming.id,peerId:incoming.caller_id};try{await sendCallSignal('reject',{})}catch(error){console.error(error);toast('رد تماس ثبت نشد؛ تماس ممکن است خودکار پایان یابد.')}finally{activeCall=previous}};
  $('#acceptIncoming').onclick=async()=>{const incoming=pendingIncomingCall;pendingIncomingCall=null;closeModal();await acceptIncomingCall(incoming,profile?.display_name||'کاربر ایرانگرام')};
 }
 async function acceptIncomingCall(row,name){
@@ -1931,10 +1931,15 @@ async function startOutgoingCall(type){
 async function finishCall(notify=true){
  const call=activeCall;if(!call)return;
  activeCall=null;if(callRingTimeout)clearTimeout(callRingTimeout);callRingTimeout=null;if(callClock)clearInterval(callClock);callClock=null;
- if(notify&&call.id){activeCall=call;await sendCallSignal('end',{});activeCall=null}
- try{call.pc?.close()}catch(e){}
- call.localStream?.getTracks().forEach(track=>track.stop());
- $('#remoteVideo').srcObject=null;$('#localVideo').srcObject=null;$('#callOverlay').classList.remove('open','audio');$('#callAvatar').style.display='grid';closeModal();
+ try{
+  if(notify&&call.id&&call.peerId){activeCall=call;await sendCallSignal('end',{})}
+ }catch(error){console.warn('Call end signal could not be delivered:',error)}
+ finally{
+  activeCall=null;
+  try{call.pc?.close()}catch(e){}
+  call.localStream?.getTracks().forEach(track=>track.stop());
+  $('#remoteVideo').srcObject=null;$('#remoteVideo').style.display='none';$('#localVideo').srcObject=null;$('#callOverlay').classList.remove('open','audio');$('#callAvatar').style.display='grid';closeModal();
+ }
 }
 
 async function initAuth(){

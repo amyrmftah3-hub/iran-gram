@@ -1641,7 +1641,7 @@ async function refreshMediaUrls(chat){
  try{
   await Promise.all(pending.map(async({message,media})=>{
    const {data,error}=await supabaseClient.storage.from('arogram-chat-media').createSignedUrl(media.path,3600);
-   if(!error&&data?.signedUrl){message.mediaUrl=data.signedUrl;message.mediaUrlExpiresAt=Date.now()+3500*1000;message.mediaLoadError='';changed=true}else{message.mediaLoadError=error?.message||'لینک فایل ساخته نشد';changed=true}
+   if(!error&&data?.signedUrl){message.mediaUrl=data.signedUrl;message.mediaUrlExpiresAt=Date.now()+3500*1000;message.mediaLoadError='';changed=true}else{message.mediaLoadError=error?.message||'لینک فایل ساخته نشد';message.mediaUrlExpiresAt=Date.now()+120000;changed=true}
   }));
  }catch(error){console.warn('Media preview refresh failed',error)}
  finally{mediaRefreshInFlight.delete(chat.id)}

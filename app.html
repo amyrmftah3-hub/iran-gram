@@ -1656,23 +1656,23 @@ async function loadOnlineChats(){
   else console.warn('Official channel auto-join unavailable',officialJoinError.message);
  }
  const conversationIds=(membershipRows||[]).map(x=>x.conversation_id).filter(Boolean);
- let conversationRows=[];
+ let conversationRows=[],messageRows=[],preferences=[];
  if(conversationIds.length){
-  const {data,error}=await supabaseClient.from('conversations').select('id,title,type,description,avatar_url,username,is_public,created_at,created_by').in('id',conversationIds).order('created_at',{ascending:false});
-  if(error){toast('دریافت اطلاعات گفت‌وگوها ناموفق بود: '+error.message);return}
-  conversationRows=data||[];
- }
- let messageRows=[];
- if(conversationIds.length){
-  const {data,error}=await supabaseClient.from('messages').select('id,conversation_id,body,sender_id,created_at,reply_to_id').in('conversation_id',conversationIds).order('created_at',{ascending:false}).limit(1000);
-  if(error){toast('دریافت پیام‌های گفت‌وگو ناموفق بود: '+error.message);return}
-  messageRows=data||[];
+  const [conversationsResult,messagesResult,preferencesResult]=await Promise.all([
+   supabaseClient.from('conversations').select('id,title,type,description,avatar_url,username,is_public,created_at,created_by').in('id',conversationIds).order('created_at',{ascending:false}),
+   supabaseClient.from('messages').select('id,conversation_id,body,sender_id,created_at,reply_to_id').in('conversation_id',conversationIds).order('created_at',{ascending:false}).limit(1000),
+   supabaseClient.from('conversation_user_preferences').select('conversation_id,archived,hidden,pinned,pinned_message_id,muted').eq('user_id',currentUser.id)
+  ]);
+  if(conversationsResult.error){toast('دریافت اطلاعات گفت‌وگوها ناموفق بود: '+conversationsResult.error.message);return}
+  if(messagesResult.error){toast('دریافت پیام‌های گفت‌وگو ناموفق بود: '+messagesResult.error.message);return}
+  if(preferencesResult.error)console.warn('Conversation preferences unavailable',preferencesResult.error.message);
+  conversationRows=conversationsResult.data||[];
+  messageRows=messagesResult.data||[];
+  preferences=preferencesResult.data||[];
  }
  const messagesByConversation=new Map();
  for(const m of messageRows){if(!messagesByConversation.has(m.conversation_id))messagesByConversation.set(m.conversation_id,[]);messagesByConversation.get(m.conversation_id).push(m)}
  const roleByConversation=new Map((membershipRows||[]).map(x=>[x.conversation_id,x.role]));
- const {data:preferences,error:preferencesError}=await supabaseClient.from('conversation_user_preferences').select('conversation_id,archived,hidden,pinned,pinned_message_id,muted').eq('user_id',currentUser.id);
- if(preferencesError)console.warn('Conversation preferences unavailable',preferencesError.message);
  const preferenceMap=new Map((preferences||[]).map(p=>[p.conversation_id,p]));
  state.chats=conversationRows.map(c=>{const flags=preferenceMap.get(c.id)||{},chatMessages=(messagesByConversation.get(c.id)||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).slice(-30);return {id:c.id,name:c.title||'گفت‌وگو',description:c.description||'',avatarUrl:c.avatar_url||'',username:c.username||'',isPublic:!!c.is_public,type:c.type==='channel'?'channels':(c.type==='group'?'groups':'people'),avatar:c.type==='channel'?'📢':(c.type==='group'?'👥':(c.title||'گ')[0]),status:c.description||'گفت‌وگوی آنلاین',unread:0,remote:true,memberRole:(roleByConversation.get(c.id)==='owner'||c.created_by===currentUser.id)?'owner':roleByConversation.get(c.id),createdBy:c.created_by||null,archived:!!flags.archived,hidden:!!flags.hidden,pinned:(c.id==='e39f6339-049e-462a-8bbe-c9bfaff04278')||!!flags.pinned,pinnedMessageId:flags.pinned_message_id||null,muted:!!flags.muted,messages:chatMessages.map(m=>({id:m.id,text:m.body,senderId:m.sender_id,senderName:m.sender_id===currentUser.id?'Manager_MT':'کاربر',mine:m.sender_id===currentUser.id,time:new Date(m.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:m.reply_to_id||null}))}});
  const messageIds=state.chats.flatMap(c=>c.messages.map(m=>m.id)).filter(id=>typeof id==='string'&&id.length>20);if(messageIds.length){const {data:reactionRows,error:reactionError}=await supabaseClient.from('message_reactions').select('message_id,reaction,user_id').in('message_id',messageIds);if(!reactionError){for(const chat of state.chats){for(const msg of chat.messages){msg.reactions=[];msg.reactionCounts={}}}for(const row of reactionRows||[]){for(const chat of state.chats){const msg=chat.messages.find(m=>m.id===row.message_id);if(msg){msg.reactionCounts=msg.reactionCounts||{};msg.reactionCounts[row.reaction]=(msg.reactionCounts[row.reaction]||0)+1;if(currentUser&&row.user_id===currentUser.id){msg.reactions=Array.isArray(msg.reactions)?msg.reactions:[];if(!msg.reactions.includes(row.reaction))msg.reactions.push(row.reaction)}break}}}}}

@@ -1570,16 +1570,24 @@ async function createStory(){
  const picker=document.createElement('input');picker.type='file';picker.accept='image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm';
  picker.onchange=async()=>{
   const file=picker.files?.[0];if(!file)return;
+  const mime=String(file.type||'').split(';')[0].trim().toLowerCase();
   if(file.size>20*1024*1024){toast('حجم استوری باید کمتر از ۲۰ مگابایت باشد');return}
-  if(!/^(image\/(jpeg|png|webp|gif)|video\/(mp4|webm))$/i.test(file.type)){toast('فقط عکس یا ویدئوی مجاز انتخاب کن');return}
+  if(!/^(image\/(jpeg|png|webp|gif)|video\/(mp4|webm))$/i.test(mime)){toast('فقط عکس JPG، PNG، WEBP یا ویدئوی MP4 و WEBM مجاز است');return}
   const caption=prompt('یک توضیح کوتاه برای استوریت بنویس (اختیاری):')||'';
   const path=currentUser.id+'/'+Date.now()+'_'+(file.name||'story').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,80);
-  const up=await supabaseClient.storage.from('arogram-stories').upload(path,file,{contentType:file.type,upsert:false});
-  if(up.error){toast('آپلود استوری ناموفق بود: '+up.error.message);return}
-  const expires=new Date(Date.now()+24*60*60*1000).toISOString();
-  const ins=await supabaseClient.from('stories').insert({user_id:currentUser.id,media_path:path,media_type:file.type.startsWith('video/')?'video':'image',caption:caption.slice(0,300),expires_at:expires});
-  if(ins.error){await supabaseClient.storage.from('arogram-stories').remove([path]);toast('ثبت استوری ناموفق بود: '+ins.error.message);return}
-  await loadStories();toast('استوریت تا ۲۴ ساعت نمایش داده می‌شود');
+  let uploaded=false;
+  try{
+   const up=await supabaseClient.storage.from('arogram-stories').upload(path,file,{contentType:mime,upsert:false});
+   if(up.error)throw new Error('آپلود استوری: '+up.error.message);
+   uploaded=true;
+   const expires=new Date(Date.now()+24*60*60*1000).toISOString();
+   const ins=await supabaseClient.from('stories').insert({user_id:currentUser.id,media_path:path,media_type:mime.startsWith('video/')?'video':'image',caption:caption.slice(0,300),expires_at:expires});
+   if(ins.error)throw new Error('ثبت استوری: '+ins.error.message);
+   await loadStories();toast('استوریت تا ۲۴ ساعت نمایش داده می‌شود');
+  }catch(error){
+   if(uploaded)await supabaseClient.storage.from('arogram-stories').remove([path]).catch(()=>{});
+   console.error('IranGram story upload failed:',error);toast(error.message||'ثبت استوری ناموفق بود');
+  }
  };
  picker.click();
 }
@@ -1756,11 +1764,17 @@ async function recordChannelActivity(channelId){if(!remoteMode||!currentUser||!c
 
 async function youtubeRewardModal(){
  if(!remoteMode||!currentUser){authModal();return}
- const [{data:account},{data:claims},{data:submissions}]=await Promise.all([
-  supabaseClient.from('reward_accounts').select('points').eq('user_id',currentUser.id).maybeSingle(),
-  supabaseClient.from('creator_reward_claims').select('platform').eq('user_id',currentUser.id),
-  supabaseClient.from('youtube_reward_submissions').select('id,platform,status,created_at,admin_note').eq('user_id',currentUser.id).order('created_at',{ascending:false})
- ]);
+ let accountResult,claimsResult,submissionsResult;
+ try{
+  [accountResult,claimsResult,submissionsResult]=await Promise.all([
+   supabaseClient.from('reward_accounts').select('points').eq('user_id',currentUser.id).maybeSingle(),
+   supabaseClient.from('creator_reward_claims').select('platform').eq('user_id',currentUser.id),
+   supabaseClient.from('youtube_reward_submissions').select('id,platform,status,created_at,admin_note').eq('user_id',currentUser.id).order('created_at',{ascending:false})
+  ]);
+  const queryError=accountResult.error||claimsResult.error||submissionsResult.error;
+  if(queryError)throw queryError;
+ }catch(error){console.error('IranGram rewards load failed:',error);showModal('🎁 جایزه و امتیازها','<p>دریافت اطلاعات جایزه‌ها ناموفق بود.</p><p class="subtle">'+esc(error.message||'خطای ارتباط')+'</p><div class="modalactions"><button class="secondary" data-close>بستن</button><button class="primary" id="retryRewards">تلاش دوباره</button></div>');$('#retryRewards').onclick=youtubeRewardModal;return}
+ const account=accountResult.data,claims=claimsResult.data,submissions=submissionsResult.data;
  const points=Number(account?.points||0),claimed=new Set((claims||[]).map(x=>x.platform)),rows=submissions||[];
  const latest=p=>rows.find(x=>x.platform===p),pending=p=>latest(p)?.status==='pending';
  const rewardCard=(platform,title,url,label)=>{
@@ -1780,11 +1794,18 @@ async function youtubeRewardModal(){
   if(!/^image\/(jpeg|png|webp)$/i.test(file.type)||file.size>5*1024*1024){toast('فقط تصویر JPG، PNG یا WEBP تا ۵ مگابایت مجاز است.');return}
   submit.disabled=true;submit.textContent='در حال ارسال تصویر...';
   const path=currentUser.id+'/'+platform+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+(file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg');
-  const upload=await supabaseClient.storage.from('youtube-reward-proof').upload(path,file,{contentType:file.type,upsert:false});
-  if(upload.error){submit.disabled=false;submit.textContent='ارسال برای بررسی مدیر';toast('آپلود تصویر ناموفق بود: '+upload.error.message);return}
-  const {error}=await supabaseClient.from('youtube_reward_submissions').insert({user_id:currentUser.id,proof_path:path,platform});
-  if(error){await supabaseClient.storage.from('youtube-reward-proof').remove([path]);submit.disabled=false;submit.textContent='ارسال برای بررسی مدیر';toast(error.code==='23505'?'برای این پلتفرم درخواست در انتظار بررسی داری.':'ثبت درخواست ناموفق بود: '+error.message);return}
-  toast('تصویر برای بررسی مدیر ارسال شد.');youtubeRewardModal();
+  let uploaded=false;
+  try{
+   const upload=await supabaseClient.storage.from('youtube-reward-proof').upload(path,file,{contentType:file.type,upsert:false});
+   if(upload.error)throw new Error('آپلود تصویر: '+upload.error.message);
+   uploaded=true;
+   const {error}=await supabaseClient.from('youtube_reward_submissions').insert({user_id:currentUser.id,proof_path:path,platform});
+   if(error)throw new Error(error.code==='23505'?'برای این پلتفرم درخواست در انتظار بررسی داری.':'ثبت درخواست: '+error.message);
+   toast('تصویر برای بررسی مدیر ارسال شد.');await youtubeRewardModal();
+  }catch(error){
+   if(uploaded)await supabaseClient.storage.from('youtube-reward-proof').remove([path]).catch(()=>{});
+   console.error('IranGram reward submission failed:',error);submit.disabled=false;submit.textContent='ارسال برای بررسی مدیر';toast(error.message||'ارسال درخواست ناموفق بود');
+  }
  });
  const redeemButton=$('#redeemRewardBtn');
  if(redeemButton)redeemButton.onclick=async()=>{
@@ -2121,8 +2142,9 @@ async function conversationSettingsModal(chat){
   if(file&&file.size>10*1024*1024){toast('حجم عکس باید کمتر از ۱۰ مگابایت باشد');return}
   if(file){
    if(!String(file.type||'').startsWith('image/')){toast('فایل انتخاب‌شده تصویر معتبر نیست');return}
-   file=await prepareIranGramImage(file,1024);
+   try{file=await prepareIranGramImage(file,1024)}catch(error){toast('آماده‌سازی عکس گروه/کانال ناموفق بود: '+(error.message||''));return}
    if(!/^image\/(jpeg|png|webp)$/i.test(file.type)){toast('این عکس در گوشی قابل تبدیل نیست؛ لطفاً JPG یا PNG انتخاب کن');return}
+   if(file.size>5*1024*1024){toast('عکس پس از آماده‌سازی باید کمتر از ۵ مگابایت باشد؛ عکس کوچک‌تری انتخاب کن.');return}
   }
   let avatarUrl=chat.avatarUrl||'';
   const saveButton=$('#csSaveInfo');saveButton.disabled=true;saveButton.textContent='در حال ذخیره...';
@@ -2307,7 +2329,7 @@ async function profileModal(){
  $('#profileAvatarFile').onchange=async e=>{
   let file=e.target.files?.[0];if(!file)return;
   if(file.size>10*1024*1024){e.target.value='';toast('حجم عکس باید کمتر از ۱۰ مگابایت باشد.');return}
-  try{file=await prepareIranGramImage(file,4096)}catch(error){toast('آماده‌سازی عکس ناموفق بود: '+(error.message||''));return}
+  try{file=await prepareIranGramImage(file,2048)}catch(error){toast('آماده‌سازی عکس ناموفق بود: '+(error.message||''));return}
   if(cropUrl)URL.revokeObjectURL(cropUrl);
   cropUrl=URL.createObjectURL(file);cropImage=new Image();
   cropImage.onload=async()=>{
@@ -2335,13 +2357,15 @@ async function profileModal(){
    }
    const {error:saveError}=await supabaseClient.from('profiles').upsert({id:currentUser.id,display_name:name,bio,username:username||null,avatar_url:avatarUrl||null},{onConflict:'id'});
    if(saveError){if(saveError.code==='23505')throw new Error('این نام کاربری قبلاً گرفته شده است.');throw new Error('ذخیره اطلاعات: '+saveError.message)}
-   state.profile.name=name;state.profile.bio=bio;state.profile.username=username;state.profile.avatar_url=avatarUrl;save();
+   state.profile.name=name;state.profile.bio=bio;state.profile.username=username;state.profile.avatar_url=avatarUrl;currentDisplayName=name;
+   for(const chat of state.chats){for(const message of chat.messages){if(message.mine)message.senderName=name}}
+   save();
    const drawerName=$('#drawerName'),drawerUsername=$('#drawerUsername');
    if(drawerName)drawerName.textContent=name;
    if(drawerUsername)drawerUsername.textContent=username?'@'+username:(currentUser.email||'حساب ایرانگرام');
    const drawerAvatar=$('#mainMenu .drawer-avatar');
    if(drawerAvatar)drawerAvatar.innerHTML=avatarUrl?'<img src="'+esc(avatarUrl)+'" alt="">':esc(name.slice(0,1));
-   closeModal();toast('پروفایل با موفقیت ذخیره شد ✓');
+   closeModal();renderChats();if(state.active)renderMessages();renderStories();toast('پروفایل با موفقیت ذخیره شد ✓');
   }catch(error){console.error('IranGram profile save failed:',error);toast(error.message||'ذخیره پروفایل ناموفق بود.');button.disabled=false;button.textContent='ذخیره تغییرات'}
  };
 }
@@ -2669,7 +2693,7 @@ $('#messages').addEventListener('ended',e=>{const video=e.target;if(!(video inst
 
 $('#messages').addEventListener('timeupdate',e=>{const audio=e.target;if(!(audio instanceof HTMLAudioElement)||!audio.closest('[data-ig-voice]'))return;const wrap=audio.closest('[data-ig-voice]'),current=wrap.querySelector('[data-voice-current]'),duration=wrap.querySelector('[data-voice-duration]'),bars=wrap.querySelectorAll('.ig-voice-wave i');const fmt=n=>{if(!Number.isFinite(n))return '۰:۰۰';const m=Math.floor(n/60),s=Math.floor(n%60);return m+':'+String(s).padStart(2,'0')};current.textContent=fmt(audio.currentTime);duration.textContent=fmt(audio.duration);const progress=audio.duration?audio.currentTime/audio.duration:0;bars.forEach((bar,i)=>bar.classList.toggle('heard',i/bars.length<progress));});
 $('#messages').addEventListener('loadedmetadata',e=>{const audio=e.target;if(!(audio instanceof HTMLAudioElement)||!audio.closest('[data-ig-voice]'))return;const d=audio.closest('[data-ig-voice]').querySelector('[data-voice-duration]');if(d&&Number.isFinite(audio.duration)){const m=Math.floor(audio.duration/60),s=Math.floor(audio.duration%60);d.textContent=m+':'+String(s).padStart(2,'0')}});
-$('#messages').addEventListener('ended',e=>{const audio=e.target;if(!(audio instanceof HTMLAudioElement)||!audio.closest('[data-ig-voice]'))return;const wrap=audio.closest('[data-ig-voice]',true);wrap.querySelector('[data-voice-play]').textContent='▶';wrap.querySelectorAll('.ig-voice-wave i').forEach(b=>b.classList.remove('heard'));wrap.querySelector('[data-voice-current]').textContent='۰:۰۰'});
+$('#messages').addEventListener('ended',e=>{const audio=e.target;if(!(audio instanceof HTMLAudioElement)||!audio.closest('[data-ig-voice]'))return;const wrap=audio.closest('[data-ig-voice]');if(!wrap)return;wrap.querySelector('[data-voice-play]').textContent='▶';wrap.querySelectorAll('.ig-voice-wave i').forEach(b=>b.classList.remove('heard'));wrap.querySelector('[data-voice-current]').textContent='۰:۰۰'});
 $('#voiceRecordBtn').onclick=()=>igVoiceRecorder?stopIgRecorder():startIgRecorder('voice');
 $('#videoNoteBtn').onclick=()=>igVideoRecorder?stopIgRecorder():startIgRecorder('roundvideo');
 

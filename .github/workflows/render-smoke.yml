@@ -28,7 +28,7 @@ jobs:
           try {
             for (const [name, url] of [
               ['landing', 'https://iran-gram.onrender.com/'],
-              ['app', 'https://iran-gram.onrender.com/app.html?v=69a7f53']
+              ['app', 'https://iran-gram.onrender.com/app.html?v=877f655']
             ]) {
               const page = await browser.newPage();
               const errors = [];
@@ -40,7 +40,7 @@ jobs:
                 if (!(await page.title()).includes('ایرانگرام')) throw new Error('Landing title missing');
                 const appLinks = await page.locator('a[href*="app.html"]').evaluateAll(nodes => nodes.map(a => a.href));
                 if (!appLinks.length) throw new Error('App entry link missing');
-                if (appLinks.some(href => !href.includes('app.html?v=69a7f53'))) throw new Error('Landing page contains a stale app link: ' + JSON.stringify(appLinks));
+                if (appLinks.some(href => !href.includes('app.html?v=877f655'))) throw new Error('Landing page contains a stale app link: ' + JSON.stringify(appLinks));
               } else {
                 await page.waitForFunction(() => !!document.querySelector('#authEmail') || document.querySelector('#modalBack')?.classList.contains('open'), { timeout: 15000 }).catch(() => {});
                 const startupState = await page.evaluate(() => ({authEmail:!!document.querySelector('#authEmail'), modalOpen:document.querySelector('#modalBack')?.classList.contains('open'), runtimeError:document.querySelector('#igRuntimeError')?.textContent || '', supabase:!!window.supabase?.createClient}));

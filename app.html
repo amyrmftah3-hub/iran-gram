@@ -1395,6 +1395,13 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
 
 /* User-selectable chat wallpaper */
 .messages{background-color:var(--ig-chat-bg,#0e1621)!important;background-image:var(--ig-chat-pattern,radial-gradient(#ffffff0a 1px,transparent 1px))!important;background-size:cover,22px 22px!important}
+
+/* Telegram-style voice note bubble */
+.ig-voice{display:flex;align-items:center;gap:11px;min-width:218px;max-width:min(330px,70vw);padding:9px 10px;border-radius:15px;background:rgba(51,144,236,.12)}
+.ig-voice-play{width:42px;height:42px;flex:0 0 42px;border:0;border-radius:50%;background:#3390ec;color:#fff;font-size:17px;display:grid;place-items:center}
+.ig-voice-main{flex:1;min-width:0}.ig-voice-wave{height:31px;display:flex;align-items:center;gap:2px;overflow:hidden}.ig-voice-wave i{display:block;width:3px;min-width:2px;height:var(--h);border-radius:4px;background:#7caedb;opacity:.85}.ig-voice-wave i.heard{background:#3390ec;opacity:1}
+.ig-voice-time{display:flex;justify-content:space-between;font-size:10px;color:var(--muted,#91a3b3);margin-top:3px}.ig-voice audio{display:none}.msg.mine .ig-voice{background:rgba(51,144,236,.18)}
+.round-video-message{width:220px;height:220px;max-width:68vw;max-height:68vw;border-radius:50%;overflow:hidden;background:#101923;box-shadow:0 2px 12px #0003}.round-video-message video{width:100%;height:100%;object-fit:cover;border-radius:50%}
 </style>
 </head>
  
@@ -1630,7 +1637,7 @@ function showChatFolderActions(chat){
   <div class="modalactions"><button class="secondary" data-close>بستن</button></div>`);
 }
 function parseMediaMarker(value){const match=String(value||'').match(/^\[\[(media|voice|roundvideo):([^|]+)\|([^|]+)\|([^|]+)\]\]$/);if(!match)return null;try{return {kind:match[1],path:decodeURIComponent(match[2]),type:decodeURIComponent(match[3]),name:decodeURIComponent(match[4])}}catch(e){return null}}
-function renderMessageContent(message){const value=typeof message==='string'?message:(message.text||'');if(/^\[\[sticker:(.+)\]\]$/.test(String(value)))return '<span class="subtle">استیکر قدیمی؛ برای جایگزینی، عکس را از گالری بفرست.</span>';const media=parseMediaMarker(value);if(media){if(!message||typeof message==='string'||!message.mediaUrl)return '<span class="subtle">'+(message?.mediaLoadError?'⚠️ دریافت فایل ناموفق بود: '+esc(media.name):'📎 '+esc(media.name)+' — در حال بارگذاری')+'</span>';if(media.type.startsWith('image/'))return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer"><img class="media-image" src="'+esc(message.mediaUrl)+'" alt="'+esc(media.name)+'"></a>';if(media.type.startsWith('audio/'))return '<div class="voice-message">🎙️ <audio controls preload="metadata" src="'+esc(message.mediaUrl)+'"></audio></div>';if(media.type.startsWith('video/')&&media.kind==='roundvideo')return '<div class="round-video-message"><video controls playsinline preload="metadata" src="'+esc(message.mediaUrl)+'"></video></div>';if(media.type.startsWith('video/'))return '<video class="media-video" controls playsinline preload="metadata" src="'+esc(message.mediaUrl)+'"></video><div class="subtle">'+esc(media.name)+'</div>';return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer" download="'+esc(media.name)+'">📎 '+esc(media.name)+'</a>'}return esc(value)}
+function renderMessageContent(message){const value=typeof message==='string'?message:(message.text||'');if(/^\[\[sticker:(.+)\]\]$/.test(String(value)))return '<span class="subtle">استیکر قدیمی؛ برای جایگزینی، عکس را از گالری بفرست.</span>';const media=parseMediaMarker(value);if(media){if(!message||typeof message==='string'||!message.mediaUrl)return '<span class="subtle">'+(message?.mediaLoadError?'⚠️ دریافت فایل ناموفق بود: '+esc(media.name):'📎 '+esc(media.name)+' — در حال بارگذاری')+'</span>';if(media.type.startsWith('image/'))return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer"><img class="media-image" src="'+esc(message.mediaUrl)+'" alt="'+esc(media.name)+'"></a>';if(media.type.startsWith('audio/'))return '<div class="ig-voice" data-ig-voice><button class="ig-voice-play" type="button" data-voice-play aria-label="پخش ویس">▶</button><div class="ig-voice-main"><div class="ig-voice-wave" data-voice-wave>'+Array.from({length:36},(_,i)=>'<i style="--h:'+((i*17+11)%19+5)+'px"></i>').join('')+'</div><div class="ig-voice-time"><span data-voice-current>۰:۰۰</span><span data-voice-duration>--:--</span></div></div><audio preload="metadata" src="'+esc(message.mediaUrl)+'"></audio></div>';if(media.type.startsWith('video/')&&media.kind==='roundvideo')return '<div class="round-video-message"><video controls playsinline preload="metadata" src="'+esc(message.mediaUrl)+'"></video></div>';if(media.type.startsWith('video/'))return '<video class="media-video" controls playsinline preload="metadata" src="'+esc(message.mediaUrl)+'"></video><div class="subtle">'+esc(media.name)+'</div>';return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer" download="'+esc(media.name)+'">📎 '+esc(media.name)+'</a>'}return esc(value)}
 const mediaRefreshInFlight=new Set();
 async function refreshMediaUrls(chat){
  if(!remoteMode||!chat||!chat.remote||mediaRefreshInFlight.has(chat.id))return;
@@ -1945,9 +1952,9 @@ async function initAuth(){
 
 
 async function uploadAndSendFile(file,kind='media'){
- const c=activeChat();if(!c){toast('اول یه چت باز کن 🙂');return}
- if(!remoteMode||!currentUser||!c.remote){toast('ارسال فایل فقط در گفت‌وگوی آنلاین فعال است.');return}
- if(c.type==='channels'&&c.memberRole!=='owner'){toast('فقط مدیر کانال می‌تواند در کانال فایل بفرستد.');return}
+ const chat=activeChat();if(!chat){toast('اول یه چت باز کن 🙂');return}
+ if(!remoteMode||!currentUser||!chat.remote){toast('برای ارسال فایل وارد حساب آنلاین شو.');return}
+ if(chat.type==='channels'&&chat.memberRole!=='owner'){toast('فقط مدیر کانال می‌تواند در کانال فایل بفرستد.');return}
  if(file.size>50*1024*1024){toast('حجم فایل باید کمتر از ۵۰ مگابایت باشد.');return}
  const safeName=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'file';
  const ext=(safeName.split('.').pop()||'').toLowerCase();
@@ -1957,14 +1964,29 @@ async function uploadAndSendFile(file,kind='media'){
  if(!mime||mime==='application/octet-stream')mime=extensionTypes[ext]||'';
  const allowed=/^(image\/(jpeg|png|webp|gif|avif|heic|heif)|video\/(mp4|webm|quicktime|3gpp)|audio\/(mpeg|ogg|mp4|webm|aac|wav|3gpp|amr)|application\/(pdf|zip)|text\/plain)$/i;
  if(!allowed.test(mime)){toast('این نوع فایل پشتیبانی نمی‌شود. نوع فایل: '+(mime||'ناشناخته'));return}
- const path=c.id+'/'+currentUser.id+'/'+Date.now()+'_'+safeName;
- const {error:uploadError}=await supabaseClient.storage.from('arogram-chat-media').upload(path,file,{upsert:false,contentType:mime});
- if(uploadError){toast('آپلود فایل ناموفق بود: '+uploadError.message);return}
+ const path=chat.id+'/'+currentUser.id+'/'+Date.now()+'_'+safeName;
  const markerKind=kind==='roundvideo'?'roundvideo':(kind==='voice'?'voice':'media');
  const body='[['+markerKind+':'+encodeURIComponent(path)+'|'+encodeURIComponent(mime)+'|'+encodeURIComponent(file.name||safeName)+']]';
- const {data:sent,error}=await supabaseClient.from('messages').insert({conversation_id:c.id,sender_id:currentUser.id,body}).select('id,created_at').single();
- if(error){await supabaseClient.storage.from('arogram-chat-media').remove([path]);toast('ثبت پیام فایل ناموفق بود: '+error.message);return}
- c.messages.push({id:sent.id,text:body,mine:true,time:new Date(sent.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[]});save();renderMessages();renderChats();
+ toast(kind==='voice'?'در حال فرستادن ویس…':kind==='roundvideo'?'در حال فرستادن ویدئوی گردالی…':'در حال آپلود فایل…');
+ let uploaded=false;
+ try{
+  const {error:uploadError}=await supabaseClient.storage.from('arogram-chat-media').upload(path,file,{upsert:false,contentType:mime});
+  if(uploadError)throw new Error('آپلود فایل: '+uploadError.message);
+  uploaded=true;
+  const {error:insertError}=await supabaseClient.from('messages').insert({conversation_id:chat.id,sender_id:currentUser.id,body});
+  if(insertError)throw new Error('ثبت پیام در گفتگو: '+insertError.message);
+  let sent=null;
+  const lookup=await supabaseClient.from('messages').select('id,created_at').eq('conversation_id',chat.id).eq('sender_id',currentUser.id).eq('body',body).order('created_at',{ascending:false}).limit(1).maybeSingle();
+  if(!lookup.error)sent=lookup.data;
+  const createdAt=sent?.created_at||new Date().toISOString();
+  chat.messages.push({id:sent?.id||('local-'+Date.now()),text:body,mine:true,time:new Date(createdAt).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[]});
+  save();renderMessages();renderChats();
+  toast(kind==='voice'?'ویس فرستاده شد ✓':kind==='roundvideo'?'ویدئوی گردالی فرستاده شد ✓':'فایل فرستاده شد ✓');
+ }catch(error){
+  console.error('IranGram media send failed:',error);
+  if(uploaded)toast('فایل آپلود شد، اما ثبت پیام کامل نشد: '+(error?.message||'خطای نامشخص'));
+  else toast('ارسال فایل ناموفق بود: '+(error?.message||'خطای نامشخص'));
+ }
 }
 
 async function sendMessage(){const input=$('#messageInput'),text=input.value.trim();if(!text)return;const c=activeChat();if(!c){toast('اول یک گفت‌وگو انتخاب کن');return}if(!remoteMode||!currentUser||!c.remote){authModal();toast('برای ارسال پیام واقعی، اول وارد حساب آنلاین شو');return}const {data:sent,error}=await supabaseClient.from('messages').insert({conversation_id:c.id,sender_id:currentUser.id,body:text,reply_to_id:state.reply||null}).select('id,created_at').single();if(error){toast('ارسال ناموفق بود: '+error.message);return}c.messages.push({id:sent.id,text,mine:true,time:new Date(sent.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:state.reply||null});state.reply=null;input.value='';input.style.height='auto';save();renderChats();renderMessages()}
@@ -2507,6 +2529,12 @@ async function startIgRecorder(kind){
  }
 }
 function stopIgRecorder(){const rec=igVideoRecorder||igVoiceRecorder;if(rec&&rec.state!=='inactive')rec.stop()}
+
+// Telegram-like inline voice playback controls
+$('#messages').addEventListener('click',e=>{const button=e.target.closest('[data-voice-play]');if(!button)return;const wrap=button.closest('[data-ig-voice]'),audio=wrap?.querySelector('audio');if(!audio)return;document.querySelectorAll('#messages .ig-voice audio').forEach(other=>{if(other!==audio){other.pause();const b=other.closest('.ig-voice')?.querySelector('[data-voice-play]');if(b)b.textContent='▶'}});if(audio.paused){audio.play().then(()=>button.textContent='Ⅱ').catch(()=>toast('پخش ویس ممکن نشد؛ دوباره بزن.'))}else{audio.pause();button.textContent='▶'}});
+$('#messages').addEventListener('timeupdate',e=>{const audio=e.target;if(!(audio instanceof HTMLAudioElement)||!audio.closest('[data-ig-voice]'))return;const wrap=audio.closest('[data-ig-voice]'),current=wrap.querySelector('[data-voice-current]'),duration=wrap.querySelector('[data-voice-duration]'),bars=wrap.querySelectorAll('.ig-voice-wave i');const fmt=n=>{if(!Number.isFinite(n))return '۰:۰۰';const m=Math.floor(n/60),s=Math.floor(n%60);return m+':'+String(s).padStart(2,'0')};current.textContent=fmt(audio.currentTime);duration.textContent=fmt(audio.duration);const progress=audio.duration?audio.currentTime/audio.duration:0;bars.forEach((bar,i)=>bar.classList.toggle('heard',i/bars.length<progress));});
+$('#messages').addEventListener('loadedmetadata',e=>{const audio=e.target;if(!(audio instanceof HTMLAudioElement)||!audio.closest('[data-ig-voice]'))return;const d=audio.closest('[data-ig-voice]').querySelector('[data-voice-duration]');if(d&&Number.isFinite(audio.duration)){const m=Math.floor(audio.duration/60),s=Math.floor(audio.duration%60);d.textContent=m+':'+String(s).padStart(2,'0')}});
+$('#messages').addEventListener('ended',e=>{const audio=e.target;if(!(audio instanceof HTMLAudioElement)||!audio.closest('[data-ig-voice]'))return;const wrap=audio.closest('[data-ig-voice]');wrap.querySelector('[data-voice-play]').textContent='▶';wrap.querySelectorAll('.ig-voice-wave i').forEach(b=>b.classList.remove('heard'));wrap.querySelector('[data-voice-current]').textContent='۰:۰۰'});
 $('#voiceRecordBtn').onclick=()=>igVoiceRecorder?stopIgRecorder():startIgRecorder('voice');
 $('#videoNoteBtn').onclick=()=>igVideoRecorder?stopIgRecorder():startIgRecorder('roundvideo');
 

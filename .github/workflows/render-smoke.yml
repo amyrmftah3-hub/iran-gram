@@ -38,8 +38,14 @@ jobs:
               await page.waitForTimeout(1800);
               if (name === 'landing') {
                 if (!(await page.title()).includes('ایرانگرام')) throw new Error('Landing title missing');
-                if (!(await page.locator('a[href*="app.html"]').count())) throw new Error('App entry link missing');
+                const appLinks = await page.locator('a[href*="app.html"]').evaluateAll(nodes => nodes.map(a => a.href));
+                if (!appLinks.length) throw new Error('App entry link missing');
+                if (appLinks.some(href => !href.includes('app.html?v=69a7f53'))) throw new Error('Landing page contains a stale app link: ' + JSON.stringify(appLinks));
               } else {
+                await page.waitForFunction(() => !!document.querySelector('#authEmail') || document.querySelector('#modalBack')?.classList.contains('open'), { timeout: 15000 }).catch(() => {});
+                const startupState = await page.evaluate(() => ({authEmail:!!document.querySelector('#authEmail'), modalOpen:document.querySelector('#modalBack')?.classList.contains('open'), runtimeError:document.querySelector('#igRuntimeError')?.textContent || '', supabase:!!window.supabase?.createClient}));
+                if (startupState.runtimeError) throw new Error('App startup runtime error: ' + startupState.runtimeError);
+                if (!startupState.authEmail && !startupState.modalOpen) throw new Error('App startup did not reach login state: ' + JSON.stringify(startupState));
                 const visible = await page.locator('#app').evaluate(el => {
                   const r = el.getBoundingClientRect();
                   return r.width > 0 && r.height > 0 && getComputedStyle(el).display !== 'none';

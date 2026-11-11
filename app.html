@@ -946,7 +946,7 @@ html,body{width:100%;height:100%;background:#0e1621;color:#e9edef;font-family:Va
 .drawer-avatar{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#3390ec;color:#fff;font-size:22px;font-weight:700;flex-shrink:0}
 #profileAvatarPreview{width:76px!important;height:76px!important;min-width:76px;min-height:76px;flex:0 0 76px;aspect-ratio:1/1;border-radius:50%;overflow:hidden;clip-path:circle(50%);display:grid;place-items:center}
 #profileAvatarPreview img{width:100%;height:100%;display:block;object-fit:cover;border-radius:50%}
-.avatar-crop-stage{width:min(76vw,260px);height:min(76vw,260px);margin:12px auto;border-radius:50%;overflow:hidden;position:relative;background:#111;touch-action:none;border:3px solid #3390ec;aspect-ratio:1/1}
+.avatar-crop-overlay{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;overflow:auto}.avatar-crop-panel{width:min(100%,420px);background:var(--panel,#18222d);border-radius:18px;padding:18px;box-shadow:0 12px 50px #0009}.avatar-crop-stage{width:min(76vw,260px);height:min(76vw,260px);margin:12px auto;border-radius:50%;overflow:hidden;position:relative;background:#111;touch-action:none;border:3px solid #3390ec;aspect-ratio:1/1}
 .avatar-crop-stage img{position:absolute;max-width:none;max-height:none;user-select:none;-webkit-user-drag:none;pointer-events:none}
 .avatar-crop-controls{display:grid;grid-template-columns:1fr;gap:8px;margin:12px 0}
 .avatar-crop-controls label{display:flex;justify-content:space-between;gap:12px}
@@ -2241,7 +2241,9 @@ async function profileModal(){
    const img=$('#avatarCropImage');img.style.width=iw+'px';img.style.height=ih+'px';img.style.left=left+'px';img.style.top=top+'px';
    $('#cropZoomValue').textContent=Math.round(cropZoom*100)+'٪';
   };
-  showModal('تنظیم عکس پروفایل','<p class="avatar-crop-hint">با کشیدن عکس، جای آن را تنظیم کن؛ با بزرگ‌نمایی کادر را دقیق‌تر کن.</p><div class="avatar-crop-stage" id="avatarCropStage"><img id="avatarCropImage" src="'+cropUrl+'" alt="برش عکس"></div><div class="avatar-crop-controls"><label>بزرگ‌نمایی <b id="cropZoomValue">۱۰۰٪</b></label><input id="cropZoom" type="range" min="1" max="3" step="0.01" value="1"><label>جابجایی افقی</label><input id="cropX" type="range" min="-50" max="50" value="0"><label>جابجایی عمودی</label><input id="cropY" type="range" min="-50" max="50" value="0"></div><div class="modalactions"><button class="secondary" id="cropCancel">انصراف</button><button class="primary" id="cropApply">تأیید برش</button></div>');
+  const cropOverlay=document.createElement('div');cropOverlay.id='avatarCropOverlay';cropOverlay.className='avatar-crop-overlay';
+  cropOverlay.innerHTML='<div class="avatar-crop-panel"><h3>تنظیم عکس پروفایل</h3><p class="avatar-crop-hint">با کشیدن عکس، جای آن را تنظیم کن؛ با بزرگ‌نمایی کادر را دقیق‌تر کن.</p><div class="avatar-crop-stage" id="avatarCropStage"><img id="avatarCropImage" src="'+cropUrl+'" alt="برش عکس"></div><div class="avatar-crop-controls"><label>بزرگ‌نمایی <b id="cropZoomValue">۱۰۰٪</b></label><input id="cropZoom" type="range" min="1" max="3" step="0.01" value="1"><label>جابجایی افقی</label><input id="cropX" type="range" min="-50" max="50" value="0"><label>جابجایی عمودی</label><input id="cropY" type="range" min="-50" max="50" value="0"></div><div class="modalactions"><button class="secondary" id="cropCancel">انصراف</button><button class="primary" id="cropApply">تأیید برش</button></div></div>';
+  document.body.appendChild(cropOverlay);
   const stage=$('#avatarCropStage');
   const update=()=>{cropZoom=Number($('#cropZoom').value);cropX=Number($('#cropX').value);cropY=Number($('#cropY').value);render()};
   $('#cropZoom').oninput=update;$('#cropX').oninput=update;$('#cropY').oninput=update;
@@ -2249,7 +2251,7 @@ async function profileModal(){
   stage.onpointermove=e=>{if(!cropDragging||!cropPointer)return;const deltaX=(e.clientX-cropPointer.x)/stage.clientWidth*100,deltaY=(e.clientY-cropPointer.y)/stage.clientHeight*100;cropX=Math.max(-50,Math.min(50,cropPointer.px+deltaX));cropY=Math.max(-50,Math.min(50,cropPointer.py+deltaY));$('#cropX').value=cropX;$('#cropY').value=cropY;render()};
   stage.onpointerup=stage.onpointercancel=()=>{cropDragging=false;cropPointer=null};
   requestAnimationFrame(render);
-  $('#cropCancel').onclick=()=>{closeModal();resolve(null)};
+  $('#cropCancel').onclick=()=>{cropOverlay.remove();resolve(null)};
   $('#cropApply').onclick=()=>{
    try{
     const base=Math.min(w,h),zoom=cropZoom,sw=base/zoom,sh=base/zoom;
@@ -2258,7 +2260,7 @@ async function profileModal(){
     const sy=Math.max(0,Math.min(h-sh,(h-sh)/2+(cropY/50)*maxY));
     const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
     const ctx=canvas.getContext('2d');ctx.drawImage(cropImage,sx,sy,sw,sh,0,0,512,512);
-    canvas.toBlob(blob=>{if(!blob){toast('ساخت عکس برش‌خورده ناموفق بود.');return}resolve(new File([blob],'profile.jpg',{type:'image/jpeg'}));closeModal()},'image/jpeg',0.9);
+    canvas.toBlob(blob=>{if(!blob){toast('ساخت عکس برش‌خورده ناموفق بود.');return}resolve(new File([blob],'profile.jpg',{type:'image/jpeg'}));cropOverlay.remove()},'image/jpeg',0.9);
    }catch(err){toast('برش عکس ناموفق بود: '+err.message)}
   };
  });

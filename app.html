@@ -1531,8 +1531,8 @@ function renderStories(){
  const mine=storyRows.filter(x=>x.user_id===currentUser?.id);
  const groups=new Map();
  for(const story of storyRows){if(!groups.has(story.user_id))groups.set(story.user_id,story)}
- const items=[{id:'add',label:'استوری من',letter:'＋',add:true},...Array.from(groups.values()).map(x=>({id:x.user_id,label:x.user_id===currentUser?.id?'استوری من':(x.profileName||x.username||'کاربر'),letter:(x.user_id===currentUser?.id?'شما':(x.profileName||x.username||'ک')[0]),storyId:x.id}))];
- $('#stories').innerHTML=items.map(x=>`<div class="story" data-story="${esc(x.id)}"><div class="storyring ${x.add?'add':''}"><span>${esc(x.letter)}</span></div>${esc(x.label)}</div>`).join('');
+ const items=[{id:'add',label:'استوری من',letter:'＋',add:true,avatarUrl:state.profile.avatar_url||''},...Array.from(groups.values()).map(x=>({id:x.user_id,label:x.user_id===currentUser?.id?'استوری من':(x.profileName||x.username||'کاربر'),letter:(x.user_id===currentUser?.id?'شما':(x.profileName||x.username||'ک')[0]),avatarUrl:x.user_id===currentUser?.id?(state.profile.avatar_url||''):(x.avatar_url||''),storyId:x.id}))];
+ $('#stories').innerHTML=items.map(x=>`<div class="story" data-story="${esc(x.id)}"><div class="storyring ${x.add?'add':''}"><span>${x.avatarUrl?'<img src="'+esc(x.avatarUrl)+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':esc(x.letter)}</span></div>${esc(x.label)}</div>`).join('');
 }
 async function loadStories(){
  if(!remoteMode||!currentUser){storyRows=[];renderStories();return}
@@ -1540,12 +1540,12 @@ async function loadStories(){
  if(error){console.warn('Stories load failed',error.message);return}
  const ids=[...new Set((data||[]).map(x=>x.user_id))];
  let profiles=[];
- if(ids.length){const p=await supabaseClient.from('profiles').select('id,display_name,username').in('id',ids);profiles=p.data||[]}
+ if(ids.length){const p=await supabaseClient.from('profiles').select('id,display_name,username,avatar_url').in('id',ids);profiles=p.data||[]}
  const byId=new Map(profiles.map(x=>[x.id,x]));
  storyRows=await Promise.all((data||[]).map(async x=>{
   const p=byId.get(x.user_id)||{};
   const signed=await supabaseClient.storage.from('arogram-stories').createSignedUrl(x.media_path,3600);
-  return {...x,profileName:p.display_name||'',username:p.username||'',signedUrl:signed.data?.signedUrl||''};
+  return {...x,profileName:p.display_name||'',username:p.username||'',avatar_url:p.avatar_url||'',signedUrl:signed.data?.signedUrl||''};
  }));
  renderStories();
 }

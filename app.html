@@ -2744,30 +2744,27 @@ function finishSplash(){
  const splash=$('#appSplash');
  if(splash){splash.style.animation='none';splash.style.opacity='0';splash.style.visibility='hidden';splash.style.pointerEvents='none'}
 }
-// نمایش صفحه را پیش از شروع هر درخواست خارجی کامل کن تا نوار بارگذاری Chrome گیر نکند.
-finishSplash();
-setTimeout(finishSplash,1200);
-// راه‌اندازی SDK آنلاین فقط بعد از رویداد load مرورگر انجام می‌شود؛
- // بنابراین CDN کند یا مسدودشده، بارگذاری خود صفحه را معطل نمی‌کند.
-window.addEventListener('load',function(){
- setTimeout(function(){
- (async()=>{
- try{
-  const sdkTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('بارگذاری سرویس ورود بیش از حد طول کشید. اینترنت را بررسی کن و دوباره تلاش کن.')),12000));
-  await Promise.race([loadSupabaseSdk(),sdkTimeout]);
-  if(!window.supabase?.createClient)throw new Error('کتابخانه ورود آنلاین در دسترس نیست.');
-  supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-  await initAuth();
-  if(new URLSearchParams(location.search).has('anon'))anonymousSendPage();
- }catch(error){
-  console.error('IranGram startup failed:',error);
-  finishSplash();
-  authModal();
-  toast(error&&error.message?error.message:'اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.');
- }
- })();
- },0);
-},{once:true});
+// صفحه برنامه مستقل از CDN نمایش داده می‌شود؛ اتصال آنلاین پس از نمایش رابط شروع می‌شود.
+finishSplash();setTimeout(finishSplash,1200);
+let iranGramStartupStarted=false;
+function startIranGramOnline(){
+ if(iranGramStartupStarted)return;iranGramStartupStarted=true;
+ setTimeout(async()=>{
+  try{
+   const sdkTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('کتابخانه ورود آنلاین در دسترس نیست؛ می‌توانی دوباره تلاش کنی.')),10000));
+   await Promise.race([loadSupabaseSdk(),sdkTimeout]);
+   if(!window.supabase?.createClient)throw new Error('کتابخانه ورود آنلاین در دسترس نیست.');
+   supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+   await initAuth();
+   if(new URLSearchParams(location.search).has('anon'))anonymousSendPage();
+  }catch(error){
+   console.error('IranGram startup failed:',error);finishSplash();authModal();
+   toast(error&&error.message?error.message:'اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.');
+  }
+ },700);
+}
+window.addEventListener('load',startIranGramOnline,{once:true});
+setTimeout(startIranGramOnline,2500);
 </script>
 
 <script>

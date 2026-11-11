@@ -1486,10 +1486,10 @@ const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,10);
 const now=()=>new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
 const starter=()=>[];
-let state={profile:{name:'کاربر ایرانگرام',bio:'سلام! من در ایرانگرام هستم.',theme:'dark'},chats:starter(),active:null,filter:'all',query:'',reply:null};
+let state={profile:{name:'کاربر ایرانگرام',bio:'سلام! من در ایرانگرام هستم.',theme:'dark',avatar_url:''},chats:starter(),active:null,filter:'all',query:'',reply:null};
 try{const s=JSON.parse(localStorage.getItem('iranGramPro'));if(s&&typeof s==='object')state={...state,...s}}catch(e){}
 // بازیابی امن داده‌های قدیمی یا ناقص ذخیره‌شده روی گوشی.
-state.profile={name:'کاربر ایرانگرام',bio:'سلام! من در ایرانگرام هستم.',theme:'dark',...(state.profile&&typeof state.profile==='object'?state.profile:{})};
+state.profile={name:'کاربر ایرانگرام',bio:'سلام! من در ایرانگرام هستم.',theme:'dark',avatar_url:'',...(state.profile&&typeof state.profile==='object'?state.profile:{})};
 state.chats=Array.isArray(state.chats)?state.chats.filter(c=>c&&typeof c==='object').map(c=>({...c,name:String(c.name||'گفت‌وگو'),messages:Array.isArray(c.messages)?c.messages:[]})):[];
 if(!['all','people','unread','groups','channels','archive','hidden'].includes(state.filter))state.filter='all';
 function save(){try{localStorage.setItem('iranGramPro',JSON.stringify(state))}catch(e){}}
@@ -1721,7 +1721,7 @@ async function loadOnlineChats(){
  if(ids.length){
   const {data:members}=await supabaseClient.from('conversation_members').select('conversation_id,user_id').in('conversation_id',ids);
   const authorIds=[...new Set([...(members||[]).map(m=>m.user_id),...state.chats.flatMap(c=>c.messages.map(m=>m.senderId).filter(Boolean))])];
-  if(authorIds.length){const {data:authors,error:authorsError}=await supabaseClient.from('profiles').select('id,display_name,username').in('id',authorIds);if(!authorsError){const authorMap=new Map((authors||[]).map(p=>[p.id,p.display_name||p.username||'کاربر']));currentDisplayName=authorMap.get(currentUser.id)||currentUser.user_metadata?.name||'کاربر';for(const chat of state.chats){for(const message of chat.messages){message.senderName=authorMap.get(message.senderId)||(message.mine?currentDisplayName:'کاربر')}if(chat.type==='people'){const peer=(members||[]).find(m=>m.conversation_id===chat.id&&m.user_id!==currentUser.id);if(peer){chat.recipientUserId=peer.user_id;chat.name=authorMap.get(peer.user_id)||chat.name;chat.avatar=(chat.name||'گ')[0]}}}}}
+  if(authorIds.length){const {data:authors,error:authorsError}=await supabaseClient.from('profiles').select('id,display_name,username,avatar_url').in('id',authorIds);if(!authorsError){const profileMap=new Map((authors||[]).map(p=>[p.id,p]));const authorMap=new Map((authors||[]).map(p=>[p.id,p.display_name||p.username||'کاربر']));currentDisplayName=authorMap.get(currentUser.id)||currentUser.user_metadata?.name||'کاربر';for(const chat of state.chats){for(const message of chat.messages){message.senderName=authorMap.get(message.senderId)||(message.mine?currentDisplayName:'کاربر')}if(chat.type==='people'){const peer=(members||[]).find(m=>m.conversation_id===chat.id&&m.user_id!==currentUser.id);if(peer){const peerProfile=profileMap.get(peer.user_id)||{};chat.recipientUserId=peer.user_id;chat.name=authorMap.get(peer.user_id)||chat.name;chat.avatarUrl=peerProfile.avatar_url||'';chat.avatar=(chat.name||'گ')[0]}}}}}
   const {data:channelStatus,error:statusError}=await supabaseClient.rpc('get_channel_verification_status');if(statusError)console.warn('Channel verification status unavailable',statusError.message);
   const {data:verifiedUsers}=await supabaseClient.from('user_verification_overrides').select('user_id').eq('is_verified',true);
   const verifiedSet=new Set((verifiedUsers||[]).map(x=>x.user_id));
@@ -2165,7 +2165,38 @@ function anonymousSendPage(){
 }
 
 function closeModal(){$('#modalBack').classList.remove('open');$('#modal').classList.remove('ai-modal')}
-function profileModal(){const body='<label>نام نمایشی</label><input id="profileName" value="'+esc(state.profile.name)+'"><label>نام کاربری (بدون @)</label><input id="profileUsername" value="'+esc(state.profile.username||'')+'" placeholder="مثلاً amir_gram" maxlength="32"><small class="subtle">۵ تا ۳۲ نویسه؛ فقط حروف انگلیسی، عدد و زیرخط</small><label>بیو</label><textarea id="profileBio">'+esc(state.profile.bio)+'</textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveProfile">ذخیره</button></div>';showModal('پروفایل من',body);$('#saveProfile').onclick=async()=>{const name=$('#profileName').value.trim()||'کاربر ایرانگرام',bio=$('#profileBio').value.trim(),username=$('#profileUsername').value.trim().replace(/^@/,'').toLowerCase();if(username&&!/^[a-z][a-z0-9_]{4,31}$/.test(username)){toast('نام کاربری باید ۵ تا ۳۲ نویسه و با حرف انگلیسی شروع شود.');return}if(remoteMode&&currentUser){const {error}=await supabaseClient.from('profiles').update({display_name:name,bio,username:username||null}).eq('id',currentUser.id);if(error){toast(error.code==='23505'?'این نام کاربری قبلاً گرفته شده.':'ذخیره پروفایل ناموفق بود: '+error.message);return}}state.profile.name=name;state.profile.bio=bio;state.profile.username=username;save();closeModal();toast(remoteMode?'پروفایل آنلاین ذخیره شد':'پروفایل روی این دستگاه ذخیره شد')}}
+function profileModal(){
+ let selectedAvatar=null;
+ const avatarView=state.profile.avatar_url?'<img src="'+esc(state.profile.avatar_url)+'" alt="عکس پروفایل" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':esc((state.profile.name||'ا').slice(0,1));
+ const body='<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><div id="profileAvatarPreview" class="drawer-avatar" style="width:76px;height:76px;overflow:hidden;font-size:28px">'+avatarView+'</div><div style="flex:1"><b>عکس پروفایل</b><p class="subtle" style="margin:5px 0">JPG، PNG یا WEBP تا ۵ مگابایت</p><input id="profileAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></div></div><label>نام نمایشی</label><input id="profileName" value="'+esc(state.profile.name)+'"><label>نام کاربری (بدون @)</label><input id="profileUsername" value="'+esc(state.profile.username||'')+'" placeholder="مثلاً amir_gram" maxlength="32"><small class="subtle">۵ تا ۳۲ نویسه؛ فقط حروف انگلیسی، عدد و زیرخط</small><label>بیو</label><textarea id="profileBio">'+esc(state.profile.bio)+'</textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveProfile">ذخیره</button></div>';
+ showModal('پروفایل من',body);
+ $('#profileAvatarFile').onchange=e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  if(!/^image\/(jpeg|png|webp)$/i.test(file.type)||file.size>5*1024*1024){e.target.value='';selectedAvatar=null;toast('فقط عکس JPG، PNG یا WEBP تا ۵ مگابایت مجاز است.');return}
+  selectedAvatar=file;const reader=new FileReader();reader.onload=()=>{$('#profileAvatarPreview').innerHTML='<img src="'+reader.result+'" alt="پیش‌نمایش عکس" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'};reader.readAsDataURL(file);
+ };
+ $('#saveProfile').onclick=async()=>{
+  const name=$('#profileName').value.trim()||'کاربر ایرانگرام',bio=$('#profileBio').value.trim(),username=$('#profileUsername').value.trim().replace(/^@/,'').toLowerCase();
+  if(username&&!/^[a-z][a-z0-9_]{4,31}$/.test(username)){toast('نام کاربری باید ۵ تا ۳۲ نویسه و با حرف انگلیسی شروع شود.');return}
+  if(selectedAvatar&&!remoteMode){toast('برای ذخیره عکس پروفایل، اول وارد حساب آنلاین شو.');return}
+  const button=$('#saveProfile');button.disabled=true;button.textContent='در حال ذخیره...';
+  let avatarUrl=state.profile.avatar_url||'';
+  if(selectedAvatar&&remoteMode&&currentUser){
+   const ext=selectedAvatar.type==='image/png'?'png':selectedAvatar.type==='image/webp'?'webp':'jpg';
+   const path=currentUser.id+'/'+Date.now()+'_avatar.'+ext;
+   const upload=await supabaseClient.storage.from('iran-gram-avatars').upload(path,selectedAvatar,{upsert:false,contentType:selectedAvatar.type});
+   if(upload.error){button.disabled=false;button.textContent='ذخیره';toast('آپلود عکس پروفایل ناموفق بود: '+upload.error.message);return}
+   avatarUrl=supabaseClient.storage.from('iran-gram-avatars').getPublicUrl(path).data.publicUrl;
+  }
+  if(remoteMode&&currentUser){
+   const {error}=await supabaseClient.from('profiles').update({display_name:name,bio,username:username||null,avatar_url:avatarUrl||null}).eq('id',currentUser.id);
+   if(error){button.disabled=false;button.textContent='ذخیره';toast(error.code==='23505'?'این نام کاربری قبلاً گرفته شده.':'ذخیره پروفایل ناموفق بود: '+error.message);return}
+  }
+  state.profile.name=name;state.profile.bio=bio;state.profile.username=username;state.profile.avatar_url=avatarUrl;save();
+  const drawerAvatar=$('.drawer-avatar');if(drawerAvatar)drawerAvatar.innerHTML=avatarUrl?'<img src="'+esc(avatarUrl)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':esc(name.slice(0,1));
+  closeModal();toast(remoteMode?'پروفایل و عکس آنلاین ذخیره شد':'پروفایل روی این دستگاه ذخیره شد');
+ };
+}
 function settingsModal(){
  const readPrefs=()=>{try{return JSON.parse(localStorage.getItem('ig_settings')||'{}')}catch(e){return {}}};
  const prefs=readPrefs();
@@ -2303,7 +2334,7 @@ async function adminPanel(){
  };
 }
 
-$('#menuBtn').onclick=()=>{const opening=!$('#mainMenu').classList.contains('open');$('#mainMenu').classList.toggle('open',opening);if(opening){$('#drawerName').textContent=state.profile.name||'کاربر ایرانگرام';$('#drawerUsername').textContent=state.profile.username?'@'+state.profile.username:(currentUser?.email||'حساب ایرانگرام')}};$('#drawerClose').onclick=()=>$('#mainMenu').classList.remove('open');document.addEventListener('click',e=>{if($('#mainMenu').classList.contains('open')&&!$('#mainMenu').contains(e.target)&&!$('#menuBtn').contains(e.target))$('#mainMenu').classList.remove('open')});
+$('#menuBtn').onclick=()=>{const opening=!$('#mainMenu').classList.contains('open');$('#mainMenu').classList.toggle('open',opening);if(opening){$('#drawerName').textContent=state.profile.name||'کاربر ایرانگرام';$('#drawerUsername').textContent=state.profile.username?'@'+state.profile.username:(currentUser?.email||'حساب ایرانگرام');const da=$('.drawer-avatar');if(da)da.innerHTML=state.profile.avatar_url?'<img src="'+esc(state.profile.avatar_url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':esc((state.profile.name||'ا').slice(0,1))}};$('#drawerClose').onclick=()=>$('#mainMenu').classList.remove('open');document.addEventListener('click',e=>{if($('#mainMenu').classList.contains('open')&&!$('#mainMenu').contains(e.target)&&!$('#menuBtn').contains(e.target))$('#mainMenu').classList.remove('open')});
 const settingsQuickBtn=$('#settingsQuickBtn');if(settingsQuickBtn)settingsQuickBtn.onclick=()=>settingsModal();$('#audioCallBtn').onclick=()=>startOutgoingCall('audio');$('#videoCallBtn').onclick=()=>startOutgoingCall('video');$('#endCallBtn').onclick=()=>finishCall(true);$('#muteCallBtn').onclick=()=>{const track=activeCall?.localStream?.getAudioTracks()[0];if(track){track.enabled=!track.enabled;$('#muteCallBtn').textContent=track.enabled?'🎙️':'🔇'}};$('#cameraCallBtn').onclick=()=>{const track=activeCall?.localStream?.getVideoTracks()[0];if(track){track.enabled=!track.enabled;$('#cameraCallBtn').textContent=track.enabled?'📷':'🚫'}};$('#bottomNav').onclick=e=>{
  const button=e.target.closest('[data-nav]');if(!button)return;
  document.querySelectorAll('.bottom-nav-item').forEach(x=>{x.classList.toggle('active',x===button);if(x===button)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});
@@ -2413,27 +2444,46 @@ $('#stories').onclick=e=>{const el=e.target.closest('[data-story]');if(!el)retur
 
 let igVoiceRecorder=null,igVideoRecorder=null,igRecorderStream=null,igRecorderChunks=[];
 async function startIgRecorder(kind){
- const chat=activeChat();if(!chat){toast('اول یک گفت‌وگو باز کن');return}
+ const chat=activeChat();if(!chat){toast('اول یک گفت‌وگو باز کن 🙂');return}
  if(!remoteMode||!currentUser||!chat.remote){toast('برای ارسال ویس و پیام گردالی وارد حسابت شو');return}
  if(chat.type==='channels'&&chat.memberRole!=='owner'){toast('فقط مدیر کانال می‌تواند پیام بفرستد');return}
  if(igVoiceRecorder||igVideoRecorder){toast('اول ضبط فعلی را تمام کن');return}
  const video=kind==='roundvideo';
+ if(!window.isSecureContext){toast('برای ضبط صدا و تصویر باید برنامه از نشانی HTTPS باز شود.');return}
+ if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast('مرورگر این گوشی ضبط صدا یا ویدئو را پشتیبانی نمی‌کند؛ Chrome را به‌روز کن.');return}
  try{
   igRecorderStream=await navigator.mediaDevices.getUserMedia(video?{audio:true,video:{facingMode:'user',width:{ideal:480},height:{ideal:480}}}:{audio:true});
-  const types=video?['video/webm;codecs=vp8,opus','video/webm']:['audio/webm;codecs=opus','audio/webm'];
-  const mime=types.find(t=>MediaRecorder.isTypeSupported(t))||'';
-  const rec=new MediaRecorder(igRecorderStream,mime?{mimeType:mime}:{});
+  const candidates=video?['video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm','video/mp4']:['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg','audio/mp4'];
+  const mime=candidates.find(t=>window.MediaRecorder.isTypeSupported&&window.MediaRecorder.isTypeSupported(t))||'';
+  const rec=mime?new MediaRecorder(igRecorderStream,{mimeType:mime}):new MediaRecorder(igRecorderStream);
   if(video)igVideoRecorder=rec;else igVoiceRecorder=rec;igRecorderChunks=[];
   rec.ondataavailable=e=>{if(e.data&&e.data.size)igRecorderChunks.push(e.data)};
-  rec.onstop=async()=>{
-   const blob=new Blob(igRecorderChunks,{type:rec.mimeType||(video?'video/webm':'audio/webm')});igRecorderChunks=[];
-   igRecorderStream?.getTracks().forEach(t=>t.stop());igRecorderStream=null;igVoiceRecorder=null;igVideoRecorder=null;
+  rec.onerror=e=>{
+   console.error('IranGram recorder error:',e.error||e);
+   igRecorderStream?.getTracks().forEach(track=>track.stop());igRecorderStream=null;igVoiceRecorder=null;igVideoRecorder=null;
    const btn=$(video?'#videoNoteBtn':'#voiceRecordBtn');btn.classList.remove('recording');btn.textContent=video?'◉':'🎙️';
-   if(blob.size){const f=new File([blob],(video?'video-note-':'voice-')+Date.now()+'.webm',{type:blob.type});await uploadAndSendFile(f,video?'roundvideo':'media')}
+   toast('ضبط متوقف شد؛ دسترسی دوربین/میکروفون یا فضای خالی گوشی را بررسی کن.');
+  };
+  rec.onstop=async()=>{
+   const actualMime=rec.mimeType|| (video?'video/webm':'audio/webm');
+   const blob=new Blob(igRecorderChunks,{type:actualMime});igRecorderChunks=[];
+   igRecorderStream?.getTracks().forEach(track=>track.stop());igRecorderStream=null;igVoiceRecorder=null;igVideoRecorder=null;
+   const btn=$(video?'#videoNoteBtn':'#voiceRecordBtn');btn.classList.remove('recording');btn.textContent=video?'◉':'🎙️';
+   if(blob.size){
+    const baseMime=actualMime.split(';')[0].toLowerCase();
+    const ext=baseMime==='video/mp4'?'mp4':baseMime==='audio/mp4'?'m4a':baseMime==='audio/ogg'?'ogg':'webm';
+    const f=new File([blob],(video?'video-note-':'voice-')+Date.now()+'.'+ext,{type:baseMime});
+    await uploadAndSendFile(f,video?'roundvideo':'media');
+   }else toast('ضبط خالی بود؛ دوباره امتحان کن.');
   };
   rec.start(250);const btn=$(video?'#videoNoteBtn':'#voiceRecordBtn');btn.classList.add('recording');btn.textContent='⏹';
   toast(video?'ضبط پیام گردالی شروع شد؛ برای پایان دوباره بزن':'ضبط ویس شروع شد؛ برای پایان دوباره بزن');
- }catch(err){igRecorderStream?.getTracks().forEach(t=>t.stop());igRecorderStream=null;igVoiceRecorder=null;igVideoRecorder=null;toast('اجازه میکروفون یا دوربین داده نشد')}
+ }catch(err){
+  console.error('IranGram getUserMedia failed:',err);
+  igRecorderStream?.getTracks().forEach(track=>track.stop());igRecorderStream=null;igVoiceRecorder=null;igVideoRecorder=null;
+  const message=err?.name==='NotAllowedError'?'اجازه میکروفون یا دوربین رد شده؛ مجوز سایت را در Chrome فعال کن.':err?.name==='NotFoundError'?'میکروفون یا دوربین پیدا نشد.':err?.name==='NotReadableError'?'میکروفون یا دوربین در برنامه دیگری مشغول است.':'شروع ضبط ناموفق بود: '+(err?.message||'خطای ناشناخته');
+  toast(message);
+ }
 }
 function stopIgRecorder(){const rec=igVideoRecorder||igVoiceRecorder;if(rec&&rec.state!=='inactive')rec.stop()}
 $('#voiceRecordBtn').onclick=()=>igVoiceRecorder?stopIgRecorder():startIgRecorder('voice');

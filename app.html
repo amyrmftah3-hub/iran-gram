@@ -1484,7 +1484,7 @@ const uid=()=>Math.random().toString(36).slice(2,10);
 const now=()=>new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
 const starter=()=>[];
 let state={profile:{name:'کاربر ایرانگرام',bio:'سلام! من در ایرانگرام هستم.',theme:'dark'},chats:starter(),active:null,filter:'all',query:'',reply:null};
-try{const s=JSON.parse(localStorage.getItem('iranGramPro'));if(s&&s.chats&&s.profile)state={...state,...s}}catch(e){}
+try{const s=JSON.parse(localStorage.getItem('iranGramPro'));if(s&&typeof s==='object')state={...state,...s}}catch(e){}\n// بازیابی امن داده‌های قدیمی یا ناقص ذخیره‌شده روی گوشی.\nstate.profile={name:'کاربر ایرانگرام',bio:'سلام! من در ایرانگرام هستم.',theme:'dark',...(state.profile&&typeof state.profile==='object'?state.profile:{})};\nstate.chats=Array.isArray(state.chats)?state.chats.filter(c=>c&&typeof c==='object').map(c=>({...c,name:String(c.name||'گفت‌وگو'),messages:Array.isArray(c.messages)?c.messages:[]})):[];\nif(!['all','people','unread','groups','channels','archive','hidden'].includes(state.filter))state.filter='all';
 function save(){try{localStorage.setItem('iranGramPro',JSON.stringify(state))}catch(e){}}
 function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500)}

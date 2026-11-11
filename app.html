@@ -2453,6 +2453,29 @@ const settingsQuickBtn=$('#settingsQuickBtn');if(settingsQuickBtn)settingsQuickB
 };
 $('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
 $('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
+// Reliable tap routing for the main navigation and conversation settings.
+document.addEventListener('click',e=>{
+ const nav=e.target.closest('#bottomNav [data-nav]');
+ if(nav){
+  e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+  const action=nav.dataset.nav;
+  if(action==='profile')profileModal();
+  else if(action==='settings')settingsModal();
+  else if(action==='contacts')newChat();
+  else if(action==='chats'){
+   $('#app').classList.remove('chat-open');state.filter='all';
+   document.querySelectorAll('.filter').forEach(x=>{const active=x.dataset.filter==='all';x.classList.toggle('active',active);x.setAttribute('aria-selected',active?'true':'false')});
+   renderChats();
+  }
+  return;
+ }
+ const menuItem=e.target.closest('#mainMenu button[data-action]');
+ if(menuItem){
+  const actions={login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,about:()=>showModal('درباره ایرانگرام','<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p>')};
+  const action=actions[menuItem.dataset.action];
+  if(action){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();$('#mainMenu').classList.remove('open');try{action()}catch(err){console.error('IranGram menu action failed:',err);toast('باز کردن این بخش ناموفق بود؛ دوباره تلاش کن.')} }
+ }
+},true);
 let suppressChatClick=false;
 $('#chatList').onclick=e=>{
  const actionButton=e.target.closest('[data-chat-actions]');
@@ -2636,6 +2659,12 @@ $('#modal').addEventListener('click',e=>{
  if(e.target.id==='archiveChat'){const c=activeChat();c.archived=!c.archived;if(c.archived)c.hidden=false;save();persistChatPreference(c);closeModal();renderChats()}
  if(e.target.id==='hideChat'){const c=activeChat();c.hidden=!c.hidden;if(c.hidden)c.archived=false;save();persistChatPreference(c);closeModal();renderChats()}
 });
+$('#modal').addEventListener('click',e=>{
+ const target=e.target.closest('#openConversationSettings');
+ if(!target)return;
+ e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+ const chat=activeChat();if(chat)conversationSettingsModal(chat);
+},true);
 $('#modalBack').onclick=e=>{if(e.target===$('#modalBack'))closeModal()};
 setSplashPoem();
 render();

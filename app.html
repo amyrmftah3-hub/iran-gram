@@ -2208,36 +2208,49 @@ function anonymousSendPage(){
 }
 
 function closeModal(){$('#modalBack').classList.remove('open');$('#modal').classList.remove('ai-modal')}
-function profileModal(){
+async function profileModal(){
+ if(remoteMode&&currentUser){
+  try{
+   const {data,error}=await supabaseClient.from('profiles').select('display_name,bio,username,avatar_url').eq('id',currentUser.id).maybeSingle();
+   if(error)throw error;
+   if(data){state.profile.name=data.display_name||'کاربر ایرانگرام';state.profile.bio=data.bio||'';state.profile.username=data.username||'';state.profile.avatar_url=data.avatar_url||'';save()}
+  }catch(error){console.error('IranGram profile load failed:',error);toast('بارگذاری پروفایل ناموفق بود: '+(error.message||'خطای ارتباط'))}
+ }
  let selectedAvatar=null;
  const avatarView=state.profile.avatar_url?'<img src="'+esc(state.profile.avatar_url)+'" alt="عکس پروفایل" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':esc((state.profile.name||'ا').slice(0,1));
- const body='<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><div id="profileAvatarPreview" class="drawer-avatar" style="width:76px;height:76px;overflow:hidden;font-size:28px">'+avatarView+'</div><div style="flex:1"><b>عکس پروفایل</b><p class="subtle" style="margin:5px 0">JPG، PNG یا WEBP تا ۵ مگابایت</p><input id="profileAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></div></div><label>نام نمایشی</label><input id="profileName" value="'+esc(state.profile.name)+'"><label>نام کاربری (بدون @)</label><input id="profileUsername" value="'+esc(state.profile.username||'')+'" placeholder="مثلاً amir_gram" maxlength="32"><small class="subtle">۵ تا ۳۲ نویسه؛ فقط حروف انگلیسی، عدد و زیرخط</small><label>بیو</label><textarea id="profileBio">'+esc(state.profile.bio)+'</textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveProfile">ذخیره</button></div>';
+ const body='<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><div id="profileAvatarPreview" class="drawer-avatar" style="width:76px;height:76px;overflow:hidden;font-size:28px">'+avatarView+'</div><div style="flex:1"><b>عکس پروفایل</b><p class="subtle" style="margin:5px 0">JPG، PNG یا WEBP تا ۵ مگابایت</p><input id="profileAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></div></div><label>نام نمایشی</label><input id="profileName" value="'+esc(state.profile.name)+'" maxlength="60"><label>نام کاربری (بدون @)</label><input id="profileUsername" value="'+esc(state.profile.username||'')+'" placeholder="مثلاً amir_gram" maxlength="32"><small class="subtle">۵ تا ۳۲ نویسه؛ فقط حروف انگلیسی، عدد و زیرخط</small><label>بیو</label><textarea id="profileBio" maxlength="160">'+esc(state.profile.bio)+'</textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveProfile">ذخیره</button></div>';
  showModal('پروفایل من',body);
  $('#profileAvatarFile').onchange=e=>{
   const file=e.target.files?.[0];if(!file)return;
-  if(!/^image\/(jpeg|png|webp)$/i.test(file.type)||file.size>5*1024*1024){e.target.value='';selectedAvatar=null;toast('فقط عکس JPG، PNG یا WEBP تا ۵ مگابایت مجاز است.');return}
-  selectedAvatar=file;const reader=new FileReader();reader.onload=()=>{$('#profileAvatarPreview').innerHTML='<img src="'+reader.result+'" alt="پیش‌نمایش عکس" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'};reader.readAsDataURL(file);
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024){e.target.value='';selectedAvatar=null;toast('فقط عکس JPG، PNG یا WEBP تا ۵ مگابایت مجاز است.');return}
+  selectedAvatar=file;const reader=new FileReader();
+  reader.onload=()=>{const preview=$('#profileAvatarPreview');if(preview)preview.innerHTML='<img src="'+reader.result+'" alt="پیش‌نمایش عکس" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'};
+  reader.onerror=()=>toast('خواندن عکس انتخاب‌شده ناموفق بود.');reader.readAsDataURL(file);
  };
  $('#saveProfile').onclick=async()=>{
-  const name=$('#profileName').value.trim()||'کاربر ایرانگرام',bio=$('#profileBio').value.trim(),username=$('#profileUsername').value.trim().replace(/^@/,'').toLowerCase();
-  if(username&&!/^[a-z][a-z0-9_]{4,31}$/.test(username)){toast('نام کاربری باید ۵ تا ۳۲ نویسه و با حرف انگلیسی شروع شود.');return}
-  if(selectedAvatar&&!remoteMode){toast('برای ذخیره عکس پروفایل، اول وارد حساب آنلاین شو.');return}
+  const name=$('#profileName').value.trim()||'کاربر ایرانگرام',bio=$('#profileBio').value.trim();
+  let username=$('#profileUsername').value.trim().toLowerCase();if(username.startsWith('@'))username=username.slice(1);
+  if(name.length>60||bio.length>160){toast('نام حداکثر ۶۰ و بیو حداکثر ۱۶۰ نویسه باشد.');return}
+  if(username&&!new RegExp('^[a-z][a-z0-9_]{4,31}$').test(username)){toast('نام کاربری باید ۵ تا ۳۲ نویسه و با حرف انگلیسی شروع شود.');return}
+  if(!remoteMode||!currentUser){toast('برای ذخیره پروفایل وارد حساب آنلاین شو.');return}
   const button=$('#saveProfile');button.disabled=true;button.textContent='در حال ذخیره...';
-  let avatarUrl=state.profile.avatar_url||'';
-  if(selectedAvatar&&remoteMode&&currentUser){
-   const ext=selectedAvatar.type==='image/png'?'png':selectedAvatar.type==='image/webp'?'webp':'jpg';
-   const path=currentUser.id+'/'+Date.now()+'_avatar.'+ext;
-   const upload=await supabaseClient.storage.from('iran-gram-avatars').upload(path,selectedAvatar,{upsert:false,contentType:selectedAvatar.type});
-   if(upload.error){button.disabled=false;button.textContent='ذخیره';toast('آپلود عکس پروفایل ناموفق بود: '+upload.error.message);return}
-   avatarUrl=supabaseClient.storage.from('iran-gram-avatars').getPublicUrl(path).data.publicUrl;
-  }
-  if(remoteMode&&currentUser){
-   const {error}=await supabaseClient.from('profiles').upsert({id:currentUser.id,display_name:name,bio,username:username||null,avatar_url:avatarUrl||null},{onConflict:'id'});
-   if(error){button.disabled=false;button.textContent='ذخیره';toast(error.code==='23505'?'این نام کاربری قبلاً گرفته شده.':'ذخیره پروفایل ناموفق بود: '+error.message);return}
-  }
-  state.profile.name=name;state.profile.bio=bio;state.profile.username=username;state.profile.avatar_url=avatarUrl;save();
-  const drawerAvatar=$('.drawer-avatar');if(drawerAvatar)drawerAvatar.innerHTML=avatarUrl?'<img src="'+esc(avatarUrl)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':esc(name.slice(0,1));
-  closeModal();toast(remoteMode?'پروفایل و عکس آنلاین ذخیره شد':'پروفایل روی این دستگاه ذخیره شد');
+  try{
+   let avatarUrl=state.profile.avatar_url||'';
+   if(selectedAvatar){
+    const ext=selectedAvatar.type==='image/png'?'png':selectedAvatar.type==='image/webp'?'webp':'jpg';
+    const path=currentUser.id+'/'+Date.now()+'_avatar.'+ext;
+    const {error:uploadError}=await supabaseClient.storage.from('iran-gram-avatars').upload(path,selectedAvatar,{upsert:false,contentType:selectedAvatar.type});
+    if(uploadError)throw new Error('آپلود عکس: '+uploadError.message);
+    avatarUrl=supabaseClient.storage.from('iran-gram-avatars').getPublicUrl(path).data.publicUrl;
+   }
+   const {error:saveError}=await supabaseClient.from('profiles').upsert({id:currentUser.id,display_name:name,bio,username:username||null,avatar_url:avatarUrl||null},{onConflict:'id'});
+   if(saveError){if(saveError.code==='23505')throw new Error('این نام کاربری قبلاً گرفته شده است.');throw new Error('ذخیره اطلاعات: '+saveError.message)}
+   state.profile.name=name;state.profile.bio=bio;state.profile.username=username;state.profile.avatar_url=avatarUrl;save();
+   $('#drawerName').textContent=name;$('#drawerUsername').textContent=username?'@'+username:(currentUser.email||'حساب ایرانگرام');
+   const drawerAvatar=$('#mainMenu .drawer-avatar');
+   if(drawerAvatar)drawerAvatar.innerHTML=avatarUrl?'<img src="'+esc(avatarUrl)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':esc(name.slice(0,1));
+   closeModal();toast('پروفایل با موفقیت ذخیره شد ✓');
+  }catch(error){console.error('IranGram profile save failed:',error);toast(error.message||'ذخیره پروفایل ناموفق بود.');button.disabled=false;button.textContent='ذخیره'}
  };
 }
 function settingsModal(){

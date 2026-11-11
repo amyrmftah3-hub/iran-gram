@@ -28,7 +28,7 @@ jobs:
           try {
             for (const [name, url] of [
               ['landing', 'https://iran-gram.onrender.com/'],
-              ['app', 'https://iran-gram.onrender.com/app.html?v=b72d9f4']
+              ['app', 'https://iran-gram.onrender.com/app.html?v=8c03e51']
             ]) {
               const page = await browser.newPage();
               const errors = [];

@@ -54,9 +54,11 @@ jobs:
                 for (const marker of ['id="stories"', 'id="videoNoteBtn"', 'data-round-video']) {
                   if (html.includes(marker)) throw new Error('Removed feature is still visible in app: ' + marker);
                 }
-                const mediaStyle = await page.locator('video.media-video').evaluate(el => {
+                const mediaStyle = await page.evaluate(() => {
+                  const el = document.createElement('video'); el.className = 'media-video'; document.body.appendChild(el);
                   const style = getComputedStyle(el);
-                  return { radius: style.borderRadius, fit: style.objectFit, height: style.height };
+                  const result = { radius: style.borderRadius, fit: style.objectFit, height: style.height };
+                  el.remove(); return result;
                 });
                 if (mediaStyle.radius !== '10px' || mediaStyle.fit !== 'contain') throw new Error('Video display CSS is still round/cropped: ' + JSON.stringify(mediaStyle));
                 const normalized = await page.evaluate(async () => {

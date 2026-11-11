@@ -1792,30 +1792,32 @@ async function startOnline(){
  }).subscribe();
 }
 
-let callSignalChannel=null,callInviteChannel=null,activeCall=null,pendingIncomingCall=null,callSeconds=0,callClock=null,callRingTimeout=null;
+let callSignalChannel=null,callInviteChannel=null,activeCall=null,pendingIncomingCall=null,callSeconds=0,callClock=null,callRingTimeout=null,incomingCallSeenIds=new Set(),callPollTimer=null,callPollBusy=false;
 function callIsSupported(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.RTCPeerConnection)}
 function callPeerId(chat){return chat&&chat.remote&&chat.type==='people'&&chat.id?chat.id:null}
 async function sendCallSignal(kind,payload={}){
- if(!activeCall||!currentUser)return;
+ if(!activeCall||!currentUser||!activeCall.id||!activeCall.peerId)throw new Error('اطلاعات تماس کامل نیست.');
  const {error}=await supabaseClient.from('call_signals').insert({call_id:activeCall.id,sender_id:currentUser.id,recipient_id:activeCall.peerId,kind,payload});
- if(error)console.warn('Call signal failed',error.message);
+ if(error){console.error('Call signal failed:',kind,error);throw new Error('ارسال اطلاعات تماس ناموفق بود: '+error.message)}
 }
 function showCallOverlay(type,name){
  const overlay=$('#callOverlay');overlay.classList.add('open');overlay.classList.toggle('audio',type==='audio');
  $('#callTypeLabel').textContent=type==='video'?'تماس تصویری ایرانگرام':'تماس صوتی ایرانگرام';
  $('#callPeerName').textContent=name||'در حال تماس…';$('#callTimer').textContent='در حال اتصال…';
- $('#callAvatar').textContent=(name||'آ')[0];$('#remoteVideo').srcObject=null;$('#localVideo').srcObject=activeCall?.localStream||null;
+ $('#callAvatar').textContent=(name||'آ')[0];$('#callAvatar').style.display='grid';$('#remoteVideo').srcObject=null;$('#remoteVideo').style.display='none';$('#localVideo').srcObject=activeCall?.localStream||null;
 }
 function startCallClock(){
  callSeconds=0;if(callClock)clearInterval(callClock);
  callClock=setInterval(()=>{callSeconds++;$('#callTimer').textContent=String(Math.floor(callSeconds/60)).padStart(2,'0')+':'+String(callSeconds%60).padStart(2,'0')},1000);
 }
 async function getCallPeerConnection(){
- const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
+ const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun2.l.google.com:19302'},{urls:'stun:stun3.l.google.com:19302'}],iceCandidatePoolSize:10,bundlePolicy:'max-bundle',rtcpMuxPolicy:'require'});
  activeCall.pc=pc;
- pc.onicecandidate=e=>{if(e.candidate)sendCallSignal('ice',e.candidate.toJSON())};
+ pc.onicecandidate=e=>{if(e.candidate)sendCallSignal('ice',e.candidate.toJSON()).catch(error=>{console.error(error);if(activeCall?.id===pc.__igCallId)toast(error.message)})};
+ pc.__igCallId=activeCall.id;
  pc.ontrack=e=>{const stream=e.streams&&e.streams[0];if(stream){$('#remoteVideo').srcObject=stream;$('#callAvatar').style.display='none';$('#remoteVideo').style.display='block';$('#remoteVideo').play().catch(()=>{})}};
- pc.onconnectionstatechange=()=>{if(!activeCall||activeCall.pc!==pc)return;if(pc.connectionState==='connected'){startCallClock();$('#callTimer').textContent='متصل'}else if(pc.connectionState==='failed'){toast('اتصال برقرار نشد؛ ممکن است شبکه به TURN نیاز داشته باشد')}else if(pc.connectionState==='disconnected')$('#callTimer').textContent='اتصال ناپایدار…'};
+ pc.oniceconnectionstatechange=()=>{if(!activeCall||activeCall.pc!==pc)return;if(pc.iceConnectionState==='checking')$('#callTimer').textContent='در حال پیدا کردن مسیر اتصال…';else if(pc.iceConnectionState==='disconnected')$('#callTimer').textContent='اتصال ناپایدار؛ در حال تلاش دوباره…';else if(pc.iceConnectionState==='failed')toast('مسیر مستقیم تماس پیدا نشد؛ این شبکه احتمالاً به سرور TURN نیاز دارد.')};
+ pc.onconnectionstatechange=()=>{if(!activeCall||activeCall.pc!==pc)return;if(pc.connectionState==='connected'){startCallClock();$('#callTimer').textContent='متصل'}else if(pc.connectionState==='failed'){toast('اتصال برقرار نشد؛ شبکه ممکن است به TURN نیاز داشته باشد')}else if(pc.connectionState==='disconnected')$('#callTimer').textContent='اتصال ناپایدار…'};
  return pc;
 }
 async function addLocalCallMedia(type){
@@ -1851,12 +1853,38 @@ async function setupCallRealtime(){
  if(callSignalChannel)supabaseClient.removeChannel(callSignalChannel);
  if(callInviteChannel)supabaseClient.removeChannel(callInviteChannel);
  callSignalChannel=supabaseClient.channel('arogram-call-signals-'+currentUser.id)
-  .on('postgres_changes',{event:'INSERT',schema:'public',table:'call_signals',filter:'recipient_id=eq.'+currentUser.id},payload=>handleCallSignal(payload.new)).subscribe();
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'call_signals',filter:'recipient_id=eq.'+currentUser.id},payload=>handleCallSignal(payload.new).catch(error=>{console.error('Incoming call signal failed:',error);toast('دریافت اطلاعات تماس ناموفق بود')}))
+  .subscribe((status,error)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.error('Call signal realtime unavailable:',status,error)});
  callInviteChannel=supabaseClient.channel('arogram-call-invites-'+currentUser.id)
-  .on('postgres_changes',{event:'INSERT',schema:'public',table:'call_sessions',filter:'callee_id=eq.'+currentUser.id},payload=>receiveIncomingCall(payload.new)).subscribe();
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'call_sessions',filter:'callee_id=eq.'+currentUser.id},payload=>receiveIncomingCall(payload.new).catch(error=>{console.error('Incoming call invite failed:',error);toast('دریافت تماس ورودی ناموفق بود')}))
+  .subscribe((status,error)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.error('Call invite realtime unavailable:',status,error)});
+ startIncomingCallPolling();
+}
+async function pollIncomingCalls(){
+ if(!currentUser||!remoteMode||document.visibilityState==='hidden'||callPollBusy||activeCall||pendingIncomingCall)return;
+ callPollBusy=true;
+ try{
+  const since=new Date(Date.now()-90000).toISOString();
+  const {data:rows,error}=await supabaseClient.from('call_sessions').select('id,conversation_id,caller_id,callee_id,call_type,created_at').eq('callee_id',currentUser.id).gte('created_at',since).order('created_at',{ascending:true}).limit(5);
+  if(error)throw error;
+  for(const row of rows||[]){
+   if(incomingCallSeenIds.has(row.id)||activeCall||pendingIncomingCall)continue;
+   const {data:terminal,error:terminalError}=await supabaseClient.from('call_signals').select('id').eq('call_id',row.id).in('kind',['end','reject','busy']).limit(1);
+   if(terminalError)throw terminalError;
+   if(terminal?.length){incomingCallSeenIds.add(row.id);continue}
+   await receiveIncomingCall(row);
+  }
+ }catch(error){console.warn('Incoming call polling failed:',error)}
+ finally{callPollBusy=false}
+}
+function startIncomingCallPolling(){
+ if(callPollTimer)clearInterval(callPollTimer);
+ pollIncomingCalls();
+ callPollTimer=setInterval(pollIncomingCalls,5000);
 }
 async function receiveIncomingCall(row){
- if(!row||row.callee_id!==currentUser.id)return;
+ if(!row||row.callee_id!==currentUser.id||incomingCallSeenIds.has(row.id))return;
+ incomingCallSeenIds.add(row.id);
  if(activeCall){const temp={id:row.id,peerId:row.caller_id};const previous=activeCall;activeCall=temp;await sendCallSignal('busy',{});activeCall=previous;return}
  const {data:profile}=await supabaseClient.from('profiles').select('display_name').eq('id',row.caller_id).maybeSingle();
  pendingIncomingCall=row;
@@ -1879,7 +1907,8 @@ async function acceptIncomingCall(row,name){
 }
 async function startOutgoingCall(type){
  const chat=activeChat();if(!chat||!chat.remote||chat.type!=='people'){toast('تماس فعلاً فقط در گفت‌وگوی خصوصی آنلاین فعال است');return}
- if(!callIsSupported()){toast('مرورگر این دستگاه از تماس پشتیبانی نمی‌کند');return}
+ if(!window.isSecureContext){toast('برای تماس باید سایت را با HTTPS در Chrome باز کنی.');return}
+ if(!callIsSupported()){toast('مرورگر این دستگاه از تماس پشتیبانی نمی‌کند؛ Chrome را به‌روز کن.');return}
  if(activeCall){toast('در حال حاضر یک تماس فعال داری');return}
  try{
   const {data:members,error:membersError}=await supabaseClient.from('conversation_members').select('user_id').eq('conversation_id',chat.id).neq('user_id',currentUser.id).limit(1);
@@ -2042,26 +2071,26 @@ async function uploadIranGramStorageFile(file,path,mime,onProgress){
  });
 }
 async function uploadAndSendFile(file,kind='media'){
- const chat=activeChat();if(!chat){toast('اول یه چت باز کن 🙂');return}
- if(!remoteMode||!currentUser||!chat.remote){toast('برای ارسال فایل وارد حساب آنلاین شو.');return}
- if(chat.type==='channels'&&chat.memberRole!=='owner'){toast('فقط مدیر کانال می‌تواند در کانال فایل بفرستد.');return}
- if(!file||!file.size){toast('فایل خالی است؛ دوباره انتخاب یا ضبط کن.');return}
- if(file.size>100*1024*1024){toast('حجم فایل انتخابی بیش از حد مجاز است.');return}
- let mime=iranGramFileMime(file);
- if(mime.startsWith('image/')&&mime!=='image/gif')file=await prepareIranGramImage(file,2048);
- mime=iranGramFileMime(file)||mime;
- if(file.size>50*1024*1024){toast('حجم فایل پس از آماده‌سازی باید کمتر از ۵۰ مگابایت باشد.');return}
- const safeName=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'file',ext=(safeName.split('.').pop()||'').toLowerCase();
- const extensionTypes={pdf:'application/pdf',zip:'application/zip',txt:'text/plain'};
- if(!mime||mime==='application/octet-stream')mime=extensionTypes[ext]||'';
- const allowed=/^(image\/(jpeg|png|webp|gif|avif|heic|heif)|video\/(mp4|webm|quicktime|3gpp)|audio\/(mpeg|ogg|mp4|webm|aac|wav|3gpp|amr)|application\/(pdf|zip)|text\/plain)$/i;
- if(!allowed.test(mime)){toast('این نوع فایل پشتیبانی نمی‌شود: '+(mime||'ناشناخته'));return}
- const path=chat.id+'/'+currentUser.id+'/'+Date.now()+'_'+safeName,markerKind=kind==='voice'?'voice':'media';
- const body='[['+markerKind+':'+encodeURIComponent(path)+'|'+encodeURIComponent(mime)+'|'+encodeURIComponent(file.name||safeName)+']]';
- const pending={id:'pending-'+Date.now(),text:body,mine:true,time:new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],sendStatus:'در حال ارسال…'};
- chat.messages.push(pending);save();renderMessages();renderChats();toast(kind==='voice'?'در حال ارسال ویس…':'در حال ارسال فایل…');
- let uploaded=false;
+ let pending=null,uploaded=false;
  try{
+  const chat=activeChat();if(!chat)throw new Error('اول یه گفت‌وگو باز کن 🙂');
+  if(!remoteMode||!currentUser||!chat.remote)throw new Error('برای ارسال فایل وارد حساب آنلاین شو.');
+  if(chat.type==='channels'&&chat.memberRole!=='owner')throw new Error('فقط مدیر کانال می‌تواند در کانال فایل بفرستد.');
+  if(!file||!file.size)throw new Error('فایل خالی است؛ دوباره انتخاب یا ضبط کن.');
+  if(file.size>100*1024*1024)throw new Error('حجم فایل انتخابی بیش از ۱۰۰ مگابایت است.');
+  let mime=iranGramFileMime(file);
+  if(mime.startsWith('image/')&&mime!=='image/gif')file=await prepareIranGramImage(file,2048);
+  mime=iranGramFileMime(file)||mime;
+  if(file.size>50*1024*1024)throw new Error('حجم فایل پس از آماده‌سازی باید کمتر از ۵۰ مگابایت باشد.');
+  const safeName=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'file',ext=(safeName.split('.').pop()||'').toLowerCase();
+  const extensionTypes={pdf:'application/pdf',zip:'application/zip',txt:'text/plain'};
+  if(!mime||mime==='application/octet-stream')mime=extensionTypes[ext]||'';
+  const allowed=/^(image\/(jpeg|png|webp|gif|avif|heic|heif)|video\/(mp4|webm|quicktime|3gpp)|audio\/(mpeg|ogg|mp4|webm|aac|wav|3gpp|amr)|application\/(pdf|zip)|text\/plain)$/i;
+  if(!allowed.test(mime))throw new Error('این نوع فایل پشتیبانی نمی‌شود: '+(mime||'ناشناخته'));
+  const path=chat.id+'/'+currentUser.id+'/'+Date.now()+'_'+safeName,markerKind=kind==='voice'?'voice':'media';
+  const body='[['+markerKind+':'+encodeURIComponent(path)+'|'+encodeURIComponent(mime)+'|'+encodeURIComponent(file.name||safeName)+']]';
+  pending={id:'pending-'+Date.now(),text:body,mine:true,time:new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],sendStatus:'در حال ارسال…'};
+  chat.messages.push(pending);save();renderMessages();renderChats();toast(kind==='voice'?'در حال ارسال ویس…':'در حال ارسال فایل…');
   await uploadIranGramStorageFile(file,path,mime,(bytes,total)=>{
    const percent=Math.min(100,Math.round(bytes/total*100));
    const status='در حال بارگذاری '+percent.toLocaleString('fa-IR')+'٪';
@@ -2073,9 +2102,10 @@ async function uploadAndSendFile(file,kind='media'){
   pending.id=sent?.id||pending.id;pending.time=new Date(sent?.created_at||Date.now()).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});pending.sendStatus='';
   save();renderMessages();renderChats();toast(kind==='voice'?'ویس فرستاده شد ✓':'فایل فرستاده شد ✓');
  }catch(error){
-  console.error('IranGram media send failed:',error);pending.sendStatus='ارسال ناموفق';pending.retryFile=file;pending.retryKind=kind;pending.mediaLoadError=error?.message||'خطای نامشخص';
+  console.error('IranGram media send failed:',error);
   const detail=error?.message||error?.error||error?.statusCode||'خطای نامشخص';
-  renderMessages();renderChats();toast((uploaded?'فایل آپلود شد اما پیام ثبت نشد: ':'ارسال ناموفق بود: ')+detail);
+  if(pending){pending.sendStatus='ارسال ناموفق';pending.retryFile=file;pending.retryKind=kind;pending.mediaLoadError=detail;renderMessages();renderChats();toast((uploaded?'فایل آپلود شد اما پیام ثبت نشد: ':'ارسال ناموفق بود: ')+detail)}
+  else toast('آماده‌سازی یا بررسی فایل ناموفق بود: '+detail);
  }
 }
 async function sendMessage(){const input=$('#messageInput'),text=input.value.trim();if(!text)return;const c=activeChat();if(!c){toast('اول یک گفت‌وگو انتخاب کن');return}if(!remoteMode||!currentUser||!c.remote){authModal();toast('برای ارسال پیام واقعی، اول وارد حساب آنلاین شو');return}const {data:sent,error}=await supabaseClient.from('messages').insert({conversation_id:c.id,sender_id:currentUser.id,body:text,reply_to_id:state.reply||null}).select('id,created_at').single();if(error){toast('ارسال ناموفق بود: '+error.message);return}c.messages.push({id:sent.id,text,mine:true,time:new Date(sent.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:state.reply||null});state.reply=null;input.value='';input.style.height='auto';save();renderChats();renderMessages()}

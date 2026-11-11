@@ -1292,7 +1292,7 @@ body{font-family:Tahoma,"Vazirmatn","Segoe UI",Arial,sans-serif;letter-spacing:0
 }
 
 
-.voice-message{display:flex;align-items:center;gap:9px;min-width:220px;padding:7px 9px;border-radius:14px;background:#3390ec18}.voice-message audio{width:min(260px,62vw);height:38px}.round-video-message{width:220px;height:220px;max-width:65vw;max-height:65vw;border-radius:50%;overflow:hidden;background:#101923}.round-video-message video{width:100%;height:100%;object-fit:cover;border-radius:50%}#voiceRecordBtn.recording,#videoNoteBtn.recording{background:#d94b59;color:#fff;animation:igRecordPulse 1s infinite}@keyframes igRecordPulse{50%{box-shadow:0 0 0 7px #e34d5940}}
+.voice-message{display:flex;align-items:center;gap:9px;min-width:220px;padding:7px 9px;border-radius:14px;background:#3390ec18}.voice-message audio{width:min(260px,62vw);height:38px}{width:220px;height:220px;max-width:65vw;max-height:65vw;border-radius:50%;overflow:hidden;background:#101923} video{width:100%;height:100%;object-fit:cover;border-radius:50%}#voiceRecordBtn.recording,.recording{background:#d94b59;color:#fff;animation:igRecordPulse 1s infinite}@keyframes igRecordPulse{50%{box-shadow:0 0 0 7px #e34d5940}}
 
 /* Telegram-inspired compact composer */
 .composer{display:flex;align-items:flex-end;gap:7px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:#17212b;border-top:1px solid #263442}
@@ -1306,22 +1306,22 @@ body{font-family:Tahoma,"Vazirmatn","Segoe UI",Arial,sans-serif;letter-spacing:0
 @media(max-width:760px){.composer{gap:4px;padding-left:7px;padding-right:7px}.composer .round{width:34px;min-width:34px;height:38px;font-size:18px}.composer .send{width:40px;height:40px;min-width:40px}.composefield{min-width:0}.composefield textarea{font-size:14px}}
 
 /* Keep voice and round-video controls visible on every chat type */
-#voiceRecordBtn,#videoNoteBtn{
+#voiceRecordBtn,{
  display:inline-grid!important;visibility:visible!important;opacity:1!important;
  place-items:center;flex:0 0 36px!important;width:36px!important;min-width:36px!important;
  height:40px!important;padding:0!important;margin:0!important;position:relative;z-index:2;
  color:#d5e6f5!important;background:#263746!important;border:1px solid #35495a!important;
  border-radius:50%!important;font-size:19px!important;line-height:1;
 }
-#voiceRecordBtn:active,#videoNoteBtn:active{background:#3390ec!important;color:#fff!important}
-#voiceRecordBtn.recording,#videoNoteBtn.recording{background:#d94b59!important;color:#fff!important}
+#voiceRecordBtn:active,:active{background:#3390ec!important;color:#fff!important}
+#voiceRecordBtn.recording,.recording{background:#d94b59!important;color:#fff!important}
 .composer{flex-wrap:nowrap;min-width:0;overflow:visible}
 .composefield{flex:1 1 auto;min-width:48px}
 .composefield textarea{min-width:0;width:100%}
 #emojiBtn{flex:0 0 32px!important;width:32px!important;min-width:32px!important}
 @media(max-width:390px){
  #emojiBtn{display:none!important}
- #voiceRecordBtn,#videoNoteBtn{flex-basis:34px!important;width:34px!important;min-width:34px!important;height:38px!important}
+ #voiceRecordBtn,{flex-basis:34px!important;width:34px!important;min-width:34px!important;height:38px!important}
  .composer{gap:3px!important;padding-left:5px!important;padding-right:5px!important}
 }
 .reward-card{background:linear-gradient(145deg,#142d4d,#1d5278);border:1px solid #347eb2;border-radius:16px;padding:16px;text-align:center;margin-bottom:14px;color:#fff}.reward-points{font-size:38px;font-weight:800;color:#7dd3fc}.reward-card p{font-size:13px;line-height:1.8;color:#e1f2ff}.reward-video{display:inline-block;color:#fff;text-decoration:none;background:#e53955;padding:10px 15px;border-radius:10px;font-size:13px;margin:4px}.reward-success{background:#153d31;color:#a8f0cd;padding:10px;border-radius:10px;font-size:13px}.reward-pending{background:#493a16;color:#ffe6a1;padding:10px;border-radius:10px;font-size:13px}.reward-rejected{background:#4b2228;color:#ffd3d7;padding:10px;border-radius:10px;font-size:13px}.reward-submit{padding:12px;border:1px solid var(--line);border-radius:12px;margin:12px 0}.reward-submit input{margin:8px 0}.reward-submit button{width:100%;margin-top:10px}.reward-redeem{margin-top:15px;padding-top:12px;border-top:1px solid var(--line)}.reward-redeem .primary{width:100%;margin-top:12px}
@@ -1345,7 +1345,7 @@ body{font-family:Tahoma,"Vazirmatn","Segoe UI",Arial,sans-serif;letter-spacing:0
 .composefield #attachBtn{min-width:34px;min-height:34px;width:34px;height:34px;padding:4px;border-radius:50%;font-size:22px;color:#8a9aa5!important;order:2}
 #emojiBtn{order:0}
 #photoBtn{display:none}
-#voiceRecordBtn,#videoNoteBtn{background:transparent;color:#8195a3}
+#voiceRecordBtn,{background:transparent;color:#8195a3}
 .composer .send{width:44px;height:44px;min-width:44px;border-radius:50%;box-shadow:0 2px 6px #168bd52b;font-size:19px}
 @media(max-width:430px){.composer{gap:4px;padding-left:6px;padding-right:6px}.composer .round{width:34px;min-width:34px;height:38px;font-size:18px}.composer .send{width:42px;min-width:42px;height:42px}.composefield{padding-left:9px;padding-right:5px}}
 body.dark .composer{background:#17212b;border-color:#253341}
@@ -1410,7 +1410,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
 .ig-voice-play{width:42px;height:42px;flex:0 0 42px;border:0;border-radius:50%;background:#3390ec;color:#fff;font-size:17px;display:grid;place-items:center}
 .ig-voice-main{flex:1;min-width:0}.ig-voice-wave{height:31px;display:flex;align-items:center;gap:2px;overflow:hidden}.ig-voice-wave i{display:block;width:3px;min-width:2px;height:var(--h);border-radius:4px;background:#7caedb;opacity:.85}.ig-voice-wave i.heard{background:#3390ec;opacity:1}
 .ig-voice-time{display:flex;justify-content:space-between;font-size:10px;color:var(--muted,#91a3b3);margin-top:3px}.ig-voice audio{display:none}.msg.mine .ig-voice{background:rgba(51,144,236,.18)}
-.round-video-message{width:220px;height:220px;max-width:68vw;max-height:68vw;aspect-ratio:1;border-radius:50%;overflow:hidden;background:#101923;box-shadow:0 2px 12px #0003;position:relative}.round-video-message video{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}.round-video-play{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:54px;height:54px;border:0;border-radius:50%;background:#071b48cc;color:#fff;font-size:22px;display:grid;place-items:center;box-shadow:0 2px 12px #0006}.round-video-message.playing .round-video-play{opacity:0}.round-video-message.playing:active .round-video-play{opacity:1}.ig-voice-wave{cursor:pointer;touch-action:pan-y}.ig-voice-wave i{transition:background .12s}
+{width:220px;height:220px;max-width:68vw;max-height:68vw;aspect-ratio:1;border-radius:50%;overflow:hidden;background:#101923;box-shadow:0 2px 12px #0003;position:relative} video{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:54px;height:54px;border:0;border-radius:50%;background:#071b48cc;color:#fff;font-size:22px;display:grid;place-items:center;box-shadow:0 2px 12px #0006}.playing {opacity:0}.playing:active {opacity:1}.ig-voice-wave{cursor:pointer;touch-action:pan-y}.ig-voice-wave i{transition:background .12s}
 </style>
 </head>
  
@@ -2655,7 +2655,7 @@ $('#messages').onclick=async e=>{const b=e.target.closest('button');if(!b)return
  const keepScroll=$('#messages').scrollTop;save();renderMessages();$('#messages').scrollTop=keepScroll;
  toast(previous===emoji?'واکنش برداشته شد':previous?'واکنش تغییر کرد':'واکنش ثبت شد')
 } else if(b.dataset.delete!==undefined){if(confirm(c.remote?'این پیام برای همه حذف شود؟':'این پیام از همین دستگاه حذف شود؟')){if(remoteMode&&c.remote&&currentUser){const media=parseMediaMarker(m.text);const {data,error}=await supabaseClient.from('messages').delete().eq('id',id).eq('sender_id',currentUser.id).select('id').maybeSingle();if(error||!data){toast('حذف آنلاین پیام ناموفق بود'+(error?': '+error.message:''));return}if(media)await supabaseClient.storage.from('arogram-chat-media').remove([media.path])}c.messages=c.messages.filter(x=>x.id!==id);if(c.pinnedMessageId===id)c.pinnedMessageId=null;save();renderChats();renderMessages()}}else if(b.dataset.edit!==undefined){showModal('ویرایش پیام',`<textarea id="editText">${esc(m.text)}</textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveEdit">ذخیره</button></div>`);$('#saveEdit').onclick=async()=>{const next=$('#editText').value.trim();if(!next){toast('متن پیام خالی نمی‌تواند باشد');return}if(remoteMode&&c.remote&&currentUser){const {data,error}=await supabaseClient.from('messages').update({body:next}).eq('id',id).eq('sender_id',currentUser.id).select('id').maybeSingle();if(error||!data){toast('ویرایش آنلاین ناموفق بود'+(error?': '+error.message:''));return}}m.text=next;m.edited=true;save();closeModal();renderChats();renderMessages()}}else if(b.dataset.reply!==undefined){state.reply=id;$('#messageInput').placeholder='پاسخ به پیام انتخاب‌شده...';$('#messageInput').focus();toast('خب، جوابت رو بنویس و بفرست 🙂')}else if(b.dataset.pin!==undefined){c.pinnedMessageId=c.pinnedMessageId===id?null:id;c.pinned=!!c.pinnedMessageId;save();await persistChatPreference(c);renderMessages();toast(c.pinnedMessageId?'پیام سنجاق شد':'سنجاق پیام برداشته شد')}else if(b.dataset.copy!==undefined){try{await navigator.clipboard.writeText(String(m.text||''));toast('متن پیام کپی شد')}catch(err){showModal('کپی پیام',`<textarea id="copyFallback" readonly>${esc(m.text||'')}</textarea><div class="modalactions"><button class="primary" id="selectCopy">انتخاب متن</button><button class="secondary" data-close>بستن</button></div>`);$('#selectCopy').onclick=()=>{$('#copyFallback').select();toast('متن را کپی کن')}}}else if(b.dataset.forward!==undefined){const targets=state.chats.filter(x=>x.id!==c.id);if(!targets.length){toast('گفت‌وگوی دیگری برای فوروارد وجود ندارد');return}showModal('فوروارد پیام',`<p class="subtle">پیام به کدام گفت‌وگو فرستاده شود؟</p><select id="forwardTarget">${targets.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="confirmForward">فوروارد</button></div>`);$('#confirmForward').onclick=async()=>{const target=state.chats.find(x=>x.id===$('#forwardTarget').value);if(!target)return;if(remoteMode&&target.remote){const {error}=await supabaseClient.from('messages').insert({conversation_id:target.id,sender_id:currentUser.id,body:'فوروارد‌شده: '+String(m.text||'')});if(error){toast('فوروارد آنلاین ناموفق بود: '+error.message);return}}target.messages.push({id:uid(),text:'فوروارد‌شده: '+String(m.text||''),mine:true,time:now(),reactions:[]});save();closeModal();renderChats();toast('پیام فوروارد شد')}}};
-$('#stories').onclick=e=>{const el=e.target.closest('[data-story]');if(!el)return;if(el.dataset.story==='add'){createStory();return}openStoryGroup(el.dataset.story)};
+
 
 let igVoiceRecorder=null,igRecorderStream=null,igRecorderChunks=[];
 async function startIgVoiceRecorder(){

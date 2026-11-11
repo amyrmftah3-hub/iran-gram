@@ -944,6 +944,15 @@ html,body{width:100%;height:100%;background:#0e1621;color:#e9edef;font-family:Va
 .menu.open:before{content:"";position:fixed;inset:0;right:100%;width:100vw;background:#0008;pointer-events:none}
 .drawer-profile{display:flex;align-items:center;gap:12px;padding:26px 18px 22px;background:linear-gradient(135deg,#1b5c8f,#17212b)}
 .drawer-avatar{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#3390ec;color:#fff;font-size:22px;font-weight:700;flex-shrink:0}
+#profileAvatarPreview{width:76px!important;height:76px!important;min-width:76px;min-height:76px;flex:0 0 76px;aspect-ratio:1/1;border-radius:50%;overflow:hidden;clip-path:circle(50%);display:grid;place-items:center}
+#profileAvatarPreview img{width:100%;height:100%;display:block;object-fit:cover;border-radius:50%}
+.avatar-crop-stage{width:min(76vw,260px);height:min(76vw,260px);margin:12px auto;border-radius:50%;overflow:hidden;position:relative;background:#111;touch-action:none;border:3px solid #3390ec;aspect-ratio:1/1}
+.avatar-crop-stage img{position:absolute;max-width:none;max-height:none;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.avatar-crop-controls{display:grid;grid-template-columns:1fr;gap:8px;margin:12px 0}
+.avatar-crop-controls label{display:flex;justify-content:space-between;gap:12px}
+.avatar-crop-controls input{width:100%;accent-color:#3390ec}
+.avatar-crop-hint{text-align:center;font-size:12px;color:var(--muted,#9aa);margin:4px 0}
+
 .drawer-user{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}.drawer-user b{font-size:15px}.drawer-user small,.settings-account small{color:#a9bac9;font-size:11px}
 .drawer-close{background:transparent;color:#dce7ef;font-size:27px;padding:4px 9px}
 .drawer-section{padding:15px 18px 5px;color:#7e9aaf;font-size:11px;font-weight:700}
@@ -2216,26 +2225,55 @@ async function profileModal(){
    if(data){state.profile.name=data.display_name||'کاربر ایرانگرام';state.profile.bio=data.bio||'';state.profile.username=data.username||'';state.profile.avatar_url=data.avatar_url||'';save()}
   }catch(error){console.error('IranGram profile load failed:',error);toast('بارگذاری پروفایل ناموفق بود: '+(error.message||'خطای ارتباط'))}
  }
- let selectedAvatar=null;
- const avatarView=state.profile.avatar_url?'<img src="'+esc(state.profile.avatar_url)+'" alt="عکس پروفایل" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':esc((state.profile.name||'ا').slice(0,1));
- const body='<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><div id="profileAvatarPreview" class="drawer-avatar" style="width:76px;height:76px;overflow:hidden;font-size:28px">'+avatarView+'</div><div style="flex:1"><b>عکس پروفایل</b><p class="subtle" style="margin:5px 0">JPG، PNG یا WEBP تا ۵ مگابایت</p><input id="profileAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></div></div><label>نام نمایشی</label><input id="profileName" value="'+esc(state.profile.name)+'" maxlength="60"><label>نام کاربری (بدون @)</label><input id="profileUsername" value="'+esc(state.profile.username||'')+'" placeholder="مثلاً amir_gram" maxlength="32"><small class="subtle">۵ تا ۳۲ نویسه؛ فقط حروف انگلیسی، عدد و زیرخط</small><label>بیو</label><textarea id="profileBio" maxlength="160">'+esc(state.profile.bio)+'</textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveProfile">ذخیره</button></div>';
+ let selectedAvatar=null, cropImage=null, cropUrl='', cropZoom=1, cropX=0, cropY=0, cropDragging=false, cropPointer=null;
+ const avatarView=state.profile.avatar_url?'<img src="'+esc(state.profile.avatar_url)+'" alt="عکس پروفایل">':esc((state.profile.name||'ا').slice(0,1));
+ const body='<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><div id="profileAvatarPreview" class="drawer-avatar">'+avatarView+'</div><div style="flex:1"><b>عکس پروفایل</b><p class="subtle" style="margin:5px 0">عکس را انتخاب کن، جای آن را تنظیم و دایره برش را تأیید کن.</p><input id="profileAvatarFile" type="file" accept="image/*"></div></div><label>نام نمایشی</label><input id="profileName" value="'+esc(state.profile.name)+'" maxlength="60"><label>نام کاربری (بدون @)</label><input id="profileUsername" value="'+esc(state.profile.username||'')+'" placeholder="مثلاً amir_gram" maxlength="32"><small class="subtle">۵ تا ۳۲ نویسه؛ فقط حروف انگلیسی، عدد و زیرخط</small><label>بیو</label><textarea id="profileBio" maxlength="160">'+esc(state.profile.bio)+'</textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveProfile">ذخیره تغییرات</button></div>';
  showModal('پروفایل من',body);
+ const preview=$('#profileAvatarPreview');
+ const cropModal=()=>new Promise((resolve)=>{
+  if(!cropImage){resolve(null);return}
+  const w=cropImage.naturalWidth,h=cropImage.naturalHeight,side=Math.min(w,h);
+  const render=()=>{
+   const stage=$('#avatarCropStage');if(!stage)return;
+   const size=stage.clientWidth,cover=Math.max(size/w,size/h)*cropZoom;
+   const iw=w*cover,ih=h*cover;
+   const left=(size-iw)/2+cropX*size/100,top=(size-ih)/2+cropY*size/100;
+   const img=$('#avatarCropImage');img.style.width=iw+'px';img.style.height=ih+'px';img.style.left=left+'px';img.style.top=top+'px';
+   $('#cropZoomValue').textContent=Math.round(cropZoom*100)+'٪';
+  };
+  showModal('تنظیم عکس پروفایل','<p class="avatar-crop-hint">با کشیدن عکس، جای آن را تنظیم کن؛ با بزرگ‌نمایی کادر را دقیق‌تر کن.</p><div class="avatar-crop-stage" id="avatarCropStage"><img id="avatarCropImage" src="'+cropUrl+'" alt="برش عکس"></div><div class="avatar-crop-controls"><label>بزرگ‌نمایی <b id="cropZoomValue">۱۰۰٪</b></label><input id="cropZoom" type="range" min="1" max="3" step="0.01" value="1"><label>جابجایی افقی</label><input id="cropX" type="range" min="-50" max="50" value="0"><label>جابجایی عمودی</label><input id="cropY" type="range" min="-50" max="50" value="0"></div><div class="modalactions"><button class="secondary" id="cropCancel">انصراف</button><button class="primary" id="cropApply">تأیید برش</button></div>');
+  const stage=$('#avatarCropStage');
+  const update=()=>{cropZoom=Number($('#cropZoom').value);cropX=Number($('#cropX').value);cropY=Number($('#cropY').value);render()};
+  $('#cropZoom').oninput=update;$('#cropX').oninput=update;$('#cropY').oninput=update;
+  stage.onpointerdown=e=>{cropDragging=true;cropPointer={x:e.clientX,y:e.clientY,px:cropX,py:cropY};stage.setPointerCapture(e.pointerId)};
+  stage.onpointermove=e=>{if(!cropDragging||!cropPointer)return;const deltaX=(e.clientX-cropPointer.x)/stage.clientWidth*100,deltaY=(e.clientY-cropPointer.y)/stage.clientHeight*100;cropX=Math.max(-50,Math.min(50,cropPointer.px+deltaX));cropY=Math.max(-50,Math.min(50,cropPointer.py+deltaY));$('#cropX').value=cropX;$('#cropY').value=cropY;render()};
+  stage.onpointerup=stage.onpointercancel=()=>{cropDragging=false;cropPointer=null};
+  requestAnimationFrame(render);
+  $('#cropCancel').onclick=()=>{closeModal();resolve(null)};
+  $('#cropApply').onclick=()=>{
+   try{
+    const base=Math.min(w,h),zoom=cropZoom,sw=base/zoom,sh=base/zoom;
+    const maxX=Math.max(0,(w-sw)/2),maxY=Math.max(0,(h-sh)/2);
+    const sx=Math.max(0,Math.min(w-sw,(w-sw)/2+(cropX/50)*maxX));
+    const sy=Math.max(0,Math.min(h-sh,(h-sh)/2+(cropY/50)*maxY));
+    const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
+    const ctx=canvas.getContext('2d');ctx.drawImage(cropImage,sx,sy,sw,sh,0,0,512,512);
+    canvas.toBlob(blob=>{if(!blob){toast('ساخت عکس برش‌خورده ناموفق بود.');return}resolve(new File([blob],'profile.jpg',{type:'image/jpeg'}));closeModal()},'image/jpeg',0.9);
+   }catch(err){toast('برش عکس ناموفق بود: '+err.message)}
+  };
+ });
  $('#profileAvatarFile').onchange=e=>{
   const file=e.target.files?.[0];if(!file)return;
-  const ext=(file.name.split('.').pop()||'').toLowerCase();
-  const allowedTypes=['image/jpeg','image/png','image/webp'];
-  const allowedExts=['jpg','jpeg','png','webp'];
-  const validImage=allowedTypes.includes((file.type||'').toLowerCase())||allowedExts.includes(ext);
-  if(!validImage||file.size>5*1024*1024){e.target.value='';selectedAvatar=null;toast('لطفاً عکس JPG، PNG یا WEBP تا ۵ مگابایت انتخاب کن.');return}
-  selectedAvatar=file;
-  const preview=$('#profileAvatarPreview');
-  if(preview){
-   try{
-    if(preview.dataset.objectUrl)URL.revokeObjectURL(preview.dataset.objectUrl);
-    const objectUrl=URL.createObjectURL(file);preview.dataset.objectUrl=objectUrl;
-    preview.innerHTML='<img src="'+objectUrl+'" alt="پیش‌نمایش عکس" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
-   }catch(previewError){console.warn('Avatar preview unavailable; original file will still upload.',previewError)}
-  }
+  if(file.size>10*1024*1024){e.target.value='';toast('حجم عکس باید کمتر از ۱۰ مگابایت باشد.');return}
+  if(cropUrl)URL.revokeObjectURL(cropUrl);
+  cropUrl=URL.createObjectURL(file);cropImage=new Image();
+  cropImage.onload=async()=>{
+   cropZoom=1;cropX=0;cropY=0;
+   const cropped=await cropModal();
+   if(cropped){selectedAvatar=cropped;const localUrl=URL.createObjectURL(cropped);preview.innerHTML='<img src="'+localUrl+'" alt="عکس پروفایل">';}
+  };
+  cropImage.onerror=()=>toast('باز کردن این عکس ممکن نشد؛ یک عکس دیگر انتخاب کن.');
+  cropImage.src=cropUrl;
  };
  $('#saveProfile').onclick=async()=>{
   const name=$('#profileName').value.trim()||'کاربر ایرانگرام',bio=$('#profileBio').value.trim();
@@ -2247,11 +2285,8 @@ async function profileModal(){
   try{
    let avatarUrl=state.profile.avatar_url||'';
    if(selectedAvatar){
-    const fileExt=(selectedAvatar.name.split('.').pop()||'jpg').toLowerCase();
-    const ext=fileExt==='jpeg'?'jpg':(['jpg','png','webp'].includes(fileExt)?fileExt:(selectedAvatar.type==='image/png'?'png':selectedAvatar.type==='image/webp'?'webp':'jpg'));
-    const mime=selectedAvatar.type||('image/'+(ext==='jpg'?'jpeg':ext));
-    const path=currentUser.id+'/'+Date.now()+'_avatar.'+ext;
-    const {error:uploadError}=await supabaseClient.storage.from('iran-gram-avatars').upload(path,selectedAvatar,{upsert:false,contentType:mime});
+    const path=currentUser.id+'/'+Date.now()+'_avatar.jpg';
+    const {error:uploadError}=await supabaseClient.storage.from('iran-gram-avatars').upload(path,selectedAvatar,{upsert:false,contentType:'image/jpeg'});
     if(uploadError)throw new Error('آپلود عکس: '+uploadError.message);
     avatarUrl=supabaseClient.storage.from('iran-gram-avatars').getPublicUrl(path).data.publicUrl;
    }
@@ -2262,9 +2297,9 @@ async function profileModal(){
    if(drawerName)drawerName.textContent=name;
    if(drawerUsername)drawerUsername.textContent=username?'@'+username:(currentUser.email||'حساب ایرانگرام');
    const drawerAvatar=$('#mainMenu .drawer-avatar');
-   if(drawerAvatar)drawerAvatar.innerHTML=avatarUrl?'<img src="'+esc(avatarUrl)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':esc(name.slice(0,1));
+   if(drawerAvatar)drawerAvatar.innerHTML=avatarUrl?'<img src="'+esc(avatarUrl)+'" alt="">':esc(name.slice(0,1));
    closeModal();toast('پروفایل با موفقیت ذخیره شد ✓');
-  }catch(error){console.error('IranGram profile save failed:',error);toast(error.message||'ذخیره پروفایل ناموفق بود.');button.disabled=false;button.textContent='ذخیره'}
+  }catch(error){console.error('IranGram profile save failed:',error);toast(error.message||'ذخیره پروفایل ناموفق بود.');button.disabled=false;button.textContent='ذخیره تغییرات'}
  };
 }
 function settingsModal(){

@@ -20,7 +20,7 @@ jobs:
         run: npm install --no-save playwright
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Test live website and app
+      - name: Test live website and media upload paths
         run: |
           node --input-type=module <<'NODE'
           import { chromium } from 'playwright';
@@ -28,7 +28,7 @@ jobs:
           try {
             for (const [name, url] of [
               ['landing', 'https://iran-gram.onrender.com/'],
-              ['app', 'https://iran-gram.onrender.com/app.html?v=b6d58914']
+              ['app', 'https://iran-gram.onrender.com/app.html?v=b72d9f4']
             ]) {
               const page = await browser.newPage();
               const errors = [];
@@ -47,33 +47,66 @@ jobs:
                 if (!visible) throw new Error('App interface is not visible');
                 const splashVisible = await page.locator('#appSplash').evaluate(el => getComputedStyle(el).visibility !== 'hidden' && Number(getComputedStyle(el).opacity) > 0.05);
                 if (splashVisible) throw new Error('Splash screen did not disappear');
-              }
-              if (name === 'app') {
                 const html = await page.content();
-                if (!html.includes('prepareIranGramAvatar') || !html.includes('collectionAvatarFile') || !html.includes('prepareIranGramImage') || !html.includes('storyFile')) {
-                  throw new Error('Live app is missing profile/group/channel/story image fixes');
+                for (const marker of ['uploadIranGramStorageFile', 'loadIranGramTus', 'prepareIranGramImage', 'prepareIranGramAvatar']) {
+                  if (!html.includes(marker)) throw new Error('Live app missing ' + marker);
                 }
+                for (const marker of ['id="stories"', 'id="videoNoteBtn"', 'data-round-video']) {
+                  if (html.includes(marker)) throw new Error('Removed feature is still visible in app: ' + marker);
+                }
+                const mediaStyle = await page.locator('video.media-video').evaluate(el => {
+                  const style = getComputedStyle(el);
+                  return { radius: style.borderRadius, fit: style.objectFit, height: style.height };
+                });
+                if (mediaStyle.radius !== '10px' || mediaStyle.fit !== 'contain') throw new Error('Video display CSS is still round/cropped: ' + JSON.stringify(mediaStyle));
                 const normalized = await page.evaluate(async () => {
                   const canvas = document.createElement('canvas');
                   canvas.width = 32; canvas.height = 24;
                   const ctx = canvas.getContext('2d');
                   ctx.fillStyle = '#168acd'; ctx.fillRect(0, 0, 32, 24);
                   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                  const input = new File([blob], 'smoke-test.png', { type: '' });
-                  const output = await prepareIranGramAvatar(input, 128);
-                  const bitmap = await createImageBitmap(output);
-                  const result = { type: output.type, width: bitmap.width, height: bitmap.height, size: output.size };
-                  bitmap.close();
-                  const profile = await prepareIranGramImage(new File([blob], 'profile.png', { type: 'image/png' }), 128);
-                  const profileBitmap = await createImageBitmap(profile);
-                  const profileResult = { type: profile.type, width: profileBitmap.width, height: profileBitmap.height };
-                  profileBitmap.close();
-                  return { avatar: result, profile: profileResult };
+                  const avatar = await prepareIranGramAvatar(new File([blob], 'avatar.png', { type: '' }), 128);
+                  const avatarBitmap = await createImageBitmap(avatar);
+                  const avatarResult = { type: avatar.type, width: avatarBitmap.width, height: avatarBitmap.height };
+                  avatarBitmap.close();
+                  const photo = await prepareIranGramImage(new File([blob], 'photo.png', { type: 'image/png' }), 128);
+                  const photoBitmap = await createImageBitmap(photo);
+                  const photoResult = { type: photo.type, width: photoBitmap.width, height: photoBitmap.height };
+                  photoBitmap.close();
+                  return { avatar: avatarResult, photo: photoResult, videoMime: iranGramFileMime(new File([blob], 'clip.mp4', { type: 'video/mp4' })) };
                 });
-                if (normalized.avatar.type !== 'image/jpeg' || normalized.avatar.width !== 128 || normalized.avatar.height !== 128 || normalized.avatar.size < 1 || normalized.profile.type !== 'image/jpeg' || !normalized.profile.width || !normalized.profile.height) {
-                  throw new Error('Avatar/profile normalization failed: ' + JSON.stringify(normalized));
+                if (normalized.avatar.type !== 'image/jpeg' || normalized.avatar.width !== 128 || normalized.avatar.height !== 128 || normalized.photo.type !== 'image/jpeg' || normalized.videoMime !== 'video/mp4') {
+                  throw new Error('Media normalization failed: ' + JSON.stringify(normalized));
                 }
-                console.log('PASS avatar/profile normalization ' + JSON.stringify(normalized));
+                const uploadPath = await page.evaluate(async () => {
+                  const original = supabaseClient;
+                  let captured = {};
+                  supabaseClient = {
+                    auth: { getSession: async () => ({ data: { session: { access_token: 'test-access-token' } }, error: null }) },
+                    storage: { from: () => ({ upload: async (path, file, options) => { captured = { path, size: file.size, contentType: options.contentType }; return { error: null }; } }) }
+                  };
+                  await uploadIranGramStorageFile(new File([new Uint8Array(1024)], 'small.jpg', { type: 'image/jpeg' }), 'test/small.jpg', 'image/jpeg');
+                  supabaseClient = original;
+                  return captured;
+                });
+                if (uploadPath.path !== 'test/small.jpg' || uploadPath.contentType !== 'image/jpeg') throw new Error('Small media upload path failed: ' + JSON.stringify(uploadPath));
+                const tusPath = await page.evaluate(async () => {
+                  const originalClient = supabaseClient, originalTus = window.tus;
+                  let captured = {};
+                  window.tus = { Upload: class {
+                    constructor(file, options) { this.file=file; this.options=options; captured={endpoint:options.endpoint,chunkSize:options.chunkSize,metadata:options.metadata,apikey:options.headers.apikey}; }
+                    findPreviousUploads() { return Promise.resolve([]); }
+                    start() { this.options.onProgress(this.file.size,this.file.size); this.options.onSuccess(); }
+                  }};
+                  supabaseClient = { auth: { getSession: async () => ({ data: { session: { access_token: 'test-access-token' } }, error: null }) } };
+                  await uploadIranGramStorageFile(new File([new Uint8Array(7*1024*1024)], 'clip.mp4', { type: 'video/mp4' }), 'test/clip.mp4', 'video/mp4');
+                  supabaseClient = originalClient; window.tus = originalTus;
+                  return captured;
+                });
+                if (!tusPath.endpoint.includes('.storage.supabase.co/storage/v1/upload/resumable') || tusPath.chunkSize !== 6*1024*1024 || tusPath.metadata.objectName !== 'test/clip.mp4' || !tusPath.apikey) {
+                  throw new Error('Large video resumable upload path failed: ' + JSON.stringify(tusPath));
+                }
+                console.log('PASS media normalization and small/TUS upload paths ' + JSON.stringify({normalized,uploadPath,tusPath}));
               }
               if (errors.length) throw new Error(name + ' JavaScript errors: ' + errors.join(' | '));
               console.log('PASS ' + name + ' ' + response.status() + ' ' + url);

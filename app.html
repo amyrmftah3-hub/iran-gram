@@ -1435,7 +1435,6 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
  <div class="searchbox"><input id="search" placeholder="جست‌وجو" autocomplete="off"></div>
  <div id="adBanner" class="ad-banner" hidden aria-label="تبلیغات"></div>
  <div class="filters" role="tablist" aria-label="پوشه گفتگوها"><button class="filter active" role="tab" aria-selected="true" data-filter="all">همه چت‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="people">شخصی</button><button class="filter" role="tab" aria-selected="false" data-filter="unread">خوانده‌نشده</button><button class="filter" role="tab" aria-selected="false" data-filter="groups">گروه‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="channels">کانال‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="archive">آرشیو</button><button class="filter" role="tab" aria-selected="false" data-filter="hidden">مخفی</button></div>
- <div class="stories" id="stories"></div>
  <div class="chats" id="chatList"></div>
  <button class="compose-fab" id="newBtn" title="گفتگوی جدید" aria-label="گفتگوی جدید">✎</button>
  <nav class="bottom-nav" id="bottomNav" aria-label="بخش‌های اصلی">
@@ -1450,7 +1449,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
  <section class="chatview" id="chatView" style="display:none">
   <header class="chatheader"><button class="iconbtn backbtn" id="backBtn" style="color:var(--text)">‹</button><div class="avatar" id="headAvatar">ای</div><div class="chatname"><b id="headName">گفت‌وگو</b><small id="headStatus">ورود به حساب</small></div><button class="iconbtn callbtn" id="audioCallBtn" title="تماس صوتی" aria-label="تماس صوتی">☎</button><button class="iconbtn callbtn" id="videoCallBtn" title="تماس تصویری" aria-label="تماس تصویری">▣</button><button class="iconbtn" id="chatSearchBtn" style="color:var(--text)" title="جست‌وجوی پیام">⌕</button><button class="iconbtn" id="chatMoreBtn" style="color:var(--text)" title="گزینه‌ها">⋮</button></header>
   <div class="messages" id="messages"></div>
-  <div class="composer"><button class="round" id="emojiBtn" title="ایموجی">☺</button><button class="round" id="photoBtn" title="ارسال عکس از گالری" aria-label="ارسال عکس">▧</button><button class="round" id="voiceRecordBtn" title="ضبط ویس">🎙️</button><button class="round" id="videoNoteBtn" title="پیام گردالی">◉</button><div class="composefield"><button class="iconbtn" id="attachBtn" style="color:var(--muted)" title="پیوست">＋</button><textarea id="messageInput" rows="1" placeholder="پیامت رو بنویس..."></textarea></div><button class="send" id="sendBtn" title="ارسال">➤</button><input type="file" id="fileInput" hidden multiple><input type="file" id="photoInput" accept="image/*" hidden></div>
+  <div class="composer"><button class="round" id="emojiBtn" title="ایموجی">☺</button><button class="round" id="photoBtn" title="ارسال عکس از گالری" aria-label="ارسال عکس">▧</button><button class="round" id="voiceRecordBtn" title="ضبط ویس">🎙️</button><div class="composefield"><button class="iconbtn" id="attachBtn" style="color:var(--muted)" title="پیوست">＋</button><textarea id="messageInput" rows="1" placeholder="پیامت رو بنویس..."></textarea></div><button class="send" id="sendBtn" title="ارسال">➤</button><input type="file" id="fileInput" hidden multiple><input type="file" id="photoInput" accept="image/*" hidden></div>
  </section>
 </main>
 </div>
@@ -1857,7 +1856,7 @@ async function startOnline(){
     const chat=state.chats.find(x=>x.messages.some(m=>m.id===row.message_id));
     if(chat&&state.active===chat.id)renderMessages();
    });
- }).on('postgres_changes',{event:'INSERT',schema:'public',table:'stories'},()=>{loadStories()}).on('postgres_changes',{event:'DELETE',schema:'public',table:'stories'},()=>{loadStories()}).subscribe();
+ }).subscribe();
 }
 
 let callSignalChannel=null,callInviteChannel=null,activeCall=null,pendingIncomingCall=null,callSeconds=0,callClock=null,callRingTimeout=null;
@@ -2725,61 +2724,58 @@ $('#messages').onclick=async e=>{const b=e.target.closest('button');if(!b)return
 } else if(b.dataset.delete!==undefined){if(confirm(c.remote?'این پیام برای همه حذف شود؟':'این پیام از همین دستگاه حذف شود؟')){if(remoteMode&&c.remote&&currentUser){const media=parseMediaMarker(m.text);const {data,error}=await supabaseClient.from('messages').delete().eq('id',id).eq('sender_id',currentUser.id).select('id').maybeSingle();if(error||!data){toast('حذف آنلاین پیام ناموفق بود'+(error?': '+error.message:''));return}if(media)await supabaseClient.storage.from('arogram-chat-media').remove([media.path])}c.messages=c.messages.filter(x=>x.id!==id);if(c.pinnedMessageId===id)c.pinnedMessageId=null;save();renderChats();renderMessages()}}else if(b.dataset.edit!==undefined){showModal('ویرایش پیام',`<textarea id="editText">${esc(m.text)}</textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveEdit">ذخیره</button></div>`);$('#saveEdit').onclick=async()=>{const next=$('#editText').value.trim();if(!next){toast('متن پیام خالی نمی‌تواند باشد');return}if(remoteMode&&c.remote&&currentUser){const {data,error}=await supabaseClient.from('messages').update({body:next}).eq('id',id).eq('sender_id',currentUser.id).select('id').maybeSingle();if(error||!data){toast('ویرایش آنلاین ناموفق بود'+(error?': '+error.message:''));return}}m.text=next;m.edited=true;save();closeModal();renderChats();renderMessages()}}else if(b.dataset.reply!==undefined){state.reply=id;$('#messageInput').placeholder='پاسخ به پیام انتخاب‌شده...';$('#messageInput').focus();toast('خب، جوابت رو بنویس و بفرست 🙂')}else if(b.dataset.pin!==undefined){c.pinnedMessageId=c.pinnedMessageId===id?null:id;c.pinned=!!c.pinnedMessageId;save();await persistChatPreference(c);renderMessages();toast(c.pinnedMessageId?'پیام سنجاق شد':'سنجاق پیام برداشته شد')}else if(b.dataset.copy!==undefined){try{await navigator.clipboard.writeText(String(m.text||''));toast('متن پیام کپی شد')}catch(err){showModal('کپی پیام',`<textarea id="copyFallback" readonly>${esc(m.text||'')}</textarea><div class="modalactions"><button class="primary" id="selectCopy">انتخاب متن</button><button class="secondary" data-close>بستن</button></div>`);$('#selectCopy').onclick=()=>{$('#copyFallback').select();toast('متن را کپی کن')}}}else if(b.dataset.forward!==undefined){const targets=state.chats.filter(x=>x.id!==c.id);if(!targets.length){toast('گفت‌وگوی دیگری برای فوروارد وجود ندارد');return}showModal('فوروارد پیام',`<p class="subtle">پیام به کدام گفت‌وگو فرستاده شود؟</p><select id="forwardTarget">${targets.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="confirmForward">فوروارد</button></div>`);$('#confirmForward').onclick=async()=>{const target=state.chats.find(x=>x.id===$('#forwardTarget').value);if(!target)return;if(remoteMode&&target.remote){const {error}=await supabaseClient.from('messages').insert({conversation_id:target.id,sender_id:currentUser.id,body:'فوروارد‌شده: '+String(m.text||'')});if(error){toast('فوروارد آنلاین ناموفق بود: '+error.message);return}}target.messages.push({id:uid(),text:'فوروارد‌شده: '+String(m.text||''),mine:true,time:now(),reactions:[]});save();closeModal();renderChats();toast('پیام فوروارد شد')}}};
 $('#stories').onclick=e=>{const el=e.target.closest('[data-story]');if(!el)return;if(el.dataset.story==='add'){createStory();return}openStoryGroup(el.dataset.story)};
 
-let igVoiceRecorder=null,igVideoRecorder=null,igRecorderStream=null,igRecorderChunks=[];
-async function startIgRecorder(kind){
+let igVoiceRecorder=null,igRecorderStream=null,igRecorderChunks=[];
+async function startIgVoiceRecorder(){
  const chat=activeChat();if(!chat){toast('اول یک گفت‌وگو باز کن 🙂');return}
- if(!remoteMode||!currentUser||!chat.remote){toast('برای ارسال ویس و پیام گردالی وارد حسابت شو');return}
+ if(!remoteMode||!currentUser||!chat.remote){toast('برای ارسال ویس وارد حسابت شو');return}
  if(chat.type==='channels'&&chat.memberRole!=='owner'){toast('فقط مدیر کانال می‌تواند پیام بفرستد');return}
- if(igVoiceRecorder||igVideoRecorder){toast('اول ضبط فعلی را تمام کن');return}
- const video=kind==='roundvideo';
- if(!window.isSecureContext){toast('برای ضبط صدا و تصویر باید برنامه از نشانی HTTPS باز شود.');return}
- if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast('مرورگر این گوشی ضبط صدا یا ویدئو را پشتیبانی نمی‌کند؛ Chrome را به‌روز کن.');return}
+ if(igVoiceRecorder){toast('اول ضبط فعلی را تمام کن');return}
+ if(!window.isSecureContext){toast('برای ضبط صدا باید برنامه از نشانی HTTPS باز شود.');return}
+ if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast('مرورگر این گوشی ضبط صدا را پشتیبانی نمی‌کند؛ Chrome را به‌روز کن.');return}
  try{
-  igRecorderStream=await navigator.mediaDevices.getUserMedia(video?{audio:true,video:{facingMode:'user',width:{ideal:480},height:{ideal:480}}}:{audio:true});
-  const candidates=video?['video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm','video/mp4']:['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg','audio/mp4'];
+  igRecorderStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  const candidates=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg','audio/mp4'];
   const mime=candidates.find(t=>window.MediaRecorder.isTypeSupported&&window.MediaRecorder.isTypeSupported(t))||'';
   const rec=mime?new MediaRecorder(igRecorderStream,{mimeType:mime}):new MediaRecorder(igRecorderStream);
-  if(video)igVideoRecorder=rec;else igVoiceRecorder=rec;igRecorderChunks=[];
+  igVoiceRecorder=rec;igRecorderChunks=[];
   rec.ondataavailable=e=>{if(e.data&&e.data.size)igRecorderChunks.push(e.data)};
   rec.onerror=e=>{
-   console.error('IranGram recorder error:',e.error||e);
-   igRecorderStream?.getTracks().forEach(track=>track.stop());igRecorderStream=null;igVoiceRecorder=null;igVideoRecorder=null;
-   const btn=$(video?'#videoNoteBtn':'#voiceRecordBtn');btn.classList.remove('recording');btn.textContent=video?'◉':'🎙️';
-   toast('ضبط متوقف شد؛ دسترسی دوربین/میکروفون یا فضای خالی گوشی را بررسی کن.');
+   console.error('IranGram voice recorder error:',e.error||e);
+   igRecorderStream?.getTracks().forEach(track=>track.stop());igRecorderStream=null;igVoiceRecorder=null;
+   const btn=$('#voiceRecordBtn');btn.classList.remove('recording');btn.textContent='🎙️';
+   toast('ضبط متوقف شد؛ دسترسی میکروفون یا فضای خالی گوشی را بررسی کن.');
   };
   rec.onstop=async()=>{
-   const actualMime=rec.mimeType|| (video?'video/webm':'audio/webm');
+   const actualMime=rec.mimeType||'audio/webm';
    const blob=new Blob(igRecorderChunks,{type:actualMime});igRecorderChunks=[];
-   igRecorderStream?.getTracks().forEach(track=>track.stop());igRecorderStream=null;igVoiceRecorder=null;igVideoRecorder=null;
-   const btn=$(video?'#videoNoteBtn':'#voiceRecordBtn');btn.classList.remove('recording');btn.textContent=video?'◉':'🎙️';
+   igRecorderStream?.getTracks().forEach(track=>track.stop());igRecorderStream=null;igVoiceRecorder=null;
+   const btn=$('#voiceRecordBtn');btn.classList.remove('recording');btn.textContent='🎙️';
    if(blob.size){
     const baseMime=actualMime.split(';')[0].toLowerCase();
-    const ext=baseMime==='video/mp4'?'mp4':baseMime==='audio/mp4'?'m4a':baseMime==='audio/ogg'?'ogg':'webm';
-    const f=new File([blob],(video?'video-note-':'voice-')+Date.now()+'.'+ext,{type:baseMime});
-    await uploadAndSendFile(f,video?'roundvideo':'voice');
+    const ext=baseMime==='audio/mp4'?'m4a':baseMime==='audio/ogg'?'ogg':'webm';
+    const f=new File([blob],'voice-'+Date.now()+'.'+ext,{type:baseMime});
+    await uploadAndSendFile(f,'voice');
    }else toast('ضبط خالی بود؛ دوباره امتحان کن.');
   };
-  rec.start(250);const btn=$(video?'#videoNoteBtn':'#voiceRecordBtn');btn.classList.add('recording');btn.textContent='⏹';
-  toast(video?'ضبط پیام گردالی شروع شد؛ برای پایان دوباره بزن':'ضبط ویس شروع شد؛ برای پایان دوباره بزن');
+  rec.start(250);const btn=$('#voiceRecordBtn');btn.classList.add('recording');btn.textContent='⏹';
+  toast('ضبط ویس شروع شد؛ برای پایان دوباره بزن');
  }catch(err){
-  console.error('IranGram getUserMedia failed:',err);
-  igRecorderStream?.getTracks().forEach(track=>track.stop());igRecorderStream=null;igVoiceRecorder=null;igVideoRecorder=null;
-  const message=err?.name==='NotAllowedError'?'اجازه میکروفون یا دوربین رد شده؛ مجوز سایت را در Chrome فعال کن.':err?.name==='NotFoundError'?'میکروفون یا دوربین پیدا نشد.':err?.name==='NotReadableError'?'میکروفون یا دوربین در برنامه دیگری مشغول است.':'شروع ضبط ناموفق بود: '+(err?.message||'خطای ناشناخته');
+  console.error('IranGram microphone failed:',err);
+  igRecorderStream?.getTracks().forEach(track=>track.stop());igRecorderStream=null;igVoiceRecorder=null;
+  const message=err?.name==='NotAllowedError'?'اجازه میکروفون رد شده؛ مجوز سایت را در Chrome فعال کن.':err?.name==='NotFoundError'?'میکروفون پیدا نشد.':err?.name==='NotReadableError'?'میکروفون در برنامه دیگری مشغول است.':'شروع ضبط ناموفق بود: '+(err?.message||'خطای ناشناخته');
   toast(message);
  }
 }
-function stopIgRecorder(){const rec=igVideoRecorder||igVoiceRecorder;if(rec&&rec.state!=='inactive')rec.stop()}
+function stopIgVoiceRecorder(){if(igVoiceRecorder&&igVoiceRecorder.state!=='inactive')igVoiceRecorder.stop()}
 
 // Telegram-like inline voice playback controls
-$('#messages').addEventListener('click',e=>{const box=e.target.closest('[data-round-video]');if(box){const video=box.querySelector('video'),round=box.querySelector('[data-round-play]');if(!video)return;if(video.paused){video.play().then(()=>{if(round)round.textContent='Ⅱ';box.classList.add('playing')}).catch(()=>toast('پخش ویدئوی گردالی ممکن نشد.'))}else{video.pause();if(round)round.textContent='▶';box.classList.remove('playing')}return}const button=e.target.closest('[data-voice-play]');if(!button)return;const wrap=button.closest('[data-ig-voice]'),audio=wrap?.querySelector('audio');if(!audio)return;document.querySelectorAll('#messages .ig-voice audio').forEach(other=>{if(other!==audio){other.pause();const b=other.closest('.ig-voice')?.querySelector('[data-voice-play]');if(b)b.textContent='▶'}});if(audio.paused){audio.play().then(()=>button.textContent='Ⅱ').catch(()=>toast('پخش ویس ممکن نشد؛ دوباره بزن.'))}else{audio.pause();button.textContent='▶'}});
+$('#messages').addEventListener('click',e=>{const button=e.target.closest('[data-voice-play]');if(!button)return;const wrap=button.closest('[data-ig-voice]'),audio=wrap?.querySelector('audio');if(!audio)return;document.querySelectorAll('#messages .ig-voice audio').forEach(other=>{if(other!==audio){other.pause();const b=other.closest('.ig-voice')?.querySelector('[data-voice-play]');if(b)b.textContent='▶'}});if(audio.paused){audio.play().then(()=>button.textContent='Ⅱ').catch(()=>toast('پخش ویس ممکن نشد؛ دوباره بزن.'))}else{audio.pause();button.textContent='▶'}});
 $('#messages').addEventListener('click',e=>{const wave=e.target.closest('[data-voice-wave]');if(!wave)return;const audio=wave.closest('[data-ig-voice]')?.querySelector('audio');if(!audio||!Number.isFinite(audio.duration))return;const rect=wave.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));audio.currentTime=ratio*audio.duration});
-$('#messages').addEventListener('ended',e=>{const video=e.target;if(!(video instanceof HTMLVideoElement)||!video.closest('[data-round-video]'))return;const box=video.closest('[data-round-video]');box.classList.remove('playing');box.querySelector('[data-round-play]').textContent='▶';video.currentTime=0});
 
 $('#messages').addEventListener('timeupdate',e=>{const audio=e.target;if(!(audio instanceof HTMLAudioElement)||!audio.closest('[data-ig-voice]'))return;const wrap=audio.closest('[data-ig-voice]'),current=wrap.querySelector('[data-voice-current]'),duration=wrap.querySelector('[data-voice-duration]'),bars=wrap.querySelectorAll('.ig-voice-wave i');const fmt=n=>{if(!Number.isFinite(n))return '۰:۰۰';const m=Math.floor(n/60),s=Math.floor(n%60);return m+':'+String(s).padStart(2,'0')};current.textContent=fmt(audio.currentTime);duration.textContent=fmt(audio.duration);const progress=audio.duration?audio.currentTime/audio.duration:0;bars.forEach((bar,i)=>bar.classList.toggle('heard',i/bars.length<progress));});
 $('#messages').addEventListener('loadedmetadata',e=>{const audio=e.target;if(!(audio instanceof HTMLAudioElement)||!audio.closest('[data-ig-voice]'))return;const d=audio.closest('[data-ig-voice]').querySelector('[data-voice-duration]');if(d&&Number.isFinite(audio.duration)){const m=Math.floor(audio.duration/60),s=Math.floor(audio.duration%60);d.textContent=m+':'+String(s).padStart(2,'0')}});
 $('#messages').addEventListener('ended',e=>{const audio=e.target;if(!(audio instanceof HTMLAudioElement)||!audio.closest('[data-ig-voice]'))return;const wrap=audio.closest('[data-ig-voice]');if(!wrap)return;wrap.querySelector('[data-voice-play]').textContent='▶';wrap.querySelectorAll('.ig-voice-wave i').forEach(b=>b.classList.remove('heard'));wrap.querySelector('[data-voice-current]').textContent='۰:۰۰'});
-$('#voiceRecordBtn').onclick=()=>igVoiceRecorder?stopIgRecorder():startIgRecorder('voice');
-$('#videoNoteBtn').onclick=()=>igVideoRecorder?stopIgRecorder():startIgRecorder('roundvideo');
+$('#voiceRecordBtn').onclick=()=>igVoiceRecorder?stopIgVoiceRecorder():startIgVoiceRecorder();
 
 $('#emojiBtn').onclick=()=>{const input=$('#messageInput');input.value+=' 😊';input.focus()};$('#photoBtn').onclick=()=>$('#photoInput').click();$('#photoInput').onchange=async e=>{const files=[...e.target.files];for(const file of files)await uploadAndSendFile(file);e.target.value=''};$('#attachBtn').onclick=()=>$('#fileInput').click();$('#fileInput').onchange=async e=>{const files=[...e.target.files];for(const file of files)await uploadAndSendFile(file);e.target.value=''};
 $('#chatSearchBtn').onclick=()=>{

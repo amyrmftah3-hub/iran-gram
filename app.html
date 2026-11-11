@@ -1406,7 +1406,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
 .messages{background-color:var(--ig-chat-bg,#0e1621)!important;background-image:var(--ig-chat-pattern,radial-gradient(#ffffff0a 1px,transparent 1px))!important;background-size:cover,22px 22px!important}
 
 /* Telegram-style voice note bubble */
-.ig-voice{display:flex;align-items:center;gap:11px;min-width:218px;max-width:min(330px,70vw);padding:9px 10px;border-radius:15px;background:rgba(51,144,236,.12)}
+.media-send-status{font-size:10px;color:var(--muted);margin-inline-start:6px}.msg button[data-retry-media]{margin-top:5px;border-color:#d97706;color:#d97706}.ig-voice{display:flex;align-items:center;gap:11px;min-width:218px;max-width:min(330px,70vw);padding:9px 10px;border-radius:15px;background:rgba(51,144,236,.12)}
 .ig-voice-play{width:42px;height:42px;flex:0 0 42px;border:0;border-radius:50%;background:#3390ec;color:#fff;font-size:17px;display:grid;place-items:center}
 .ig-voice-main{flex:1;min-width:0}.ig-voice-wave{height:31px;display:flex;align-items:center;gap:2px;overflow:hidden}.ig-voice-wave i{display:block;width:3px;min-width:2px;height:var(--h);border-radius:4px;background:#7caedb;opacity:.85}.ig-voice-wave i.heard{background:#3390ec;opacity:1}
 .ig-voice-time{display:flex;justify-content:space-between;font-size:10px;color:var(--muted,#91a3b3);margin-top:3px}.ig-voice audio{display:none}.msg.mine .ig-voice{background:rgba(51,144,236,.18)}
@@ -1650,7 +1650,7 @@ function renderMessageContent(message){const value=typeof message==='string'?mes
 const mediaRefreshInFlight=new Set();
 async function refreshMediaUrls(chat){
  if(!remoteMode||!chat||!chat.remote||mediaRefreshInFlight.has(chat.id))return;
- const pending=chat.messages.slice(-30).map(message=>({message,media:parseMediaMarker(message.text)})).filter(x=>x.media&&(!x.message.mediaUrl||!Number.isFinite(x.message.mediaUrlExpiresAt)||x.message.mediaUrlExpiresAt<=Date.now()+60000)).slice(0,10);
+ const pending=chat.messages.slice(-30).map(message=>({message,media:parseMediaMarker(message.text)})).filter(x=>x.media&&!x.message.sendStatus&&(!x.message.mediaUrl||!Number.isFinite(x.message.mediaUrlExpiresAt)||x.message.mediaUrlExpiresAt<=Date.now()+60000)).slice(0,10);
  if(!pending.length)return;
  mediaRefreshInFlight.add(chat.id);
  let changed=false;

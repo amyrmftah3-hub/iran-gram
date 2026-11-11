@@ -102,7 +102,7 @@ jobs:
                     findPreviousUploads() { return Promise.resolve([]); }
                     start() { this.options.onProgress(this.file.size,this.file.size); this.options.onSuccess(); }
                   }};
-                  supabaseClient = { auth: { getSession: async () => ({ data: { session: { access_token: 'test-access-token' } }, error: null }) } };
+                  supabaseClient = { auth: { getSession: async () => ({ data: { session: { access_token: 'test-access-token' } }, error: null }) }, storage: { from: () => ({}) } };
                   await uploadIranGramStorageFile(new File([new Uint8Array(7*1024*1024)], 'clip.mp4', { type: 'video/mp4' }), 'test/clip.mp4', 'video/mp4');
                   supabaseClient = originalClient; window.tus = originalTus;
                   return captured;

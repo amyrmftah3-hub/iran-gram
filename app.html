@@ -1541,73 +1541,6 @@ async function persistChatPreference(chat){
  const {error}=await supabaseClient.from('conversation_user_preferences').upsert({user_id:currentUser.id,conversation_id:chat.id,archived:!!chat.archived,hidden:!!chat.hidden,pinned:!!chat.pinned,pinned_message_id:chat.pinnedMessageId||null,muted:!!chat.muted,updated_at:new Date().toISOString()},{onConflict:'user_id,conversation_id'});
  if(error)toast('ذخیره پوشه گفت‌وگو ناموفق بود: '+error.message);
 }
-let storyRows=[];
-function renderStories(){
- const mine=storyRows.filter(x=>x.user_id===currentUser?.id);
- const groups=new Map();
- for(const story of storyRows){if(!groups.has(story.user_id))groups.set(story.user_id,story)}
- const items=[{id:'add',label:'استوری من',letter:'＋',add:true,avatarUrl:state.profile.avatar_url||''},...Array.from(groups.values()).map(x=>({id:x.user_id,label:x.user_id===currentUser?.id?'استوری من':(x.profileName||x.username||'کاربر'),letter:(x.user_id===currentUser?.id?'شما':(x.profileName||x.username||'ک')[0]),avatarUrl:x.user_id===currentUser?.id?(state.profile.avatar_url||''):(x.avatar_url||''),storyId:x.id}))];
- $('#stories').innerHTML=items.map(x=>`<div class="story" data-story="${esc(x.id)}"><div class="storyring ${x.add?'add':''}"><span>${x.avatarUrl?'<img src="'+esc(x.avatarUrl)+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':esc(x.letter)}</span></div>${esc(x.label)}</div>`).join('');
-}
-async function loadStories(){
- if(!remoteMode||!currentUser){storyRows=[];renderStories();return}
- const {data,error}=await supabaseClient.from('stories').select('id,user_id,media_path,media_type,caption,created_at,expires_at').gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false}).limit(100);
- if(error){console.warn('Stories load failed',error.message);return}
- const ids=[...new Set((data||[]).map(x=>x.user_id))];
- let profiles=[];
- if(ids.length){const p=await supabaseClient.from('profiles').select('id,display_name,username,avatar_url').in('id',ids);profiles=p.data||[]}
- const byId=new Map(profiles.map(x=>[x.id,x]));
- storyRows=await Promise.all((data||[]).map(async x=>{
-  const p=byId.get(x.user_id)||{};
-  const signed=await supabaseClient.storage.from('arogram-stories').createSignedUrl(x.media_path,3600);
-  return {...x,profileName:p.display_name||'',username:p.username||'',avatar_url:p.avatar_url||'',signedUrl:signed.data?.signedUrl||''};
- }));
- renderStories();
-}
-async function createStory(){
- if(!remoteMode||!currentUser){toast('برای انتشار استوری اول وارد حسابت شو');return}
- const picker=document.createElement('input');picker.type='file';picker.accept='image/*,video/*';
- picker.onchange=async()=>{
-  const file=picker.files?.[0];if(!file)return;
-  const mime=iranGramFileMime(file);
-  if(file.size>20*1024*1024){toast('حجم استوری باید کمتر از ۲۰ مگابایت باشد');return}
-  if(!/^(image\/(jpeg|png|webp|gif|avif|heic|heif)|video\/(mp4|webm|quicktime|3gpp))$/i.test(mime)){toast('فرمت این عکس یا فیلم پشتیبانی نمی‌شود؛ JPG، PNG، WEBP، GIF، MP4، WEBM یا MOV انتخاب کن.');return}
-  let storyFile=file;
-  if(mime.startsWith('image/')&&mime!=='image/gif')storyFile=await prepareIranGramImage(file,2048);
-  const caption=prompt('یک توضیح کوتاه برای استوریت بنویس (اختیاری):')||'';
-  const path=currentUser.id+'/'+Date.now()+'_'+(storyFile.name||'story').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,80);
-  let uploaded=false;
-  try{
-   const storyMime=iranGramFileMime(storyFile);
-   const up=await supabaseClient.storage.from('arogram-stories').upload(path,storyFile,{contentType:storyMime,upsert:false});
-   if(up.error)throw new Error('آپلود استوری: '+up.error.message);
-   uploaded=true;
-   const expires=new Date(Date.now()+24*60*60*1000).toISOString();
-   const ins=await supabaseClient.from('stories').insert({user_id:currentUser.id,media_path:path,media_type:storyMime.startsWith('video/')?'video':'image',caption:caption.slice(0,300),expires_at:expires});
-   if(ins.error)throw new Error('ثبت استوری: '+ins.error.message);
-   await loadStories();toast('استوریت تا ۲۴ ساعت نمایش داده می‌شود');
-  }catch(error){
-   if(uploaded)await supabaseClient.storage.from('arogram-stories').remove([path]).catch(()=>{});
-   console.error('IranGram story upload failed:',error);toast(error.message||'ثبت استوری ناموفق بود');
-  }
- };
- picker.click();
-}
-async function openStoryGroup(userId){
- const items=storyRows.filter(x=>x.user_id===userId);
- if(!items.length)return;
- const story=items[0];
- if(!story.signedUrl){toast('دریافت فایل استوری ناموفق بود');return}
- const media=(story.media_type==='video'||story.media_type.startsWith('video/'))?`<video src="${esc(story.signedUrl)}" controls autoplay playsinline style="width:100%;max-height:58vh;border-radius:14px;background:#000"></video>`:`<img src="${esc(story.signedUrl)}" alt="استوری" style="width:100%;max-height:58vh;object-fit:contain;border-radius:14px;background:#000">`;
- const own=story.user_id===currentUser?.id;
- showModal(esc(story.profileName||story.username||'استوری'),`<div style="text-align:center">${media}<p>${esc(story.caption||'')}</p><small class="subtle">این استوری پس از ۲۴ ساعت ناپدید می‌شود.</small></div><div class="modalactions"><button class="secondary" data-close>بستن</button>${own?'<button class="primary" id="deleteOwnStory">حذف استوری</button>':''}</div>`);
- if(own)$('#deleteOwnStory').onclick=async()=>{
-  const del=await supabaseClient.from('stories').delete().eq('id',story.id).eq('user_id',currentUser.id);
-  if(del.error){toast('حذف استوری ناموفق بود: '+del.error.message);return}
-  await supabaseClient.storage.from('arogram-stories').remove([story.media_path]);
-  closeModal();await loadStories();toast('استوری حذف شد');
- };
-}
 function renderChats(){
  const arr=state.chats.filter(c=>{
   const inFolder=state.filter==='all'?!c.archived&&!c.hidden:
@@ -1656,7 +1589,7 @@ function showChatFolderActions(chat){
   <div class="modalactions"><button class="secondary" data-close>بستن</button></div>`);
 }
 function parseMediaMarker(value){const match=String(value||'').match(/^\[\[(media|voice|roundvideo):([^|]+)\|([^|]+)\|([^|]+)\]\]$/);if(!match)return null;try{return {kind:match[1],path:decodeURIComponent(match[2]),type:decodeURIComponent(match[3]),name:decodeURIComponent(match[4])}}catch(e){return null}}
-function renderMessageContent(message){const value=typeof message==='string'?message:(message.text||'');if(/^\[\[sticker:(.+)\]\]$/.test(String(value)))return '<span class="subtle">استیکر قدیمی؛ برای جایگزینی، عکس را از گالری بفرست.</span>';const media=parseMediaMarker(value);if(media){if(!message||typeof message==='string'||!message.mediaUrl)return '<span class="subtle">'+(message?.mediaLoadError?'⚠️ دریافت فایل ناموفق بود: '+esc(media.name)+' <button type="button" class="tiny" data-refresh-media="'+esc(message.id)+'">تلاش دوباره</button>':'📎 '+esc(media.name)+' — در حال بارگذاری')+'</span>';if(media.type.startsWith('image/'))return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer"><img class="media-image" src="'+esc(message.mediaUrl)+'" alt="'+esc(media.name)+'"></a>';if(media.type.startsWith('audio/'))return '<div class="ig-voice" data-ig-voice><button class="ig-voice-play" type="button" data-voice-play aria-label="پخش ویس">▶</button><div class="ig-voice-main"><div class="ig-voice-wave" data-voice-wave role="slider" aria-label="موقعیت ویس" tabindex="0">'+Array.from({length:42},(_,i)=>'<i style="--h:'+((i*17+11)%19+5)+'px"></i>').join('')+'</div><div class="ig-voice-time"><span data-voice-current>۰:۰۰</span><span data-voice-duration>--:--</span></div></div><audio preload="metadata" src="'+esc(message.mediaUrl)+'"></audio></div>';if(media.type.startsWith('video/')&&media.kind==='roundvideo')return '<div class="round-video-message" data-round-video><video playsinline preload="metadata" src="'+esc(message.mediaUrl)+'"></video><button type="button" class="round-video-play" data-round-play aria-label="پخش ویدئو">▶</button></div>';if(media.type.startsWith('video/'))return '<video class="media-video" controls playsinline preload="metadata" src="'+esc(message.mediaUrl)+'"></video><div class="subtle">'+esc(media.name)+'</div>';return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer" download="'+esc(media.name)+'">📎 '+esc(media.name)+'</a>'}return esc(value)}
+function renderMessageContent(message){const value=typeof message==='string'?message:(message.text||'');if(/^\[\[sticker:(.+)\]\]$/.test(String(value)))return '<span class="subtle">استیکر قدیمی؛ برای جایگزینی، عکس را از گالری بفرست.</span>';const media=parseMediaMarker(value);if(media){if(!message||typeof message==='string'||!message.mediaUrl)return '<span class="subtle">'+(message?.mediaLoadError?'⚠️ دریافت فایل ناموفق بود: '+esc(media.name)+' <button type="button" class="tiny" data-refresh-media="'+esc(message.id)+'">تلاش دوباره</button>':'📎 '+esc(media.name)+' — در حال بارگذاری')+'</span>';if(media.type.startsWith('image/'))return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer"><img class="media-image" src="'+esc(message.mediaUrl)+'" alt="'+esc(media.name)+'"></a>';if(media.type.startsWith('audio/'))return '<div class="ig-voice" data-ig-voice><button class="ig-voice-play" type="button" data-voice-play aria-label="پخش ویس">▶</button><div class="ig-voice-main"><div class="ig-voice-wave" data-voice-wave role="slider" aria-label="موقعیت ویس" tabindex="0">'+Array.from({length:42},(_,i)=>'<i style="--h:'+((i*17+11)%19+5)+'px"></i>').join('')+'</div><div class="ig-voice-time"><span data-voice-current>۰:۰۰</span><span data-voice-duration>--:--</span></div></div><audio preload="metadata" src="'+esc(message.mediaUrl)+'"></audio></div>';if(media.type.startsWith('video/'))return '<video class="media-video" controls playsinline preload="metadata" src="'+esc(message.mediaUrl)+'"></video><div class="subtle">'+esc(media.name)+'</div>';return '<a href="'+esc(message.mediaUrl)+'" target="_blank" rel="noopener noreferrer" download="'+esc(media.name)+'">📎 '+esc(media.name)+'</a>'}return esc(value)}
 const mediaRefreshInFlight=new Set();
 async function refreshMediaUrls(chat){
  if(!remoteMode||!chat||!chat.remote||mediaRefreshInFlight.has(chat.id))return;
@@ -1696,7 +1629,7 @@ function renderMessages(){
  const active=activeChat();if(active)refreshMediaUrls(active)
 }
 function openChat(id){const c=state.chats.find(c=>c.id===id);if(!c)return;const canCall=!!(remoteMode&&c.remote&&c.type==='people');$('#audioCallBtn').style.display=canCall?'inline-grid':'none';$('#videoCallBtn').style.display=canCall?'inline-grid':'none';state.active=id;c.unread=0;if(remoteMode&&c.remote&&c.type==='channels')setTimeout(()=>recordChannelActivity(c.id).catch(err=>console.warn('Channel activity failed',err)),0);save();$('#emptyState').style.display='none';$('#chatView').style.display='flex';$('#app').classList.add('chat-open');$('#headAvatar').innerHTML=avatarMarkup(c);$('#headAvatar').className='avatar '+(c.color||'');$('#headName').innerHTML=esc(c.name)+(c.verified?' <span class="verified" title="تأییدشده">✓</span>':'');$('#headStatus').textContent=c.status||'گفت‌وگوی آنلاین';renderChats();renderMessages();$('#messageInput').focus()}
-function render(){renderStories();renderChats();if(state.active&&activeChat()){openChatNoFocus()}if(state.profile.theme==='dark')document.body.classList.add('dark');else document.body.classList.remove('dark')}
+function render(){renderChats();if(state.active&&activeChat()){openChatNoFocus()}if(state.profile.theme==='dark')document.body.classList.add('dark');else document.body.classList.remove('dark')}
 function openChatNoFocus(){const c=activeChat();const canCall=!!(remoteMode&&c&&c.remote&&c.type==='people');$('#audioCallBtn').style.display=canCall?'inline-grid':'none';$('#videoCallBtn').style.display=canCall?'inline-grid':'none';$('#emptyState').style.display='none';$('#chatView').style.display='flex';$('#headAvatar').innerHTML=avatarMarkup(c);$('#headAvatar').className='avatar '+(c.color||'');$('#headName').textContent=c.name;$('#headStatus').textContent=c.status||'گفت‌وگوی آنلاین';renderMessages()}
 
 let currentUser=null,currentDisplayName='کاربر',realtimeChannel=null,remoteMode=false,activityHeartbeat=null,presenceHeartbeat=null;
@@ -1840,7 +1773,7 @@ async function startOnline(){
  presenceHeartbeat=setInterval(()=>{if(document.visibilityState==='visible')updateMyPresence(true)},45000);
  const {data:myProfile}=await supabaseClient.from('profiles').select('display_name,bio,username,avatar_url').eq('id',currentUser.id).maybeSingle();if(myProfile){state.profile.name=myProfile.display_name||state.profile.name;state.profile.bio=myProfile.bio||'';state.profile.username=myProfile.username||'';state.profile.avatar_url=myProfile.avatar_url||'';save()}
  await loadOnlineChats();
- await loadStories();
+ 
  await setupCallRealtime();
  if(activityHeartbeat)clearInterval(activityHeartbeat);
  activityHeartbeat=setInterval(()=>{const c=activeChat();if(c&&c.remote&&c.type==='channels')recordChannelActivity(c.id)},10*60*1000);
@@ -2074,10 +2007,10 @@ async function uploadAndSendFile(file,kind='media'){
  if(!mime||mime==='application/octet-stream')mime=extensionTypes[ext]||'';
  const allowed=/^(image\/(jpeg|png|webp|gif|avif|heic|heif)|video\/(mp4|webm|quicktime|3gpp)|audio\/(mpeg|ogg|mp4|webm|aac|wav|3gpp|amr)|application\/(pdf|zip)|text\/plain)$/i;
  if(!allowed.test(mime)){toast('این نوع فایل پشتیبانی نمی‌شود: '+(mime||'ناشناخته'));return}
- const path=chat.id+'/'+currentUser.id+'/'+Date.now()+'_'+safeName,markerKind=kind==='roundvideo'?'roundvideo':(kind==='voice'?'voice':'media');
+ const path=chat.id+'/'+currentUser.id+'/'+Date.now()+'_'+safeName,markerKind=kind==='voice'?'voice':'media';
  const body='[['+markerKind+':'+encodeURIComponent(path)+'|'+encodeURIComponent(mime)+'|'+encodeURIComponent(file.name||safeName)+']]';
  const pending={id:'pending-'+Date.now(),text:body,mine:true,time:new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],sendStatus:'در حال ارسال…'};
- chat.messages.push(pending);save();renderMessages();renderChats();toast(kind==='voice'?'در حال ارسال ویس…':kind==='roundvideo'?'در حال ارسال ویدئوی گردالی…':'در حال ارسال فایل…');
+ chat.messages.push(pending);save();renderMessages();renderChats();toast(kind==='voice'?'در حال ارسال ویس…':'در حال ارسال فایل…');
  let uploaded=false;
  try{
   const {error:uploadError}=await supabaseClient.storage.from('arogram-chat-media').upload(path,file,{upsert:false,contentType:mime,cacheControl:'3600'});
@@ -2086,7 +2019,7 @@ async function uploadAndSendFile(file,kind='media'){
   const {data:sent,error:insertError}=await supabaseClient.from('messages').insert({conversation_id:chat.id,sender_id:currentUser.id,body}).select('id,created_at').single();
   if(insertError)throw new Error('ثبت پیام در گفتگو: '+insertError.message);
   pending.id=sent?.id||pending.id;pending.time=new Date(sent?.created_at||Date.now()).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});pending.sendStatus='';
-  save();renderMessages();renderChats();toast(kind==='voice'?'ویس فرستاده شد ✓':kind==='roundvideo'?'ویدئوی گردالی فرستاده شد ✓':'فایل فرستاده شد ✓');
+  save();renderMessages();renderChats();toast(kind==='voice'?'ویس فرستاده شد ✓':'فایل فرستاده شد ✓');
  }catch(error){
   console.error('IranGram media send failed:',error);pending.sendStatus='ارسال ناموفق';pending.retryFile=file;pending.retryKind=kind;pending.mediaLoadError=error?.message||'خطای نامشخص';
   renderMessages();renderChats();toast((uploaded?'فایل آپلود شد اما پیام ثبت نشد: ':'ارسال ناموفق بود: ')+(error?.message||'خطای نامشخص'));
@@ -2448,7 +2381,7 @@ async function profileModal(){
    if(drawerUsername)drawerUsername.textContent=username?'@'+username:(currentUser.email||'حساب ایرانگرام');
    const drawerAvatar=$('#mainMenu .drawer-avatar');
    if(drawerAvatar)drawerAvatar.innerHTML=avatarUrl?'<img src="'+esc(avatarUrl)+'" alt="">':esc(name.slice(0,1));
-   closeModal();renderChats();if(state.active)renderMessages();renderStories();toast('پروفایل با موفقیت ذخیره شد ✓');
+   closeModal();renderChats();if(state.active)renderMessages();toast('پروفایل با موفقیت ذخیره شد ✓');
   }catch(error){console.error('IranGram profile save failed:',error);toast(error.message||'ذخیره پروفایل ناموفق بود.');button.disabled=false;button.textContent='ذخیره تغییرات'}
  };
 }

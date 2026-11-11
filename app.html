@@ -1675,7 +1675,7 @@ function renderMessages(){
    ${m.reply?(()=>{const replied=c.messages.find(x=>x.id===m.reply);return replied?`<div class="reply-quote" style="border-right:3px solid #3390ec;padding:5px 8px;margin-bottom:7px;background:#3390ec18;border-radius:6px;font-size:11px;color:inherit"><b>پاسخ به پیام</b><div>${esc(String(replied.text||'').slice(0,100))}</div></div>`:''})():''}
    <p>${renderMessageContent(m)}</p>
    ${c.type==="channels"?`<span class="channel-author">${esc(m.senderName||(m.mine?currentDisplayName:"کاربر"))}</span>`:(m.mine?`<span class="msg-signature">— ${esc(m.senderName||currentDisplayName)}</span>`:"")}
-   <div class="msgmeta"><span>${esc(m.time||'')}</span>${m.mine?'<span>✓✓</span>':''}</div>
+   <div class="msgmeta"><span>${esc(m.time||'')}</span>${m.sendStatus?'<span class="media-send-status">'+esc(m.sendStatus)+'</span>':''}${m.mine&&!m.sendStatus?'<span>✓✓</span>':''}</div>${m.retryFile?'<button class="tiny" data-retry-media="'+esc(m.id)+'">ارسال دوباره</button>':''}
    ${realRows.length?`<div class="reaction-summary" aria-label="واکنش‌های واقعی">${realRows.map(([emoji,count])=>`<button class="reaction-chip ${m.reactions?.includes(emoji)?"is-liked":""}" data-react="${m.id}" data-emoji="${emoji}" aria-pressed="${m.reactions?.includes(emoji)?"true":"false"}"><span>${emoji}</span><b>${count.toLocaleString("fa-IR")}</b></button>`).join('')}</div>`:''}
    <div class="msgactions">${["👍","❤️","😂","🔥","👏","🚀"].map(em=>`<button class="tiny reaction-btn ${m.reactions?.includes(em)?"is-liked":""}" data-react="${m.id}" data-emoji="${em}" aria-label="واکنش ${em}" aria-pressed="${m.reactions?.includes(em)?"true":"false"}">${em}</button>`).join('')}
    ${m.mine?`<button class="tiny" data-edit="${m.id}">ویرایش</button><button class="tiny" data-delete="${m.id}">حذف</button>`:''}
@@ -1964,37 +1964,31 @@ async function uploadAndSendFile(file,kind='media'){
  const chat=activeChat();if(!chat){toast('اول یه چت باز کن 🙂');return}
  if(!remoteMode||!currentUser||!chat.remote){toast('برای ارسال فایل وارد حساب آنلاین شو.');return}
  if(chat.type==='channels'&&chat.memberRole!=='owner'){toast('فقط مدیر کانال می‌تواند در کانال فایل بفرستد.');return}
+ if(!file||!file.size){toast('فایل ضبط‌شده خالی است؛ دوباره امتحان کن.');return}
  if(file.size>50*1024*1024){toast('حجم فایل باید کمتر از ۵۰ مگابایت باشد.');return}
- const safeName=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'file';
- const ext=(safeName.split('.').pop()||'').toLowerCase();
+ const safeName=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'file',ext=(safeName.split('.').pop()||'').toLowerCase();
  const extensionTypes={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',gif:'image/gif',avif:'image/avif',heic:'image/heic',heif:'image/heif',mp4:'video/mp4',m4v:'video/mp4',webm:'video/webm',mov:'video/quicktime','3gp':'video/3gpp',mp3:'audio/mpeg',m4a:'audio/mp4',aac:'audio/aac',ogg:'audio/ogg',opus:'audio/ogg',wav:'audio/wav',amr:'audio/amr',pdf:'application/pdf',zip:'application/zip',txt:'text/plain'};
- let mime=String(file.type||'').split(';')[0].trim().toLowerCase();
- if(mime==='image/jpg')mime='image/jpeg';
- if(!mime||mime==='application/octet-stream')mime=extensionTypes[ext]||'';
+ let mime=String(file.type||'').split(';')[0].trim().toLowerCase();if(mime==='image/jpg')mime='image/jpeg';if(!mime||mime==='application/octet-stream')mime=extensionTypes[ext]||'';
  const allowed=/^(image\/(jpeg|png|webp|gif|avif|heic|heif)|video\/(mp4|webm|quicktime|3gpp)|audio\/(mpeg|ogg|mp4|webm|aac|wav|3gpp|amr)|application\/(pdf|zip)|text\/plain)$/i;
- if(!allowed.test(mime)){toast('این نوع فایل پشتیبانی نمی‌شود. نوع فایل: '+(mime||'ناشناخته'));return}
- const path=chat.id+'/'+currentUser.id+'/'+Date.now()+'_'+safeName;
- const markerKind=kind==='roundvideo'?'roundvideo':(kind==='voice'?'voice':'media');
+ if(!allowed.test(mime)){toast('این نوع فایل پشتیبانی نمی‌شود: '+(mime||'ناشناخته'));return}
+ const path=chat.id+'/'+currentUser.id+'/'+Date.now()+'_'+safeName,markerKind=kind==='roundvideo'?'roundvideo':(kind==='voice'?'voice':'media');
  const body='[['+markerKind+':'+encodeURIComponent(path)+'|'+encodeURIComponent(mime)+'|'+encodeURIComponent(file.name||safeName)+']]';
- toast(kind==='voice'?'در حال فرستادن ویس…':kind==='roundvideo'?'در حال فرستادن ویدئوی گردالی…':'در حال آپلود فایل…');
+ const pending={id:'pending-'+Date.now(),text:body,mine:true,time:new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],sendStatus:'در حال ارسال…'};
+ chat.messages.push(pending);save();renderMessages();renderChats();toast(kind==='voice'?'در حال ارسال ویس…':kind==='roundvideo'?'در حال ارسال ویدئوی گردالی…':'در حال ارسال فایل…');
  let uploaded=false;
  try{
-  const {error:uploadError}=await supabaseClient.storage.from('arogram-chat-media').upload(path,file,{upsert:false,contentType:mime});
+  const {error:uploadError}=await supabaseClient.storage.from('arogram-chat-media').upload(path,file,{upsert:false,contentType:mime,cacheControl:'3600'});
   if(uploadError)throw new Error('آپلود فایل: '+uploadError.message);
-  uploaded=true;
+  uploaded=true;pending.sendStatus='در حال ثبت پیام…';renderMessages();
   const {data:sent,error:insertError}=await supabaseClient.from('messages').insert({conversation_id:chat.id,sender_id:currentUser.id,body}).select('id,created_at').single();
   if(insertError)throw new Error('ثبت پیام در گفتگو: '+insertError.message);
-  const createdAt=sent?.created_at||new Date().toISOString();
-  chat.messages.push({id:sent?.id||('local-'+Date.now()),text:body,mine:true,time:new Date(createdAt).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[]});
-  save();renderMessages();renderChats();
-  toast(kind==='voice'?'ویس فرستاده شد ✓':kind==='roundvideo'?'ویدئوی گردالی فرستاده شد ✓':'فایل فرستاده شد ✓');
+  pending.id=sent?.id||pending.id;pending.time=new Date(sent?.created_at||Date.now()).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});pending.sendStatus='';
+  save();renderMessages();renderChats();toast(kind==='voice'?'ویس فرستاده شد ✓':kind==='roundvideo'?'ویدئوی گردالی فرستاده شد ✓':'فایل فرستاده شد ✓');
  }catch(error){
-  console.error('IranGram media send failed:',error);
-  if(uploaded)toast('فایل آپلود شد، اما ثبت پیام کامل نشد: '+(error?.message||'خطای نامشخص'));
-  else toast('ارسال فایل ناموفق بود: '+(error?.message||'خطای نامشخص'));
+  console.error('IranGram media send failed:',error);pending.sendStatus='ارسال ناموفق';pending.retryFile=file;pending.retryKind=kind;pending.mediaLoadError=error?.message||'خطای نامشخص';
+  renderMessages();renderChats();toast((uploaded?'فایل آپلود شد اما پیام ثبت نشد: ':'ارسال ناموفق بود: ')+(error?.message||'خطای نامشخص'));
  }
 }
-
 async function sendMessage(){const input=$('#messageInput'),text=input.value.trim();if(!text)return;const c=activeChat();if(!c){toast('اول یک گفت‌وگو انتخاب کن');return}if(!remoteMode||!currentUser||!c.remote){authModal();toast('برای ارسال پیام واقعی، اول وارد حساب آنلاین شو');return}const {data:sent,error}=await supabaseClient.from('messages').insert({conversation_id:c.id,sender_id:currentUser.id,body:text,reply_to_id:state.reply||null}).select('id,created_at').single();if(error){toast('ارسال ناموفق بود: '+error.message);return}c.messages.push({id:sent.id,text,mine:true,time:new Date(sent.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:state.reply||null});state.reply=null;input.value='';input.style.height='auto';save();renderChats();renderMessages()}
 async function browsePublicChannels(){
  if(!remoteMode||!currentUser){toast('برای دیدن کانال‌های عمومی اول وارد حسابت شو');return}
@@ -2176,7 +2170,26 @@ async function manageBotCommands(bot){
  };
 }
 
-function createCollection(type){if(!remoteMode||!currentUser){authModal();return}const channel=type==='channels';showModal(channel?'ساخت کانال':'ساخت گروه',`<label>نام ${channel?'کانال':'گروه'}</label><input id="collectionName" placeholder="${channel?'مثلاً اطلاعیه‌های من':'مثلاً خانواده'}"><label>توضیحات</label><textarea id="collectionBio" placeholder="توضیح کوتاه (اختیاری)"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="createCollection">ساخت</button></div><p class="subtle">در حالت آنلاین، کانال و گروه در سرور ساخته می‌شوند.</p>`);$('#createCollection').onclick=async()=>{const name=$('#collectionName').value.trim(),bio=$('#collectionBio').value.trim();if(!name){toast('نام را وارد کن');return}if(remoteMode&&currentUser){const kind=channel?'channel':'group';const {data:conv,error}=await supabaseClient.from('conversations').insert({title:name,type:kind,description:bio,is_public:channel,created_by:currentUser.id}).select('id').single();if(error){toast('ساخت ناموفق بود: '+error.message);return}const {error:memberError}=await supabaseClient.from('conversation_members').insert({conversation_id:conv.id,user_id:currentUser.id,role:'owner'});if(memberError){toast('ساخت عضویت ناموفق بود: '+memberError.message);return}if(bio){const {error:msgError}=await supabaseClient.from('messages').insert({conversation_id:conv.id,sender_id:currentUser.id,body:bio});if(msgError){toast('کانال ساخته شد، اما توضیحات ثبت نشد.')}}closeModal();await loadOnlineChats();openChat(conv.id);return}authModal();return}}
+async function createCollection(type){
+ if(!remoteMode||!currentUser){authModal();return}
+ const channel=type==='channels';
+ showModal(channel?'ساخت کانال':'ساخت گروه',`<label>نام ${channel?'کانال':'گروه'}</label><input id="collectionName" placeholder="${channel?'مثلاً اطلاعیه‌های من':'مثلاً خانواده'}"><label>توضیحات</label><textarea id="collectionBio" placeholder="توضیح کوتاه (اختیاری)"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="createCollection">ساخت ${channel?'کانال':'گروه'}</button></div><p class="subtle">ساخت در حساب آنلاین و ذخیره روی سرور انجام می‌شود.</p>`);
+ const button=$('#createCollection');
+ button.onclick=async()=>{
+  const name=$('#collectionName').value.trim(),bio=$('#collectionBio').value.trim();
+  if(!name){toast('نام را وارد کن');return}
+  button.disabled=true;button.textContent='در حال ساخت…';
+  try{
+   const {data:conv,error}=await supabaseClient.from('conversations').insert({title:name,type:channel?'channel':'group',description:bio,is_public:channel,created_by:currentUser.id}).select('id').single();
+   if(error)throw new Error('ثبت '+(channel?'کانال':'گروه')+': '+error.message);
+   const {error:memberError}=await supabaseClient.from('conversation_members').insert({conversation_id:conv.id,user_id:currentUser.id,role:'owner'});
+   if(memberError)throw new Error('ثبت مالکیت: '+memberError.message);
+   if(bio){const {error:msgError}=await supabaseClient.from('messages').insert({conversation_id:conv.id,sender_id:currentUser.id,body:bio});if(msgError)console.warn('Description message was not added:',msgError.message)}
+   closeModal();await loadOnlineChats();if(state.chats.some(x=>x.id===conv.id))openChat(conv.id);
+   toast((channel?'کانال':'گروه')+' ساخته شد ✓');
+  }catch(error){console.error('IranGram create collection failed:',error);button.disabled=false;button.textContent='تلاش دوباره';toast('ساخت ناموفق بود: '+(error.message||'خطای ارتباط'))}
+ };
+}
 function showModal(title,body){$('#modal').innerHTML=`<h3>${title}</h3>${body}`;$('#modalBack').classList.add('open')}
 
 async function savedMessagesModal(){
@@ -2451,7 +2464,11 @@ const settingsQuickBtn=$('#settingsQuickBtn');if(settingsQuickBtn)settingsQuickB
  else if(action==='settings')settingsModal();
  else if(action==='profile')profileModal();
 };
-$('#newBtn').onclick=newChat;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
+function quickCreateModal(){
+ showModal('شروع گفت‌وگوی تازه','<p class="subtle">چه چیزی می‌خواهی بسازی؟</p><button class="secondary" id="quickNewChat" style="width:100%;margin:5px 0">✉️ گفت‌وگوی شخصی</button><button class="secondary" id="quickNewGroup" style="width:100%;margin:5px 0">👥 ساخت گروه</button><button class="secondary" id="quickNewChannel" style="width:100%;margin:5px 0">📢 ساخت کانال</button><div class="modalactions"><button class="secondary" data-close>بستن</button></div>');
+ $('#quickNewChat').onclick=()=>newChat();$('#quickNewGroup').onclick=()=>createCollection('groups');$('#quickNewChannel').onclick=()=>createCollection('channels');
+}
+$('#newBtn').onclick=quickCreateModal;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
 $('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 // Reliable tap routing for the main navigation and conversation settings.
 document.addEventListener('click',e=>{
@@ -2547,7 +2564,7 @@ async function refreshMessageReactions(messageId){
  }
  return true;
 }
-$('#messages').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const c=activeChat();if(!c)return;if(b.dataset.jumpPinned){document.querySelector('[data-msg="'+CSS.escape(b.dataset.jumpPinned)+'"]')?.scrollIntoView({behavior:'smooth',block:'center'});return}const id=b.dataset.react||b.dataset.edit||b.dataset.delete||b.dataset.reply||b.dataset.pin||b.dataset.forward||b.dataset.copy||b.dataset.save;const m=c.messages.find(x=>x.id===id);if(!m)return;if(b.dataset.save!==undefined){if(remoteMode&&currentUser&&c.remote){const {error}=await supabaseClient.from('saved_messages').insert({user_id:currentUser.id,conversation_id:c.id,original_message_id:m.id,body:m.text||''});if(error){toast(error.code==='23505'?'این پیام قبلاً ذخیره شده است':'ذخیره پیام ناموفق بود: '+error.message);return}}else{const list=JSON.parse(localStorage.getItem('ig_saved_messages')||'[]');if(list.some(x=>x.id===m.id)){toast('این پیام قبلاً ذخیره شده است');return}list.unshift({id:m.id,conversation:c.name,body:m.text||'',saved_at:new Date().toISOString()});localStorage.setItem('ig_saved_messages',JSON.stringify(list))}toast('پیام به ذخیره‌شده‌ها اضافه شد')}else if(b.dataset.react!==undefined){
+$('#messages').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const c=activeChat();if(!c)return;if(b.dataset.retryMedia!==undefined){const failed=c.messages.find(x=>x.id===b.dataset.retryMedia);if(!failed?.retryFile)return;const file=failed.retryFile,kind=failed.retryKind;c.messages=c.messages.filter(x=>x!==failed);renderMessages();await uploadAndSendFile(file,kind);return}if(b.dataset.jumpPinned){document.querySelector('[data-msg="'+CSS.escape(b.dataset.jumpPinned)+'"]')?.scrollIntoView({behavior:'smooth',block:'center'});return}const id=b.dataset.react||b.dataset.edit||b.dataset.delete||b.dataset.reply||b.dataset.pin||b.dataset.forward||b.dataset.copy||b.dataset.save;const m=c.messages.find(x=>x.id===id);if(!m)return;if(b.dataset.save!==undefined){if(remoteMode&&currentUser&&c.remote){const {error}=await supabaseClient.from('saved_messages').insert({user_id:currentUser.id,conversation_id:c.id,original_message_id:m.id,body:m.text||''});if(error){toast(error.code==='23505'?'این پیام قبلاً ذخیره شده است':'ذخیره پیام ناموفق بود: '+error.message);return}}else{const list=JSON.parse(localStorage.getItem('ig_saved_messages')||'[]');if(list.some(x=>x.id===m.id)){toast('این پیام قبلاً ذخیره شده است');return}list.unshift({id:m.id,conversation:c.name,body:m.text||'',saved_at:new Date().toISOString()});localStorage.setItem('ig_saved_messages',JSON.stringify(list))}toast('پیام به ذخیره‌شده‌ها اضافه شد')}else if(b.dataset.react!==undefined){
  const emoji=b.dataset.emoji||'❤️';
  m.reactions=Array.isArray(m.reactions)?m.reactions:[];
  const previous=m.reactions[0]||null;

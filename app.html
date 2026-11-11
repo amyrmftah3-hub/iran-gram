@@ -2205,7 +2205,8 @@ async function conversationSettingsModal(chat){
  const isPrivate=chat.type==='people',isOwner=chat.memberRole==='owner';
  const {data:prefs}=await supabaseClient.from('conversation_user_preferences').select('*').eq('user_id',currentUser.id).eq('conversation_id',chat.id).maybeSingle();
  const {count:memberCount}=await supabaseClient.from('conversation_members').select('*',{count:'exact',head:true}).eq('conversation_id',chat.id);
- const memberArea=!isPrivate?'<div class="settings-card"><h4>اعضا و مدیریت</h4><p>تعداد اعضا: '+(memberCount??'—')+'</p><button class="setting-row" id="csAddMember"><span>افزودن عضو</span><b>›</b></button><button class="setting-row" id="csMembers"><span>مشاهده اعضا</span><b>›</b></button></div>':'';
+ const canDeleteConversation=isOwner&&!isPrivate&&chat.id!=='e39f6339-049e-462a-8bbe-c9bfaff04278';
+ const memberArea=!isPrivate?'<div class="settings-card"><h4>اعضا و مدیریت</h4><p>تعداد اعضا: '+(memberCount??'—')+'</p><button class="setting-row" id="csAddMember"><span>افزودن عضو</span><b>›</b></button><button class="setting-row" id="csMembers"><span>مشاهده اعضا</span><b>›</b></button>'+(canDeleteConversation?'<button class="setting-row" id="csDeleteConversation" style="color:#ff6577"><span>🗑️ حذف دائمی '+(chat.type==='channels'?'کانال':'گروه')+'</span><b>›</b></button>':'')+'</div>':'';
  showModal('تنظیمات '+(chat.type==='channels'?'کانال':chat.type==='groups'?'گروه':'گفت‌وگو'),
  '<div class="settings-card"><h4>'+(isPrivate?'تنظیمات شخصی گفتگو':'مشخصات '+(chat.type==='channels'?'کانال':'گروه'))+'</h4>'+
  (isOwner&&!isPrivate?'<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div id="csAvatarPreview" style="width:68px;height:68px;border-radius:50%;overflow:hidden;background:var(--panel);display:grid;place-items:center;font-size:30px">'+(chat.avatarUrl?'<img src="'+esc(chat.avatarUrl)+'" alt="" style="width:100%;height:100%;object-fit:cover">':esc(chat.avatar||chat.name?.[0]||'گ'))+'</div><div style="flex:1"><b>عکس '+(chat.type==='channels'?'کانال':'گروه')+'</b><p class="subtle" style="margin:4px 0">JPG، PNG یا WEBP تا ۵ مگابایت</p><input id="csAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></div></div><label>نام</label><input id="csTitle" maxlength="80" value="'+esc(chat.name)+'"><label>توضیحات</label><textarea id="csDescription" maxlength="500">'+esc(chat.description||'')+'</textarea><label>نام کاربری عمومی (اختیاری)</label><input id="csUsername" maxlength="32" value="'+esc(chat.username||'')+'" placeholder="my_channel"><label class="setting-toggle"><span><b>لینک عمومی</b><small>قابل جست‌وجو شدن با نام کاربری</small></span><input id="csPublic" type="checkbox" '+(chat.isPublic?'checked':'')+'><i></i></label><button class="primary" id="csSaveInfo">ذخیره مشخصات</button>':'<p>'+esc(chat.description||'برای این گفتگو توضیحی ثبت نشده است.')+'</p>')+
@@ -2253,6 +2254,19 @@ async function conversationSettingsModal(chat){
   const ids=(membersData||[]).map(m=>m.user_id);const {data:profilesData}=ids.length?await supabaseClient.from('profiles').select('id,display_name,username').in('id',ids):{data:[]};const profileMap=new Map((profilesData||[]).map(p=>[p.id,p]));
   showModal('اعضای '+esc(chat.name),(membersData||[]).map(m=>{const p=profileMap.get(m.user_id)||{};return '<div class="setting-row"><span><b>'+esc(p.display_name||'کاربر')+'</b><small>@'+esc(p.username||'')+' · '+esc(m.role)+'</small></span>'+(isOwner&&m.role!=='owner'?'<button class="secondary" data-remove-member="'+esc(m.user_id)+'">حذف</button>':'')+'</div>'}).join('')+'<div class="modalactions"><button class="secondary" data-close>بستن</button></div>');
   $('#modal').querySelectorAll('[data-remove-member]').forEach(b=>b.onclick=async()=>{if(!confirm('این عضو از گفتگو حذف شود؟'))return;const {error}=await supabaseClient.from('conversation_members').delete().eq('conversation_id',chat.id).eq('user_id',b.dataset.removeMember);if(error){toast('حذف عضو ناموفق بود: '+error.message);return}b.closest('.setting-row').remove();toast('عضو حذف شد')});
+ };
+ const deleteConversationButton=$('#csDeleteConversation');
+ if(deleteConversationButton)deleteConversationButton.onclick=async()=>{
+  if(!canDeleteConversation||!remoteMode||!currentUser||!chat.remote)return;
+  const kind=chat.type==='channels'?'کانال':'گروه';
+  if(!confirm('هشدار: '+kind+' «'+chat.name+'» برای همه حذف می‌شود و پیام‌ها و اعضای آن نیز پاک خواهند شد. این کار برگشت‌پذیر نیست. مطمئنی؟'))return;
+  deleteConversationButton.disabled=true;deleteConversationButton.textContent='در حال حذف...';
+  const {data,error}=await supabaseClient.from('conversations').delete().eq('id',chat.id).select('id').maybeSingle();
+  if(error||!data){deleteConversationButton.disabled=false;deleteConversationButton.textContent='🗑️ حذف دائمی '+kind;toast('حذف '+kind+' انجام نشد'+(error?': '+error.message:'؛ دسترسی مالک بررسی شود.'));return}
+  state.chats=state.chats.filter(item=>item.id!==chat.id);
+  if(state.active===chat.id)state.active=null;
+  save();closeModal();renderChats();render();
+  toast(kind+' برای همه حذف شد');
  };
 }
 

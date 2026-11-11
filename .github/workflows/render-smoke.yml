@@ -48,6 +48,29 @@ jobs:
                 const splashVisible = await page.locator('#appSplash').evaluate(el => getComputedStyle(el).visibility !== 'hidden' && Number(getComputedStyle(el).opacity) > 0.05);
                 if (splashVisible) throw new Error('Splash screen did not disappear');
               }
+              if (name === 'app') {
+                const html = await page.content();
+                if (!html.includes('prepareIranGramAvatar') || !html.includes('collectionAvatarFile')) {
+                  throw new Error('Live app is missing the group avatar fix');
+                }
+                const normalized = await page.evaluate(async () => {
+                  const canvas = document.createElement('canvas');
+                  canvas.width = 32; canvas.height = 24;
+                  const ctx = canvas.getContext('2d');
+                  ctx.fillStyle = '#168acd'; ctx.fillRect(0, 0, 32, 24);
+                  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                  const input = new File([blob], 'smoke-test.png', { type: 'image/png' });
+                  const output = await prepareIranGramAvatar(input, 128);
+                  const bitmap = await createImageBitmap(output);
+                  const result = { type: output.type, width: bitmap.width, height: bitmap.height, size: output.size };
+                  bitmap.close();
+                  return result;
+                });
+                if (normalized.type !== 'image/jpeg' || normalized.width !== 128 || normalized.height !== 128 || normalized.size < 1) {
+                  throw new Error('Avatar normalization failed: ' + JSON.stringify(normalized));
+                }
+                console.log('PASS group avatar normalization ' + JSON.stringify(normalized));
+              }
               if (errors.length) throw new Error(name + ' JavaScript errors: ' + errors.join(' | '));
               console.log('PASS ' + name + ' ' + response.status() + ' ' + url);
               await page.close();

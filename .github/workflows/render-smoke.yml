@@ -28,7 +28,7 @@ jobs:
           try {
             for (const [name, url] of [
               ['landing', 'https://iran-gram.onrender.com/'],
-              ['app', 'https://iran-gram.onrender.com/app.html?v=dcc96c6']
+              ['app', 'https://iran-gram.onrender.com/app.html?v=69a7f53']
             ]) {
               const page = await browser.newPage();
               const errors = [];
@@ -48,11 +48,21 @@ jobs:
                 const splashVisible = await page.locator('#appSplash').evaluate(el => getComputedStyle(el).visibility !== 'hidden' && Number(getComputedStyle(el).opacity) > 0.05);
                 if (splashVisible) throw new Error('Splash screen did not disappear');
                 const html = await page.content();
-                for (const marker of ['uploadIranGramStorageFile', 'loadIranGramTus', 'prepareIranGramImage', 'prepareIranGramAvatar', 'startIncomingCallPolling', 'incomingCallSeenIds', 'oniceconnectionstatechange']) {
+                for (const marker of ['uploadIranGramStorageFile', 'loadIranGramTus', 'prepareIranGramImage', 'prepareIranGramAvatar', 'startIncomingCallPolling', ".select('id,avatar_url').single()", 'incomingCallSeenIds', 'oniceconnectionstatechange']) {
                   if (!html.includes(marker)) throw new Error('Live app missing ' + marker);
                 }
                 for (const marker of ['id="stories"', 'id="videoNoteBtn"', 'data-round-video']) {
                   if (html.includes(marker)) throw new Error('Removed feature is still visible in app: ' + marker);
+                }
+                const drawerAvatarStyle = await page.evaluate(() => {
+                  const avatar = document.createElement('div'); avatar.className = 'drawer-avatar';
+                  const img = document.createElement('img'); avatar.appendChild(img); document.body.appendChild(avatar);
+                  const style = getComputedStyle(img);
+                  const result = { width: style.width, height: style.height, fit: style.objectFit, radius: style.borderRadius, overflow: getComputedStyle(avatar).overflow };
+                  avatar.remove(); return result;
+                });
+                if (drawerAvatarStyle.width !== '52px' || drawerAvatarStyle.height !== '52px' || drawerAvatarStyle.fit !== 'cover' || drawerAvatarStyle.radius !== '50%' || drawerAvatarStyle.overflow !== 'hidden') {
+                  throw new Error('Drawer profile avatar rendering failed: ' + JSON.stringify(drawerAvatarStyle));
                 }
                 const mediaStyle = await page.evaluate(() => {
                   const el = document.createElement('video'); el.className = 'media-video'; document.body.appendChild(el);
@@ -141,7 +151,21 @@ jobs:
                 if (callProbe.serverCount < 2 || !callProbe.closed || !callProbe.stopped || !callProbe.signalRejected || !callProbe.polling) {
                   throw new Error('Call reliability checks failed: ' + JSON.stringify(callProbe));
                 }
-                console.log('PASS media and call reliability checks ' + JSON.stringify({normalized,uploadPath,tusPath,callProbe}));
+                const validationProbe = await page.evaluate(async () => {
+                  const oldChats = state.chats, oldActive = state.active, oldRemote = remoteMode, oldUser = currentUser, oldToast = window.toast;
+                  let toastMessage = '';
+                  state.chats = [{ id: '00000000-0000-0000-0000-000000000001', remote: true, type: 'people', messages: [] }];
+                  state.active = state.chats[0].id; remoteMode = true; currentUser = { id: '00000000-0000-0000-0000-000000000002' };
+                  window.toast = message => { toastMessage = String(message); };
+                  await uploadAndSendFile(new File([new Uint8Array([1,2,3])], 'invalid.bin', { type: 'application/x-invalid' }));
+                  const result = { message: toastMessage, pendingMessages: state.chats[0].messages.length };
+                  state.chats = oldChats; state.active = oldActive; remoteMode = oldRemote; currentUser = oldUser; window.toast = oldToast;
+                  return result;
+                });
+                if (!validationProbe.message.includes('پشتیبانی نمی‌شود') || validationProbe.pendingMessages !== 0) {
+                  throw new Error('Media validation error handling failed: ' + JSON.stringify(validationProbe));
+                }
+                console.log('PASS media and call reliability checks ' + JSON.stringify({normalized,uploadPath,tusPath,callProbe,drawerAvatarStyle,validationProbe}));
               }
               if (errors.length) throw new Error(name + ' JavaScript errors: ' + errors.join(' | '));
               console.log('PASS ' + name + ' ' + response.status() + ' ' + url);

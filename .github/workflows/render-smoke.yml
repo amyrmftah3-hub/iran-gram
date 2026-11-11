@@ -61,6 +61,8 @@ jobs:
                   el.remove(); return result;
                 });
                 if (mediaStyle.radius !== '10px' || mediaStyle.fit !== 'contain') throw new Error('Video display CSS is still round/cropped: ' + JSON.stringify(mediaStyle));
+                const tusLibraryType = await page.evaluate(async () => typeof (await loadIranGramTus()).Upload);
+                if (tusLibraryType !== 'function') throw new Error('TUS upload library did not load');
                 const normalized = await page.evaluate(async () => {
                   const canvas = document.createElement('canvas');
                   canvas.width = 32; canvas.height = 24;

@@ -2117,20 +2117,27 @@ async function conversationSettingsModal(chat){
   const title=$('#csTitle').value.trim(),username=$('#csUsername').value.trim().replace(/^@/,'').toLowerCase(),description=$('#csDescription').value.trim(),isPublic=$('#csPublic').checked;
   if(!title){toast('نام نمی‌تواند خالی باشد');return}
   if(username&&!/^[a-z][a-z0-9_]{4,31}$/.test(username)){toast('نام کاربری باید ۵ تا ۳۲ نویسه باشد و با حرف شروع شود');return}
-  const file=$('#csAvatarFile')?.files?.[0]||null;
-  if(file&&(!/^image\/(jpeg|png|webp)$/i.test(file.type)||file.size>5*1024*1024)){toast('عکس باید JPG، PNG یا WEBP و حداکثر ۵ مگابایت باشد');return}
+  let file=$('#csAvatarFile')?.files?.[0]||null;
+  if(file&&file.size>10*1024*1024){toast('حجم عکس باید کمتر از ۱۰ مگابایت باشد');return}
+  if(file){
+   if(!String(file.type||'').startsWith('image/')){toast('فایل انتخاب‌شده تصویر معتبر نیست');return}
+   file=await prepareIranGramImage(file,1024);
+   if(!/^image\/(jpeg|png|webp)$/i.test(file.type)){toast('این عکس در گوشی قابل تبدیل نیست؛ لطفاً JPG یا PNG انتخاب کن');return}
+  }
   let avatarUrl=chat.avatarUrl||'';
   const saveButton=$('#csSaveInfo');saveButton.disabled=true;saveButton.textContent='در حال ذخیره...';
-  if(file){
-   const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
-   const path=currentUser.id+'/'+chat.id+'_'+Date.now()+'.'+ext;
-   const upload=await supabaseClient.storage.from('iran-gram-avatars').upload(path,file,{upsert:false,contentType:file.type});
-   if(upload.error){saveButton.disabled=false;saveButton.textContent='ذخیره مشخصات';toast('آپلود عکس ناموفق بود: '+upload.error.message);return}
-   avatarUrl=supabaseClient.storage.from('iran-gram-avatars').getPublicUrl(path).data.publicUrl;
-  }
-  const {error}=await supabaseClient.from('conversations').update({title,description,username:username||null,is_public:isPublic,avatar_url:avatarUrl||null}).eq('id',chat.id);
-  if(error){saveButton.disabled=false;saveButton.textContent='ذخیره مشخصات';toast('ذخیره مشخصات ناموفق بود: '+error.message);return}
-  chat.name=title;chat.description=description;chat.username=username;chat.isPublic=isPublic;chat.avatarUrl=avatarUrl;closeModal();render();if(state.active===chat.id)openChatNoFocus();toast('پروفایل '+(chat.type==='channels'?'کانال':'گروه')+' ذخیره شد');
+  try{
+   if(file){
+    const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+    const path=currentUser.id+'/'+chat.id+'_'+Date.now()+'.'+ext;
+    const upload=await supabaseClient.storage.from('iran-gram-avatars').upload(path,file,{upsert:false,contentType:file.type});
+    if(upload.error)throw new Error('آپلود عکس: '+upload.error.message);
+    avatarUrl=supabaseClient.storage.from('iran-gram-avatars').getPublicUrl(path).data.publicUrl;
+   }
+   const {error}=await supabaseClient.from('conversations').update({title,description,username:username||null,is_public:isPublic,avatar_url:avatarUrl||null}).eq('id',chat.id);
+   if(error)throw new Error('ذخیره مشخصات: '+error.message);
+   chat.name=title;chat.description=description;chat.username=username;chat.isPublic=isPublic;chat.avatarUrl=avatarUrl;closeModal();render();if(state.active===chat.id)openChatNoFocus();toast('پروفایل '+(chat.type==='channels'?'کانال':'گروه')+' ذخیره شد');
+  }catch(error){console.error('IranGram conversation profile save failed:',error);saveButton.disabled=false;saveButton.textContent='ذخیره مشخصات';toast(error.message||'ذخیره عکس و مشخصات ناموفق بود');}
  };
  $('#csSavePrefs').onclick=async()=>{
   const payload={user_id:currentUser.id,conversation_id:chat.id,archived:!!chat.archived,hidden:!!chat.hidden,pinned:!!chat.pinned,pinned_message_id:chat.pinnedMessageId||null,muted:$('#csMuted').checked,auto_download:$('#csAuto').checked,read_receipts:$('#csReceipts').checked,notification_mode:$('#csNotify').value,updated_at:new Date().toISOString()};

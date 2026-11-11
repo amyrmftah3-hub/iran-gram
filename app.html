@@ -2744,10 +2744,14 @@ function finishSplash(){
  const splash=$('#appSplash');
  if(splash){splash.style.animation='none';splash.style.opacity='0';splash.style.visibility='hidden';splash.style.pointerEvents='none'}
 }
-// نمایش خود برنامه نباید منتظر پاسخ Supabase یا بارگذاری CDN بماند.
+// نمایش صفحه را پیش از شروع هر درخواست خارجی کامل کن تا نوار بارگذاری Chrome گیر نکند.
 finishSplash();
 setTimeout(finishSplash,1200);
-(async()=>{
+// راه‌اندازی SDK آنلاین فقط بعد از رویداد load مرورگر انجام می‌شود؛
+ // بنابراین CDN کند یا مسدودشده، بارگذاری خود صفحه را معطل نمی‌کند.
+window.addEventListener('load',function(){
+ setTimeout(function(){
+ (async()=>{
  try{
   const sdkTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('بارگذاری سرویس ورود بیش از حد طول کشید. اینترنت را بررسی کن و دوباره تلاش کن.')),12000));
   await Promise.race([loadSupabaseSdk(),sdkTimeout]);
@@ -2761,7 +2765,9 @@ setTimeout(finishSplash,1200);
   authModal();
   toast(error&&error.message?error.message:'اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.');
  }
-})();
+ })();
+ },0);
+},{once:true});
 </script>
 
 <script>

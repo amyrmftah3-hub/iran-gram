@@ -2264,7 +2264,7 @@ async function profileModal(){
    }catch(err){toast('برش عکس ناموفق بود: '+err.message)}
   };
  });
- $('#profileAvatarFile').onchange=e=>{
+ $('#profileAvatarFile').onchange=async e=>{
   const file=e.target.files?.[0];if(!file)return;
   if(file.size>10*1024*1024){e.target.value='';toast('حجم عکس باید کمتر از ۱۰ مگابایت باشد.');return}
   if(cropUrl)URL.revokeObjectURL(cropUrl);

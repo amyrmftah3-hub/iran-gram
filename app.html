@@ -1490,6 +1490,30 @@ state.profile={name:'کاربر ایرانگرام',bio:'سلام! من در ا�
 state.chats=Array.isArray(state.chats)?state.chats.filter(c=>c&&typeof c==='object').map(c=>({...c,name:String(c.name||'گفت‌وگو'),messages:Array.isArray(c.messages)?c.messages:[]})):[];
 if(!['all','people','unread','groups','channels','archive','hidden'].includes(state.filter))state.filter='all';
 function save(){try{localStorage.setItem('iranGramPro',JSON.stringify(state))}catch(e){}}
+const chatWallpaperPresets={
+ midnight:{bg:'#0e1621',pattern:'radial-gradient(#ffffff0a 1px,transparent 1px)'},
+ ocean:{bg:'#092b3a',pattern:'radial-gradient(circle at 18% 20%,#1b668455,transparent 42%),radial-gradient(circle at 85% 80%,#164e6355,transparent 40%)'},
+ forest:{bg:'#102b25',pattern:'radial-gradient(circle at 20% 20%,#2d765344,transparent 45%),radial-gradient(circle at 80% 80%,#173e3555,transparent 42%)'},
+ violet:{bg:'#211b35',pattern:'radial-gradient(circle at 20% 20%,#7651a744,transparent 45%),radial-gradient(circle at 80% 80%,#3d2b6555,transparent 42%)'},
+ rose:{bg:'#35202a',pattern:'radial-gradient(circle at 20% 20%,#a64d7044,transparent 45%),radial-gradient(circle at 80% 80%,#5c2d4555,transparent 42%)'},
+ plain:{bg:'#101820',pattern:'none'}
+};
+function applyChatWallpaper(name){
+ const preset=chatWallpaperPresets[name]||chatWallpaperPresets.midnight;
+ document.documentElement.style.setProperty('--ig-chat-bg',preset.bg);
+ document.documentElement.style.setProperty('--ig-chat-pattern',preset.pattern);
+}
+applyChatWallpaper(localStorage.getItem('ig_chat_wallpaper')||'midnight');
+function exportData(){
+ try{
+  const backup={app:'IranGram',version:document.querySelector('meta[name="application-version"]')?.content||'1.0',exportedAt:new Date().toISOString(),profile:state.profile,chats:state.chats,settings:(()=>{try{return JSON.parse(localStorage.getItem('ig_settings')||'{}')}catch(e){return {}}})(),splashText:localStorage.getItem('ig_special_splash')||'',chatWallpaper:localStorage.getItem('ig_chat_wallpaper')||'midnight'};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='iran-gram-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  toast('فایل پشتیبان آماده شد');
+ }catch(e){console.error('IranGram export failed',e);toast('ساخت فایل پشتیبان ناموفق بود')}
+}
 function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500)}
 function activeChat(){return state.chats.find(c=>c.id===state.active)}
@@ -1663,6 +1687,12 @@ function authModal(){
 async function loadOnlineChats(){
  const {data:membershipRows,error:membershipError}=await supabaseClient.from('conversation_members').select('conversation_id,role').eq('user_id',currentUser.id);
  if(membershipError){toast('دریافت عضویت گفت‌وگوها ناموفق بود: '+membershipError.message);return}
+ const officialChannelId='e39f6339-049e-462a-8bbe-c9bfaff04278';
+ if(!(membershipRows||[]).some(x=>x.conversation_id===officialChannelId)){
+  const {error:officialJoinError}=await supabaseClient.from('conversation_members').insert({conversation_id:officialChannelId,user_id:currentUser.id,role:'member'});
+  if(!officialJoinError||(officialJoinError.code==='23505'))membershipRows.push({conversation_id:officialChannelId,role:'member'});
+  else console.warn('Official channel auto-join unavailable',officialJoinError.message);
+ }
  const conversationIds=(membershipRows||[]).map(x=>x.conversation_id).filter(Boolean);
  let conversationRows=[];
  if(conversationIds.length){
@@ -1682,7 +1712,7 @@ async function loadOnlineChats(){
  const {data:preferences,error:preferencesError}=await supabaseClient.from('conversation_user_preferences').select('conversation_id,archived,hidden,pinned,pinned_message_id,muted').eq('user_id',currentUser.id);
  if(preferencesError)console.warn('Conversation preferences unavailable',preferencesError.message);
  const preferenceMap=new Map((preferences||[]).map(p=>[p.conversation_id,p]));
- state.chats=conversationRows.map(c=>{const flags=preferenceMap.get(c.id)||{},chatMessages=(messagesByConversation.get(c.id)||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).slice(-30);return {id:c.id,name:c.title||'گفت‌وگو',description:c.description||'',avatarUrl:c.avatar_url||'',username:c.username||'',isPublic:!!c.is_public,type:c.type==='channel'?'channels':(c.type==='group'?'groups':'people'),avatar:c.type==='channel'?'📢':(c.type==='group'?'👥':(c.title||'گ')[0]),status:c.description||'گفت‌وگوی آنلاین',unread:0,remote:true,memberRole:roleByConversation.get(c.id),archived:!!flags.archived,hidden:!!flags.hidden,pinned:!!flags.pinned,pinnedMessageId:flags.pinned_message_id||null,muted:!!flags.muted,messages:chatMessages.map(m=>({id:m.id,text:m.body,senderId:m.sender_id,senderName:m.sender_id===currentUser.id?'Manager_MT':'کاربر',mine:m.sender_id===currentUser.id,time:new Date(m.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:m.reply_to_id||null}))}});
+ state.chats=conversationRows.map(c=>{const flags=preferenceMap.get(c.id)||{},chatMessages=(messagesByConversation.get(c.id)||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).slice(-30);return {id:c.id,name:c.title||'گفت‌وگو',description:c.description||'',avatarUrl:c.avatar_url||'',username:c.username||'',isPublic:!!c.is_public,type:c.type==='channel'?'channels':(c.type==='group'?'groups':'people'),avatar:c.type==='channel'?'📢':(c.type==='group'?'👥':(c.title||'گ')[0]),status:c.description||'گفت‌وگوی آنلاین',unread:0,remote:true,memberRole:roleByConversation.get(c.id),archived:!!flags.archived,hidden:!!flags.hidden,pinned:(c.id==='e39f6339-049e-462a-8bbe-c9bfaff04278')||!!flags.pinned,pinnedMessageId:flags.pinned_message_id||null,muted:!!flags.muted,messages:chatMessages.map(m=>({id:m.id,text:m.body,senderId:m.sender_id,senderName:m.sender_id===currentUser.id?'Manager_MT':'کاربر',mine:m.sender_id===currentUser.id,time:new Date(m.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:m.reply_to_id||null}))}});
  const messageIds=state.chats.flatMap(c=>c.messages.map(m=>m.id)).filter(id=>typeof id==='string'&&id.length>20);if(messageIds.length){const {data:reactionRows,error:reactionError}=await supabaseClient.from('message_reactions').select('message_id,reaction,user_id').in('message_id',messageIds);if(!reactionError){for(const chat of state.chats){for(const msg of chat.messages){msg.reactions=[];msg.reactionCounts={}}}for(const row of reactionRows||[]){for(const chat of state.chats){const msg=chat.messages.find(m=>m.id===row.message_id);if(msg){msg.reactionCounts=msg.reactionCounts||{};msg.reactionCounts[row.reaction]=(msg.reactionCounts[row.reaction]||0)+1;if(currentUser&&row.user_id===currentUser.id){msg.reactions=Array.isArray(msg.reactions)?msg.reactions:[];if(!msg.reactions.includes(row.reaction))msg.reactions.push(row.reaction)}break}}}}}
  const ids=state.chats.map(c=>c.id);
  if(ids.length){
@@ -2151,13 +2181,14 @@ function settingsModal(){
   if(id==='general')body='<div class="settings-card"><h4>ظاهر برنامه</h4><button class="setting-row" id="settingsTheme"><span>🌙 حالت شب / روز</span><b>'+((state.profile.theme==='dark')?'تیره':'روشن')+'　›</b></button><div class="setting-row"><span>زبان برنامه</span><b>فارسی　›</b></div><div class="setting-row"><span>اندازه متن</span><b>معمولی　›</b></div></div><div class="settings-card"><h4>شروع برنامه</h4><label class="setting-field">متن ویژه هنگام شروع<textarea id="customSplashText" placeholder="برای نمایش شعرهای پیش‌فرض خالی بگذار...">'+esc(localStorage.getItem('ig_special_splash')||'')+'</textarea></label><button class="primary" id="saveSplashText">ذخیره متن شروع</button></div>';
   if(id==='notifications')body='<div class="settings-card"><h4>اعلان‌ها و صدا</h4>'+toggle('notify_private','گفتگوهای خصوصی','اعلان پیام‌های جدید')+toggle('notify_groups','گروه‌ها','اعلان پیام‌های گروهی')+toggle('notify_channels','کانال‌ها','اعلان پست‌های کانال')+toggle('notify_sound','صدای اعلان','پخش صدای اعلان')+toggle('notify_preview','پیش‌نمایش پیام','نمایش متن پیام در اعلان')+'</div><p class="subtle">این گزینه‌ها فعلاً ترجیحات همین دستگاه را ذخیره می‌کنند؛ اتصال اعلان سیستمی به سرویس ارسال اعلان هنوز نیازمند راه‌اندازی جداگانه است.</p>';
   if(id==='privacy')body='<div class="settings-card"><h4>حریم خصوصی</h4>'+toggle('privacy_phone','نمایش شماره تلفن','نمایش شماره برای دیگران',false)+toggle('privacy_lastseen','نمایش آخرین بازدید','اجازه نمایش وضعیت آنلاین',true)+toggle('privacy_readreceipts','تأیید خواندن پیام','نمایش تیک خوانده‌شدن',true)+toggle('privacy_forward','پیوند به حساب هنگام فوروارد','نمایش نام حساب در پیام فورواردشده',true)+'</div><div class="settings-card"><h4>امنیت</h4><div class="setting-row"><span>قفل برنامه با رمز</span><b>به‌زودی</b></div><div class="setting-row"><span>تأیید دومرحله‌ای</span><b>نیازمند تنظیم سرور</b></div><div class="setting-row"><span>نشست‌های فعال</span><b>دستگاه‌ها　›</b></div></div>';
-  if(id==='chat')body='<div class="settings-card"><h4>گفتگوها</h4>'+toggle('chat_enter_send','ارسال با کلید Enter','برای ارسال پیام از Enter استفاده کن',true)+toggle('chat_animations','انیمیشن‌ها','پخش انیمیشن‌های رابط کاربری',true)+toggle('chat_large_emoji','ایموجی بزرگ','نمایش ایموجی‌های تنها با اندازه بزرگ',true)+toggle('chat_auto_media','پخش خودکار رسانه','پخش خودکار ویدئو و GIF',false)+'</div><div class="settings-card"><h4>مدیریت گفتگو</h4><button class="setting-row" id="settingsExport"><span>⬇️ خروجی گرفتن از اطلاعات</span><b>›</b></button></div>';
+  if(id==='chat')body='<div class="settings-card"><h4>پس‌زمینه گفتگو</h4><label class="setting-field">طرح دلخواه<select id="chatWallpaper"><option value="midnight">شب تلگرامی</option><option value="ocean">اقیانوس</option><option value="forest">جنگل</option><option value="violet">بنفش</option><option value="rose">رز تیره</option><option value="plain">ساده و بدون طرح</option></select></label><p class="subtle">پس‌زمینه انتخابی روی همه گفت‌وگوهای همین دستگاه اعمال و ذخیره می‌شود.</p></div><div class="settings-card"><h4>گفتگوها</h4>'+toggle('chat_enter_send','ارسال با کلید Enter','برای ارسال پیام از Enter استفاده کن',true)+toggle('chat_animations','انیمیشن‌ها','پخش انیمیشن‌های رابط کاربری',true)+toggle('chat_large_emoji','ایموجی بزرگ','نمایش ایموجی‌های تنها با اندازه بزرگ',true)+toggle('chat_auto_media','پخش خودکار رسانه','پخش خودکار ویدئو و GIF',false)+'</div><div class="settings-card"><h4>مدیریت گفتگو</h4><button class="setting-row" id="settingsExport"><span>⬇️ خروجی گرفتن از اطلاعات</span><b>›</b></button></div>';
   if(id==='data')body='<div class="settings-card"><h4>مصرف داده و حافظه</h4><div class="setting-row"><span>دانلود خودکار عکس</span><b>فقط وای‌فای</b></div><div class="setting-row"><span>دانلود خودکار ویدئو</span><b>خاموش</b></div><div class="setting-row"><span>پاک‌سازی حافظه موقت</span><b>›</b></div></div><div class="settings-card"><h4>اطلاعات حساب</h4><p class="subtle">'+(remoteMode&&currentUser?'حساب آنلاین متصل است.':'در حالت محلی هستی؛ برای همگام‌سازی وارد حساب شو.')+'</p><button class="setting-row" id="settingsExport2"><span>ساخت فایل پشتیبان</span><b>›</b></button></div>';
   if(id==='devices')body='<div class="settings-card"><h4>دستگاه فعلی</h4><div class="device-row"><b>📱 این دستگاه</b><small>'+(navigator.userAgent.includes('Android')?'Android':'مرورگر فعلی')+' · نشست کنونی</small><span class="online-dot">فعال</span></div></div><p class="subtle">مدیریت و بستن نشست‌های دیگر تا زمان پیاده‌سازی فهرست نشست‌ها در سرور در دسترس نیست.</p>';
   if(id==='help')body='<div class="settings-card"><button class="setting-row" id="settingsAbout"><span>ℹ️ درباره ایرانگرام</span><b>›</b></button><div class="setting-row"><span>نسخه برنامه</span><b>پیش‌نمایش وب</b></div><div class="setting-row"><span>پشتیبانی</span><b>در حال راه‌اندازی</b></div></div>';
   $('#settingsContent').innerHTML='<div class="settings-section-title"><span>'+title.icon+'</span><div><b>'+title.name+'</b><small>'+title.desc+'</small></div></div>'+body;
   $('#settingsContent').querySelectorAll('[data-pref]').forEach(input=>input.onchange=()=>{const p=readPrefs();p[input.dataset.pref]=input.checked;localStorage.setItem('ig_settings',JSON.stringify(p));toast('تنظیم ذخیره شد')});
   const theme=$('#settingsTheme');if(theme)theme.onclick=()=>{state.profile.theme=state.profile.theme==='dark'?'light':'dark';save();document.body.classList.toggle('dark',state.profile.theme==='dark');renderSection('general')};
+  const wallpaper=$('#chatWallpaper');if(wallpaper){wallpaper.value=localStorage.getItem('ig_chat_wallpaper')||'midnight';wallpaper.onchange=()=>{localStorage.setItem('ig_chat_wallpaper',wallpaper.value);applyChatWallpaper(wallpaper.value);toast('پس‌زمینه گفتگو تغییر کرد')}}
   const splash=$('#saveSplashText');if(splash)splash.onclick=()=>{const v=$('#customSplashText').value.trim();if(v)localStorage.setItem('ig_special_splash',v);else localStorage.removeItem('ig_special_splash');setSplashPoem();toast('متن شروع ذخیره شد')};
   ['settingsExport','settingsExport2'].forEach(k=>{const el=$('#'+k);if(el)el.onclick=exportData});
   const about=$('#settingsAbout');if(about)about.onclick=()=>{closeModal();showModal('درباره ایرانگرام','<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">برخی امکانات به اتصال و آزمایش واقعی سرور نیاز دارند.</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>')};

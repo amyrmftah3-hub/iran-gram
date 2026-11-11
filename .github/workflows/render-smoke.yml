@@ -1,0 +1,58 @@
+name: Render browser smoke test
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'app.html'
+      - '.github/workflows/render-smoke.yml'
+  workflow_dispatch:
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
+        run: npm install --no-save playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Test live website and app
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright';
+          const browser = await chromium.launch({ headless: true });
+          try {
+            for (const [name, url] of [
+              ['landing', 'https://iran-gram.onrender.com/'],
+              ['app', 'https://iran-gram.onrender.com/app.html?v=23e61403']
+            ]) {
+              const page = await browser.newPage();
+              const errors = [];
+              page.on('pageerror', e => errors.push(e.message));
+              const response = await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+              if (!response || !response.ok()) throw new Error(name + ' HTTP response failed: ' + (response?.status() ?? 'none'));
+              await page.waitForTimeout(1800);
+              if (name === 'landing') {
+                if (!(await page.title()).includes('ایرانگرام')) throw new Error('Landing title missing');
+                if (!(await page.locator('a[href*="app.html"]').count())) throw new Error('App entry link missing');
+              } else {
+                const visible = await page.locator('#app').evaluate(el => {
+                  const r = el.getBoundingClientRect();
+                  return r.width > 0 && r.height > 0 && getComputedStyle(el).display !== 'none';
+                });
+                if (!visible) throw new Error('App interface is not visible');
+                const splashVisible = await page.locator('#appSplash').evaluate(el => getComputedStyle(el).visibility !== 'hidden' && Number(getComputedStyle(el).opacity) > 0.05);
+                if (splashVisible) throw new Error('Splash screen did not disappear');
+              }
+              if (errors.length) throw new Error(name + ' JavaScript errors: ' + errors.join(' | '));
+              console.log('PASS ' + name + ' ' + response.status() + ' ' + url);
+              await page.close();
+            }
+          } finally {
+            await browser.close();
+          }
+          NODE

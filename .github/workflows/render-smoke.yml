@@ -50,8 +50,8 @@ jobs:
               }
               if (name === 'app') {
                 const html = await page.content();
-                if (!html.includes('prepareIranGramAvatar') || !html.includes('collectionAvatarFile')) {
-                  throw new Error('Live app is missing the group avatar fix');
+                if (!html.includes('prepareIranGramAvatar') || !html.includes('collectionAvatarFile') || !html.includes('prepareIranGramImage') || !html.includes('storyFile')) {
+                  throw new Error('Live app is missing profile/group/channel/story image fixes');
                 }
                 const normalized = await page.evaluate(async () => {
                   const canvas = document.createElement('canvas');
@@ -59,17 +59,21 @@ jobs:
                   const ctx = canvas.getContext('2d');
                   ctx.fillStyle = '#168acd'; ctx.fillRect(0, 0, 32, 24);
                   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                  const input = new File([blob], 'smoke-test.png', { type: 'image/png' });
+                  const input = new File([blob], 'smoke-test.png', { type: '' });
                   const output = await prepareIranGramAvatar(input, 128);
                   const bitmap = await createImageBitmap(output);
                   const result = { type: output.type, width: bitmap.width, height: bitmap.height, size: output.size };
                   bitmap.close();
-                  return result;
+                  const profile = await prepareIranGramImage(new File([blob], 'profile.png', { type: 'image/png' }), 128);
+                  const profileBitmap = await createImageBitmap(profile);
+                  const profileResult = { type: profile.type, width: profileBitmap.width, height: profileBitmap.height };
+                  profileBitmap.close();
+                  return { avatar: result, profile: profileResult };
                 });
-                if (normalized.type !== 'image/jpeg' || normalized.width !== 128 || normalized.height !== 128 || normalized.size < 1) {
-                  throw new Error('Avatar normalization failed: ' + JSON.stringify(normalized));
+                if (normalized.avatar.type !== 'image/jpeg' || normalized.avatar.width !== 128 || normalized.avatar.height !== 128 || normalized.avatar.size < 1 || normalized.profile.type !== 'image/jpeg' || !normalized.profile.width || !normalized.profile.height) {
+                  throw new Error('Avatar/profile normalization failed: ' + JSON.stringify(normalized));
                 }
-                console.log('PASS group avatar normalization ' + JSON.stringify(normalized));
+                console.log('PASS avatar/profile normalization ' + JSON.stringify(normalized));
               }
               if (errors.length) throw new Error(name + ' JavaScript errors: ' + errors.join(' | '));
               console.log('PASS ' + name + ' ' + response.status() + ' ' + url);

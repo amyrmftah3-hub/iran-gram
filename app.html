@@ -1292,7 +1292,7 @@ body{font-family:Tahoma,"Vazirmatn","Segoe UI",Arial,sans-serif;letter-spacing:0
 }
 
 
-.voice-message{display:flex;align-items:center;gap:9px;min-width:220px;padding:7px 9px;border-radius:14px;background:#3390ec18}.voice-message audio{width:min(260px,62vw);height:38px}{width:220px;height:220px;max-width:65vw;max-height:65vw;border-radius:50%;overflow:hidden;background:#101923} video{width:100%;height:100%;object-fit:cover;border-radius:50%}#voiceRecordBtn.recording,.recording{background:#d94b59;color:#fff;animation:igRecordPulse 1s infinite}@keyframes igRecordPulse{50%{box-shadow:0 0 0 7px #e34d5940}}
+.voice-message{display:flex;align-items:center;gap:9px;min-width:220px;padding:7px 9px;border-radius:14px;background:#3390ec18}.voice-message audio{width:min(260px,62vw);height:38px}#voiceRecordBtn.recording{background:#d94b59;color:#fff;animation:igRecordPulse 1s infinite}@keyframes igRecordPulse{50%{box-shadow:0 0 0 7px #e34d5940}}
 
 /* Telegram-inspired compact composer */
 .composer{display:flex;align-items:flex-end;gap:7px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:#17212b;border-top:1px solid #263442}
@@ -1305,15 +1305,15 @@ body{font-family:Tahoma,"Vazirmatn","Segoe UI",Arial,sans-serif;letter-spacing:0
 .composer .send{width:42px;height:42px;border-radius:50%;background:#3390ec;color:#fff;box-shadow:0 2px 7px #0002}
 @media(max-width:760px){.composer{gap:4px;padding-left:7px;padding-right:7px}.composer .round{width:34px;min-width:34px;height:38px;font-size:18px}.composer .send{width:40px;height:40px;min-width:40px}.composefield{min-width:0}.composefield textarea{font-size:14px}}
 
-/* Keep voice and round-video controls visible on every chat type */
-#voiceRecordBtn,{
+/* Keep the ordinary voice recorder visible on every chat type */
+#voiceRecordBtn{
  display:inline-grid!important;visibility:visible!important;opacity:1!important;
  place-items:center;flex:0 0 36px!important;width:36px!important;min-width:36px!important;
  height:40px!important;padding:0!important;margin:0!important;position:relative;z-index:2;
  color:#d5e6f5!important;background:#263746!important;border:1px solid #35495a!important;
  border-radius:50%!important;font-size:19px!important;line-height:1;
 }
-#voiceRecordBtn:active,:active{background:#3390ec!important;color:#fff!important}
+#voiceRecordBtn:active{background:#3390ec!important;color:#fff!important}
 #voiceRecordBtn.recording,.recording{background:#d94b59!important;color:#fff!important}
 .composer{flex-wrap:nowrap;min-width:0;overflow:visible}
 .composefield{flex:1 1 auto;min-width:48px}
@@ -1410,7 +1410,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
 .ig-voice-play{width:42px;height:42px;flex:0 0 42px;border:0;border-radius:50%;background:#3390ec;color:#fff;font-size:17px;display:grid;place-items:center}
 .ig-voice-main{flex:1;min-width:0}.ig-voice-wave{height:31px;display:flex;align-items:center;gap:2px;overflow:hidden}.ig-voice-wave i{display:block;width:3px;min-width:2px;height:var(--h);border-radius:4px;background:#7caedb;opacity:.85}.ig-voice-wave i.heard{background:#3390ec;opacity:1}
 .ig-voice-time{display:flex;justify-content:space-between;font-size:10px;color:var(--muted,#91a3b3);margin-top:3px}.ig-voice audio{display:none}.msg.mine .ig-voice{background:rgba(51,144,236,.18)}
-{width:220px;height:220px;max-width:68vw;max-height:68vw;aspect-ratio:1;border-radius:50%;overflow:hidden;background:#101923;box-shadow:0 2px 12px #0003;position:relative} video{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:54px;height:54px;border:0;border-radius:50%;background:#071b48cc;color:#fff;font-size:22px;display:grid;place-items:center;box-shadow:0 2px 12px #0006}.playing {opacity:0}.playing:active {opacity:1}.ig-voice-wave{cursor:pointer;touch-action:pan-y}.ig-voice-wave i{transition:background .12s}
+.media-video{width:min(100%,420px);height:auto;max-height:360px;object-fit:contain;border-radius:10px;display:block;background:#101923}.ig-voice-wave{cursor:pointer;touch-action:pan-y}.ig-voice-wave i{transition:background .12s}
 </style>
 </head>
  
@@ -1990,19 +1990,68 @@ async function prepareIranGramImage(file,maxDimension=2048){
   if(!blob)throw new Error('تصویر قابل تبدیل نبود');
   const base=String(file.name||'image').replace(/\.[^.]*$/,'')||'image';
   return new File([blob],base+'.jpg',{type:'image/jpeg',lastModified:Date.now()});
- }catch(error){console.warn('Image conversion failed; using original file',error);return file}
+ }catch(error){console.warn('Image conversion failed',error);throw new Error(error?.message||'آماده‌سازی عکس ناموفق بود؛ لطفاً عکس JPG یا PNG دیگری انتخاب کن.')}
  finally{try{bitmap.close()}catch(_){}}
+}
+let tusClientPromise=null;
+async function loadIranGramTus(){
+ if(window.tus?.Upload)return window.tus;
+ if(!tusClientPromise)tusClientPromise=new Promise((resolve,reject)=>{
+  const sources=['https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js','https://unpkg.com/tus-js-client@4.3.1/dist/tus.min.js'];
+  let index=0;
+  const next=()=>{
+   if(index>=sources.length){reject(new Error('کتابخانه آپلود امن بارگذاری نشد؛ اینترنت را بررسی و دوباره تلاش کن.'));return}
+   const script=document.createElement('script');script.src=sources[index++];script.async=true;
+   let done=false;const timer=setTimeout(()=>{if(done)return;done=true;script.remove();next()},8000);
+   script.onload=()=>{if(done)return;done=true;clearTimeout(timer);if(window.tus?.Upload)resolve(window.tus);else next()};
+   script.onerror=()=>{if(done)return;done=true;clearTimeout(timer);next()};
+   document.head.appendChild(script);
+  };next();
+ }).catch(error=>{tusClientPromise=null;throw error});
+ return tusClientPromise;
+}
+async function uploadIranGramStorageFile(file,path,mime,onProgress){
+ const bucket=supabaseClient.storage.from('arogram-chat-media');
+ if(file.size<=6*1024*1024){
+  const {error}=await bucket.upload(path,file,{upsert:false,contentType:mime,cacheControl:'3600'});
+  if(error)throw error;
+  return;
+ }
+ const {data,error:sessionError}=await supabaseClient.auth.getSession();
+ if(sessionError||!data?.session?.access_token)throw new Error('نشست ورود منقضی شده؛ دوباره وارد حساب شو.');
+ const tus=await loadIranGramTus();
+ const projectRef=new URL(SUPABASE_URL).hostname.split('.')[0];
+ const endpoint='https://'+projectRef+'.storage.supabase.co/storage/v1/upload/resumable';
+ await new Promise((resolve,reject)=>{
+  let upload;
+  try{
+   upload=new tus.Upload(file,{
+    endpoint,
+    retryDelays:[0,3000,5000,10000,20000],
+    headers:{authorization:'Bearer '+data.session.access_token,apikey:SUPABASE_KEY},
+    uploadDataDuringCreation:true,
+    removeFingerprintOnSuccess:true,
+    chunkSize:6*1024*1024,
+    metadata:{bucketName:'arogram-chat-media',objectName:path,contentType:mime,cacheControl:'3600'},
+    onError:error=>reject(error),
+    onProgress:(uploaded,total)=>{if(typeof onProgress==='function')onProgress(uploaded,total)},
+    onSuccess:()=>resolve()
+   });
+   upload.findPreviousUploads().then(previous=>{if(previous?.length)upload.resumeFromPreviousUpload(previous[0]);upload.start()}).catch(()=>upload.start());
+  }catch(error){reject(error)}
+ });
 }
 async function uploadAndSendFile(file,kind='media'){
  const chat=activeChat();if(!chat){toast('اول یه چت باز کن 🙂');return}
  if(!remoteMode||!currentUser||!chat.remote){toast('برای ارسال فایل وارد حساب آنلاین شو.');return}
  if(chat.type==='channels'&&chat.memberRole!=='owner'){toast('فقط مدیر کانال می‌تواند در کانال فایل بفرستد.');return}
  if(!file||!file.size){toast('فایل خالی است؛ دوباره انتخاب یا ضبط کن.');return}
- if(file.size>50*1024*1024){toast('حجم فایل باید کمتر از ۵۰ مگابایت باشد.');return}
- const safeName=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'file',ext=(safeName.split('.').pop()||'').toLowerCase();
+ if(file.size>100*1024*1024){toast('حجم فایل انتخابی بیش از حد مجاز است.');return}
  let mime=iranGramFileMime(file);
  if(mime.startsWith('image/')&&mime!=='image/gif')file=await prepareIranGramImage(file,2048);
- if(mime.startsWith('image/')&&file.type)mime=iranGramFileMime(file);
+ mime=iranGramFileMime(file)||mime;
+ if(file.size>50*1024*1024){toast('حجم فایل پس از آماده‌سازی باید کمتر از ۵۰ مگابایت باشد.');return}
+ const safeName=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'file',ext=(safeName.split('.').pop()||'').toLowerCase();
  const extensionTypes={pdf:'application/pdf',zip:'application/zip',txt:'text/plain'};
  if(!mime||mime==='application/octet-stream')mime=extensionTypes[ext]||'';
  const allowed=/^(image\/(jpeg|png|webp|gif|avif|heic|heif)|video\/(mp4|webm|quicktime|3gpp)|audio\/(mpeg|ogg|mp4|webm|aac|wav|3gpp|amr)|application\/(pdf|zip)|text\/plain)$/i;
@@ -2013,8 +2062,11 @@ async function uploadAndSendFile(file,kind='media'){
  chat.messages.push(pending);save();renderMessages();renderChats();toast(kind==='voice'?'در حال ارسال ویس…':'در حال ارسال فایل…');
  let uploaded=false;
  try{
-  const {error:uploadError}=await supabaseClient.storage.from('arogram-chat-media').upload(path,file,{upsert:false,contentType:mime,cacheControl:'3600'});
-  if(uploadError)throw new Error('آپلود فایل: '+uploadError.message);
+  await uploadIranGramStorageFile(file,path,mime,(bytes,total)=>{
+   const percent=Math.min(100,Math.round(bytes/total*100));
+   const status='در حال بارگذاری '+percent.toLocaleString('fa-IR')+'٪';
+   if(pending.sendStatus!==status){pending.sendStatus=status;renderMessages()}
+  });
   uploaded=true;pending.sendStatus='در حال ثبت پیام…';renderMessages();
   const {data:sent,error:insertError}=await supabaseClient.from('messages').insert({conversation_id:chat.id,sender_id:currentUser.id,body}).select('id,created_at').single();
   if(insertError)throw new Error('ثبت پیام در گفتگو: '+insertError.message);
@@ -2022,7 +2074,8 @@ async function uploadAndSendFile(file,kind='media'){
   save();renderMessages();renderChats();toast(kind==='voice'?'ویس فرستاده شد ✓':'فایل فرستاده شد ✓');
  }catch(error){
   console.error('IranGram media send failed:',error);pending.sendStatus='ارسال ناموفق';pending.retryFile=file;pending.retryKind=kind;pending.mediaLoadError=error?.message||'خطای نامشخص';
-  renderMessages();renderChats();toast((uploaded?'فایل آپلود شد اما پیام ثبت نشد: ':'ارسال ناموفق بود: ')+(error?.message||'خطای نامشخص'));
+  const detail=error?.message||error?.error||error?.statusCode||'خطای نامشخص';
+  renderMessages();renderChats();toast((uploaded?'فایل آپلود شد اما پیام ثبت نشد: ':'ارسال ناموفق بود: ')+detail);
  }
 }
 async function sendMessage(){const input=$('#messageInput'),text=input.value.trim();if(!text)return;const c=activeChat();if(!c){toast('اول یک گفت‌وگو انتخاب کن');return}if(!remoteMode||!currentUser||!c.remote){authModal();toast('برای ارسال پیام واقعی، اول وارد حساب آنلاین شو');return}const {data:sent,error}=await supabaseClient.from('messages').insert({conversation_id:c.id,sender_id:currentUser.id,body:text,reply_to_id:state.reply||null}).select('id,created_at').single();if(error){toast('ارسال ناموفق بود: '+error.message);return}c.messages.push({id:sent.id,text,mine:true,time:new Date(sent.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:state.reply||null});state.reply=null;input.value='';input.style.height='auto';save();renderChats();renderMessages()}

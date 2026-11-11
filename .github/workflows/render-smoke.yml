@@ -28,7 +28,7 @@ jobs:
           try {
             for (const [name, url] of [
               ['landing', 'https://iran-gram.onrender.com/'],
-              ['app', 'https://iran-gram.onrender.com/app.html?v=8c03e51']
+              ['app', 'https://iran-gram.onrender.com/app.html?v=dcc96c6']
             ]) {
               const page = await browser.newPage();
               const errors = [];
@@ -48,7 +48,7 @@ jobs:
                 const splashVisible = await page.locator('#appSplash').evaluate(el => getComputedStyle(el).visibility !== 'hidden' && Number(getComputedStyle(el).opacity) > 0.05);
                 if (splashVisible) throw new Error('Splash screen did not disappear');
                 const html = await page.content();
-                for (const marker of ['uploadIranGramStorageFile', 'loadIranGramTus', 'prepareIranGramImage', 'prepareIranGramAvatar']) {
+                for (const marker of ['uploadIranGramStorageFile', 'loadIranGramTus', 'prepareIranGramImage', 'prepareIranGramAvatar', 'startIncomingCallPolling', 'incomingCallSeenIds', 'oniceconnectionstatechange']) {
                   if (!html.includes(marker)) throw new Error('Live app missing ' + marker);
                 }
                 for (const marker of ['id="stories"', 'id="videoNoteBtn"', 'data-round-video']) {
@@ -110,7 +110,38 @@ jobs:
                 if (!tusPath.endpoint.includes('.storage.supabase.co/storage/v1/upload/resumable') || tusPath.chunkSize !== 6*1024*1024 || tusPath.metadata.objectName !== 'test/clip.mp4' || !tusPath.apikey) {
                   throw new Error('Large video resumable upload path failed: ' + JSON.stringify(tusPath));
                 }
-                console.log('PASS media normalization and small/TUS upload paths ' + JSON.stringify({normalized,uploadPath,tusPath}));
+                const callProbe = await page.evaluate(async () => {
+                  const originalRtc = window.RTCPeerConnection;
+                  const originalCall = activeCall, originalUser = currentUser, originalClient = supabaseClient;
+                  let config = null, closed = false, stopped = false;
+                  class MockPeerConnection {
+                    constructor(value) { config = value; this.connectionState = 'new'; this.iceConnectionState = 'new'; }
+                    close() { closed = true; }
+                    addTrack() {}
+                    addIceCandidate() { return Promise.resolve(); }
+                    setLocalDescription() { return Promise.resolve(); }
+                    setRemoteDescription() { return Promise.resolve(); }
+                    createOffer() { return Promise.resolve({ type: 'offer', sdp: 'test' }); }
+                    createAnswer() { return Promise.resolve({ type: 'answer', sdp: 'test' }); }
+                  }
+                  window.RTCPeerConnection = MockPeerConnection;
+                  activeCall = { id: 'call-test', peerId: 'peer-test', localStream: { getTracks: () => [{ stop: () => { stopped = true; } }] } };
+                  const pc = await getCallPeerConnection();
+                  const serverCount = config.iceServers.length;
+                  activeCall.pc = pc;
+                  await finishCall(false);
+                  currentUser = { id: 'user-test' };
+                  activeCall = { id: 'call-test', peerId: 'peer-test' };
+                  supabaseClient = { from: () => ({ insert: async () => ({ error: { message: 'simulated signal failure' } }) }) };
+                  let signalRejected = false;
+                  try { await sendCallSignal('offer', {}); } catch (_) { signalRejected = true; }
+                  window.RTCPeerConnection = originalRtc; activeCall = originalCall; currentUser = originalUser; supabaseClient = originalClient;
+                  return { serverCount, closed, stopped, signalRejected, polling: typeof startIncomingCallPolling === 'function' };
+                });
+                if (callProbe.serverCount < 2 || !callProbe.closed || !callProbe.stopped || !callProbe.signalRejected || !callProbe.polling) {
+                  throw new Error('Call reliability checks failed: ' + JSON.stringify(callProbe));
+                }
+                console.log('PASS media and call reliability checks ' + JSON.stringify({normalized,uploadPath,tusPath,callProbe}));
               }
               if (errors.length) throw new Error(name + ' JavaScript errors: ' + errors.join(' | '));
               console.log('PASS ' + name + ' ' + response.status() + ' ' + url);

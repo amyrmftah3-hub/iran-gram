@@ -20,6 +20,22 @@ jobs:
         run: npm install --no-save playwright
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+      - name: Wait for GitHub Pages and Render to publish the current story build
+        run: |
+          set -e
+          pages_url="https://amyrmftah3-hub.github.io/iran-gram/?check=${GITHUB_SHA}"
+          render_url="https://iran-gram.onrender.com/app.html?v=1.1.2-stories&check=${GITHUB_SHA}"
+          for attempt in $(seq 1 60); do
+            pages="$(curl --max-time 10 -fsSL "$pages_url" || true)"
+            render="$(curl --max-time 10 -fsSL "$render_url" || true)"
+            if printf '%s' "$pages" | grep -Fq 'app.html?v=1.1.2-stories' && printf '%s' "$render" | grep -Fq 'id="storyStrip"'; then
+              echo "PASS both live hosts published the story build"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "GitHub Pages or Render did not publish the current story build in time" >&2
+          exit 1
       - name: Test live website and media upload paths
         run: |
           node --input-type=module <<'NODE'

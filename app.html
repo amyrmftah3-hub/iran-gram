@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b8fd3">
-<meta name="application-version" content="1.1.1">
+<meta name="application-version" content="1.1.2">
 <title>ایرانگرام | پیام‌رسان ایرانی</title>
 <style>
 :root{--blue:#168acd;--blue2:#087fbd;--bg:#e9f1f6;--panel:#fff;--text:#17212b;--muted:#71808f;--line:#e6edf2;--chat:#dcecf4;--bubble:#fff;--mine:#d9fdd3;--shadow:0 5px 24px #0a3a5510}
@@ -2055,7 +2055,7 @@ async function initAuth(){
  const {data}=await supabaseClient.auth.getSession();
  if(data.session){await startOnline()}else{state.chats=[];state.active=null;save();render();authModal()}
  document.addEventListener('visibilitychange',()=>{if(currentUser&&remoteMode)updateMyPresence(document.visibilityState==='visible')});
- supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){if(presenceHeartbeat)clearInterval(presenceHeartbeat);presenceHeartbeat=null;currentUser=null;remoteMode=false;state.chats=[];state.active=null;authModal()}});
+ supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){if(presenceHeartbeat)clearInterval(presenceHeartbeat);presenceHeartbeat=null;if(storyRealtimeChannel){supabaseClient.removeChannel(storyRealtimeChannel);storyRealtimeChannel=null}storyRows=[];currentUser=null;remoteMode=false;renderStories();state.chats=[];state.active=null;authModal()}});
 }
 
 

@@ -5,7 +5,7 @@
 ## وضعیت فعلی اندروید
 
 - شناسه بسته: `com.iranigram.app`
-- نسخه کد: `1.0.9` (versionCode: `10`)
+- نسخه کد: `1.1.1` (versionCode: `12`)
 - `compileSdk: 35` و `targetSdk: 34`
 - گردش‌کار GitHub Actions، کد JavaScript توکار `app.html` را با `node --check` بررسی می‌کند و APK آزمایشی و APK نسخه Release امضاشده می‌سازد.
 - فایل‌ها به‌صورت Artifact در صفحه اجرای گردش‌کار نگه‌داری می‌شوند (۳۰ روز)؛ این مخزن فعلاً GitHub Release دائمی ندارد.

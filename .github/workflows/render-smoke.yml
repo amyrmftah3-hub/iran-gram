@@ -27,8 +27,9 @@ jobs:
           const browser = await chromium.launch({ headless: true });
           try {
             for (const [name, url] of [
-              ['landing', 'https://iran-gram.onrender.com/'],
-              ['app', 'https://iran-gram.onrender.com/app.html?v=877f655']
+              ['landing-pages', 'https://amyrmftah3-hub.github.io/iran-gram/'],
+              ['app-pages', 'https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.1.1-d0324d2'],
+              ['app-render', 'https://iran-gram.onrender.com/app.html?v=1.1.1-d0324d2']
             ]) {
               const page = await browser.newPage();
               const errors = [];
@@ -36,11 +37,11 @@ jobs:
               const response = await page.goto(url, { waitUntil: 'load', timeout: 30000 });
               if (!response || !response.ok()) throw new Error(name + ' HTTP response failed: ' + (response?.status() ?? 'none'));
               await page.waitForTimeout(1800);
-              if (name === 'landing') {
+              if (name === 'landing-pages') {
                 if (!(await page.title()).includes('ایرانگرام')) throw new Error('Landing title missing');
                 const appLinks = await page.locator('a[href*="app.html"]').evaluateAll(nodes => nodes.map(a => a.href));
                 if (!appLinks.length) throw new Error('App entry link missing');
-                if (appLinks.some(href => !href.includes('app.html?v=877f655'))) throw new Error('Landing page contains a stale app link: ' + JSON.stringify(appLinks));
+                if (appLinks.some(href => !href.includes('app.html?v=1.1.1-d0324d2'))) throw new Error('Landing page contains a stale app link: ' + JSON.stringify(appLinks));
               } else {
                 await page.waitForFunction(() => !!document.querySelector('#authEmail') || document.querySelector('#modalBack')?.classList.contains('open'), { timeout: 15000 }).catch(() => {});
                 const startupState = await page.evaluate(() => ({authEmail:!!document.querySelector('#authEmail'), modalOpen:document.querySelector('#modalBack')?.classList.contains('open'), runtimeError:document.querySelector('#igRuntimeError')?.textContent || '', supabase:!!window.supabase?.createClient}));
@@ -51,10 +52,12 @@ jobs:
                   return r.width > 0 && r.height > 0 && getComputedStyle(el).display !== 'none';
                 });
                 if (!visible) throw new Error('App interface is not visible');
+                const storyStripVisible = await page.locator('#storyStrip').isVisible().catch(() => false);
+                if (!storyStripVisible) throw new Error('Story strip is not visible');
                 const splashVisible = await page.locator('#appSplash').evaluate(el => getComputedStyle(el).visibility !== 'hidden' && Number(getComputedStyle(el).opacity) > 0.05);
                 if (splashVisible) throw new Error('Splash screen did not disappear');
                 const html = await page.content();
-                for (const marker of ['uploadIranGramStorageFile', 'loadIranGramTus', 'prepareIranGramImage', 'prepareIranGramAvatar', 'startIncomingCallPolling', ".select('id,avatar_url').single()", 'incomingCallSeenIds', 'oniceconnectionstatechange']) {
+                for (const marker of ['uploadIranGramStorageFile', 'loadIranGramTus', 'prepareIranGramImage', 'prepareIranGramAvatar', 'startIncomingCallPolling', ".select('id,avatar_url').single()", 'incomingCallSeenIds', 'oniceconnectionstatechange', 'id="storyStrip"', 'function loadStories', 'function createStory', 'function setupStoryRealtime', "from('stories')"]) {
                   if (!html.includes(marker)) throw new Error('Live app missing ' + marker);
                 }
                 for (const marker of ['id="stories"', 'id="videoNoteBtn"', 'data-round-video']) {

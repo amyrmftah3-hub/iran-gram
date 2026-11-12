@@ -1435,6 +1435,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
  <div class="searchbox"><input id="search" placeholder="جست‌وجو" autocomplete="off"></div>
  <div id="adBanner" class="ad-banner" hidden aria-label="تبلیغات"></div>
  <div class="filters" role="tablist" aria-label="پوشه گفتگوها"><button class="filter active" role="tab" aria-selected="true" data-filter="all">همه چت‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="people">شخصی</button><button class="filter" role="tab" aria-selected="false" data-filter="unread">خوانده‌نشده</button><button class="filter" role="tab" aria-selected="false" data-filter="groups">گروه‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="channels">کانال‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="archive">آرشیو</button><button class="filter" role="tab" aria-selected="false" data-filter="hidden">مخفی</button></div>
+ <div class="stories" id="storyStrip" aria-label="داستان‌های کاربران"></div>
  <div class="chats" id="chatList"></div>
  <button class="compose-fab" id="newBtn" title="گفتگوی جدید" aria-label="گفتگوی جدید">✎</button>
  <nav class="bottom-nav" id="bottomNav" aria-label="بخش‌های اصلی">
@@ -1646,6 +1647,110 @@ function authModal(){
  $('#signInBtn').onclick=async()=>{const email=$('#authEmail').value.trim(),password=$('#authPassword').value;if(!email||!password){$('#authHint').textContent='ایمیل و رمز عبور را وارد کن.';return}const {error}=await supabaseClient.auth.signInWithPassword({email,password});$('#authHint').textContent=error?error.message:'ورود انجام شد.';if(!error){closeModal();await startOnline()}};
  $('#signUpBtn').onclick=async()=>{const email=$('#authEmail').value.trim(),password=$('#authPassword').value;if(!email||password.length<6){$('#authHint').textContent='ایمیل معتبر و رمز حداقل ۶ کاراکتری وارد کن.';return}const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{name:email.split('@')[0]}}});$('#authHint').textContent=error?error.message:(data.session?'حساب ساخته شد.':'حساب ساخته شد؛ ایمیلت را برای تأیید بررسی کن.');if(data.session){closeModal();await startOnline()}};
 }
+let storyRows=[],storyRealtimeChannel=null;
+function renderStories(){
+ const host=$('#storyStrip');if(!host)return;
+ if(!remoteMode||!currentUser){
+  host.innerHTML='<button type="button" class="story" data-story-action="login" style="border:0;background:transparent;color:inherit;padding:0"><span class="storyring add"><span>＋</span></span>ورود برای داستان</button>';
+  return;
+ }
+ const grouped=new Map();
+ for(const row of storyRows){if(!grouped.has(row.user_id))grouped.set(row.user_id,[]);grouped.get(row.user_id).push(row)}
+ const items=[{id:'add',label:'داستان من',letter:'＋',add:true}];
+ for(const [userId,rows] of grouped){
+  const first=rows[0];
+  items.push({id:userId,label:userId===currentUser.id?'داستان من':(first.profileName||first.username||'کاربر'),letter:userId===currentUser.id?'من':Array.from(first.profileName||first.username||'ک')[0]});
+ }
+ host.innerHTML=items.map(item=>'<button type="button" class="story" data-story-action="'+esc(item.id)+'" aria-label="'+esc(item.add?'افزودن داستان':('دیدن داستان '+item.label))+'" style="border:0;background:transparent;color:inherit;padding:0"><span class="storyring '+(item.add?'add':'')+'"><span>'+esc(item.letter)+'</span></span>'+esc(item.label)+'</button>').join('');
+}
+async function loadStories(){
+ if(!remoteMode||!currentUser||!supabaseClient){storyRows=[];renderStories();return}
+ const {data,error}=await supabaseClient.from('stories').select('id,user_id,media_path,media_type,caption,created_at,expires_at').gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false}).limit(100);
+ if(error){console.warn('IranGram stories load failed:',error.message);const host=$('#storyStrip');if(host)host.innerHTML='<div class="subtle" style="padding:12px">دریافت داستان‌ها ناموفق بود؛ دوباره تلاش کن.</div>';return}
+ const rows=data||[],userIds=[...new Set(rows.map(x=>x.user_id))];
+ let profiles=[];
+ if(userIds.length){
+  const result=await supabaseClient.from('profiles').select('id,display_name,username').in('id',userIds);
+  if(!result.error)profiles=result.data||[];
+ }
+ const byId=new Map(profiles.map(x=>[x.id,x]));
+ storyRows=await Promise.all(rows.map(async row=>{
+  const profile=byId.get(row.user_id)||{};
+  const signed=await supabaseClient.storage.from('arogram-stories').createSignedUrl(row.media_path,3600);
+  return {...row,profileName:profile.display_name||'',username:profile.username||'',signedUrl:signed.data?.signedUrl||''};
+ }));
+ renderStories();
+}
+async function createStory(){
+ if(!remoteMode||!currentUser){authModal();toast('برای انتشار داستان اول وارد حسابت شو');return}
+ showModal('انتشار داستان','<label>عکس یا ویدئو</label><input id="storyFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"><label>توضیح کوتاه (اختیاری)</label><textarea id="storyCaption" maxlength="300" placeholder="چه خبر؟"></textarea><p class="subtle">داستان پس از ۲۴ ساعت از نمایش خارج می‌شود. حداکثر حجم: ۲۰ مگابایت.</p><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="publishStory">انتشار</button></div>');
+ const button=$('#publishStory');
+ button.onclick=async()=>{
+  const file=$('#storyFile').files?.[0],caption=$('#storyCaption').value.trim();
+  if(!file){toast('اول عکس یا ویدئو را انتخاب کن');return}
+  if(file.size>20*1024*1024){toast('حجم فایل باید کمتر از ۲۰ مگابایت باشد');return}
+  const mime=iranGramFileMime(file)||file.type;
+  const allowed=['image/jpeg','image/png','image/webp','image/gif','video/mp4','video/webm'];
+  if(!allowed.includes(mime)){toast('این نوع فایل برای داستان پشتیبانی نمی‌شود');return}
+  button.disabled=true;button.textContent='در حال بارگذاری…';
+  const safeName=(file.name||'story').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,80)||'story';
+  const path=currentUser.id+'/'+Date.now()+'_'+safeName;
+  const storage=supabaseClient.storage.from('arogram-stories');
+  const upload=await storage.upload(path,file,{upsert:false,contentType:mime,cacheControl:'3600'});
+  if(upload.error){button.disabled=false;button.textContent='تلاش دوباره';toast('آپلود داستان ناموفق بود: '+upload.error.message);return}
+  const expiresAt=new Date(Date.now()+24*60*60*1000).toISOString();
+  const {error}=await supabaseClient.from('stories').insert({user_id:currentUser.id,media_path:path,media_type:mime.startsWith('video/')?'video':'image',caption:caption.slice(0,300),expires_at:expiresAt});
+  if(error){
+   await storage.remove([path]);
+   button.disabled=false;button.textContent='تلاش دوباره';
+   toast('ثبت داستان ناموفق بود: '+error.message);return;
+  }
+  closeModal();await loadStories();toast('داستانت منتشر شد و تا ۲۴ ساعت نمایش داده می‌شود');
+ };
+}
+function openStoryGroup(userId){
+ const items=storyRows.filter(x=>x.user_id===userId);
+ if(!items.length)return;
+ let index=0;
+ const show=()=>{
+  const item=items[index];
+  if(!item.signedUrl){toast('دریافت فایل داستان ناموفق بود');return}
+  const media=item.media_type==='video'
+   ?'<video src="'+esc(item.signedUrl)+'" controls autoplay playsinline style="width:100%;max-height:58vh;border-radius:14px;background:#000"></video>'
+   :'<img src="'+esc(item.signedUrl)+'" alt="داستان" style="width:100%;max-height:58vh;object-fit:contain;border-radius:14px;background:#000">';
+  const own=item.user_id===currentUser?.id;
+  showModal(esc(item.profileName||item.username||'داستان'),'<div style="text-align:center">'+media+'<p style="white-space:pre-wrap">'+esc(item.caption||'')+'</p><small class="subtle">داستان '+(index+1).toLocaleString('fa-IR')+' از '+items.length.toLocaleString('fa-IR')+' · انقضا پس از ۲۴ ساعت</small></div><div class="modalactions">'+(index>0?'<button class="secondary" id="storyPrev">قبلی</button>':'')+(index<items.length-1?'<button class="secondary" id="storyNext">بعدی</button>':'')+(own?'<button class="secondary" id="storyDelete">حذف داستان</button>':'')+'<button class="primary" data-close>بستن</button></div>');
+  const prev=$('#storyPrev'),next=$('#storyNext'),del=$('#storyDelete');
+  if(prev)prev.onclick=()=>{index--;show()};
+  if(next)next.onclick=()=>{index++;show()};
+  if(del)del.onclick=async()=>{
+   del.disabled=true;del.textContent='در حال حذف…';
+   const {error}=await supabaseClient.from('stories').delete().eq('id',item.id).eq('user_id',currentUser.id);
+   if(error){toast('حذف داستان ناموفق بود: '+error.message);return}
+   const {error:removeError}=await supabaseClient.storage.from('arogram-stories').remove([item.media_path]);
+   if(removeError)console.warn('Story media cleanup failed:',removeError.message);
+   storyRows=storyRows.filter(x=>x.id!==item.id);closeModal();renderStories();toast('داستان حذف شد');
+  };
+ };
+ show();
+}
+$('#storyStrip').onclick=e=>{
+ const button=e.target.closest('[data-story-action]');if(!button)return;
+ const action=button.dataset.storyAction;
+ if(action==='login'){authModal();return}
+ if(action==='add'){createStory();return}
+ openStoryGroup(action);
+};
+function setupStoryRealtime(){
+ if(!remoteMode||!currentUser)return;
+ if(storyRealtimeChannel)supabaseClient.removeChannel(storyRealtimeChannel);
+ storyRealtimeChannel=supabaseClient.channel('iran-gram-live-stories')
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'stories'},()=>loadStories())
+  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'stories'},()=>loadStories())
+  .on('postgres_changes',{event:'DELETE',schema:'public',table:'stories'},()=>loadStories())
+  .subscribe();
+}
+
 async function loadOnlineChats(){
  const {data:membershipRows,error:membershipError}=await supabaseClient.from('conversation_members').select('conversation_id,role').eq('user_id',currentUser.id);
  if(membershipError){toast('دریافت عضویت گفت‌وگوها ناموفق بود: '+membershipError.message);return}
@@ -1776,6 +1881,7 @@ async function startOnline(){
  presenceHeartbeat=setInterval(()=>{if(document.visibilityState==='visible')updateMyPresence(true)},45000);
  const myProfile=profileResult.data;if(myProfile){state.profile.name=myProfile.display_name||state.profile.name;state.profile.bio=myProfile.bio||'';state.profile.username=myProfile.username||'';state.profile.avatar_url=myProfile.avatar_url||'';save()}
  await loadOnlineChats();
+ await loadStories();setupStoryRealtime();
  
  await setupCallRealtime();
  if(activityHeartbeat)clearInterval(activityHeartbeat);
@@ -2867,7 +2973,7 @@ $('#modal').addEventListener('click',e=>{
 },true);
 $('#modalBack').onclick=e=>{if(e.target===$('#modalBack'))closeModal()};
 setSplashPoem();
-render();
+render();renderStories();
 function finishSplash(){
  const splash=$('#appSplash');
  if(splash){splash.style.animation='none';splash.style.opacity='0';splash.style.visibility='hidden';splash.style.pointerEvents='none'}

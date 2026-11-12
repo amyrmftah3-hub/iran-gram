@@ -3,44 +3,186 @@ package com.iranigram.app;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.net.http.SslError;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.Gravity;
+import android.view.View;
+import android.webkit.CookieManager;
 import android.webkit.PermissionRequest;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
-import android.view.View;
+
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 public class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 41;
+    private static final String APP_URL = "https://iran-gram.onrender.com/app.html?v=877f655";
+    private static final int NAVY = Color.rgb(7, 22, 55);
+
+    private FrameLayout root;
     private WebView webView;
+    private LinearLayout loadingPanel;
+    private TextView statusText;
+    private ProgressBar progressBar;
+    private Button retryButton;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private boolean pageLoaded = false;
     private PermissionRequest pendingWebPermission;
     private String[] pendingAndroidPermissions = new String[0];
+
+    private final Runnable loadTimeout = () -> {
+        if (!pageLoaded) showError("بارگذاری ایرانگرام بیشتر از حد معمول طول کشید. اتصال اینترنت را بررسی کن و دوباره بزن.");
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setStatusBarColor(NAVY);
+        getWindow().setNavigationBarColor(NAVY);
+        buildScreen();
+        createWebView();
+        if (savedInstanceState != null) {
+            Bundle webState = savedInstanceState.getBundle("web_state");
+            if (webState != null && webView.restoreState(webState) != null) {
+                showLoading("در حال بازگردانی ایرانگرام...");
+                handler.postDelayed(loadTimeout, 30000);
+                return;
+            }
+        }
+        loadApp();
+    }
+
+    private void buildScreen() {
+        root = new FrameLayout(this);
+        root.setBackgroundColor(NAVY);
+        setContentView(root);
+
+        loadingPanel = new LinearLayout(this);
+        loadingPanel.setOrientation(LinearLayout.VERTICAL);
+        loadingPanel.setGravity(Gravity.CENTER);
+        loadingPanel.setPadding(32, 32, 32, 32);
+        loadingPanel.setBackgroundColor(NAVY);
+
+        TextView mark = new TextView(this);
+        mark.setText("✈");
+        mark.setTextColor(Color.WHITE);
+        mark.setTextSize(54);
+        mark.setGravity(Gravity.CENTER);
+        loadingPanel.addView(mark, new LinearLayout.LayoutParams(-2, -2));
+
+        TextView title = new TextView(this);
+        title.setText("ایران‌گرام");
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(27);
+        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        title.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(-2, -2);
+        titleParams.topMargin = 12;
+        loadingPanel.addView(title, titleParams);
+
+        statusText = new TextView(this);
+        statusText.setText("در حال اتصال به ایرانگرام...");
+        statusText.setTextColor(Color.rgb(205, 222, 245));
+        statusText.setTextSize(14);
+        statusText.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(-1, -2);
+        statusParams.topMargin = 18;
+        loadingPanel.addView(statusText, statusParams);
+
+        progressBar = new ProgressBar(this);
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(180, -2);
+        progressParams.topMargin = 22;
+        loadingPanel.addView(progressBar, progressParams);
+
+        retryButton = new Button(this);
+        retryButton.setText("تلاش دوباره");
+        retryButton.setOnClickListener(v -> loadApp());
+        LinearLayout.LayoutParams retryParams = new LinearLayout.LayoutParams(-2, -2);
+        retryParams.topMargin = 18;
+        loadingPanel.addView(retryButton, retryParams);
+        retryButton.setVisibility(View.GONE);
+
+        root.addView(loadingPanel, new FrameLayout.LayoutParams(-1, -1));
+    }
+
+    private void createWebView() {
         webView = new WebView(this);
-        webView.setBackgroundColor(0xFFFFFFFF);
+        webView.setBackgroundColor(NAVY);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setAllowFileAccess(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        CookieManager.getInstance().setAcceptCookie(true);
+
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public void onReceivedError(WebView view, android.webkit.WebResourceRequest request, android.webkit.WebResourceError error) {
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                pageLoaded = false;
+                showLoading("در حال باز کردن ایرانگرام...");
+                handler.removeCallbacks(loadTimeout);
+                handler.postDelayed(loadTimeout, 30000);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                pageLoaded = true;
+                handler.removeCallbacks(loadTimeout);
+                loadingPanel.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) {
-                    String fallback = "<!doctype html><html lang='fa' dir='rtl'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>اتصال ایرانگرام</title><body style='margin:0;background:#071a36;color:#fff;font-family:Tahoma,sans-serif;display:grid;min-height:100vh;place-items:center;text-align:center'><main style='padding:28px;max-width:420px'><div style='font-size:48px'>✈️</div><h2>اتصال به ایرانگرام برقرار نشد</h2><p style='line-height:2;color:#c9d9ec'>اینترنت یا دسترسی به سایت موقتاً در دسترس نیست. دوباره تلاش کن.</p><button onclick=\"location.href='https://iran-gram.onrender.com/app.html?v=877f655'\" style='border:0;border-radius:24px;padding:13px 28px;background:#168acd;color:white;font-size:16px'>تلاش دوباره</button></main></body></html>";
-                    view.loadDataWithBaseURL("https://iran-gram.onrender.com/", fallback, "text/html", "UTF-8", null);
+                    handler.removeCallbacks(loadTimeout);
+                    showError("اتصال به سرور برقرار نشد. اینترنت را بررسی کن و دوباره تلاش کن.");
                 }
             }
+
+            @Override
+            public void onReceivedHttpError(WebView view, WebResourceRequest request, android.webkit.WebResourceResponse response) {
+                super.onReceivedHttpError(view, request, response);
+                if (request.isForMainFrame()) {
+                    handler.removeCallbacks(loadTimeout);
+                    showError("سرور ایرانگرام پاسخ مناسب نداد (کد " + response.getStatusCode() + "). دوباره تلاش کن.");
+                }
+            }
+
+            @Override
+            public void onReceivedSslError(WebView view, SslErrorHandler sslHandler, SslError error) {
+                sslHandler.cancel();
+                handler.removeCallbacks(loadTimeout);
+                showError("اتصال امن برقرار نشد. تاریخ و ساعت گوشی و اینترنت را بررسی کن.");
+            }
+
+            @Override
+            public boolean onRenderProcessGone(WebView view, android.webkit.RenderProcessGoneDetail detail) {
+                handler.removeCallbacks(loadTimeout);
+                showError("بخش نمایش برنامه متوقف شد. برای راه‌اندازی دوباره تلاش کن.");
+                return true;
+            }
         });
+
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onPermissionRequest(PermissionRequest request) {
@@ -70,12 +212,32 @@ public class MainActivity extends Activity {
                 if (pendingWebPermission == request) pendingWebPermission = null;
             }
         });
-        setContentView(webView);
-        if (savedInstanceState == null) {
-            webView.loadUrl("https://iran-gram.onrender.com/app.html?v=877f655");
-        } else {
-            webView.restoreState(savedInstanceState);
-        }
+
+        root.addView(webView, 0, new FrameLayout.LayoutParams(-1, -1));
+    }
+
+    private void showLoading(String message) {
+        statusText.setText(message);
+        progressBar.setVisibility(View.VISIBLE);
+        retryButton.setVisibility(View.GONE);
+        loadingPanel.setVisibility(View.VISIBLE);
+    }
+
+    private void showError(String message) {
+        pageLoaded = false;
+        statusText.setText(message);
+        progressBar.setVisibility(View.GONE);
+        retryButton.setVisibility(View.VISIBLE);
+        loadingPanel.setVisibility(View.VISIBLE);
+    }
+
+    private void loadApp() {
+        if (webView == null) return;
+        pageLoaded = false;
+        showLoading("در حال اتصال به ایرانگرام...");
+        handler.removeCallbacks(loadTimeout);
+        handler.postDelayed(loadTimeout, 30000);
+        webView.loadUrl(APP_URL);
     }
 
     @Override
@@ -97,7 +259,11 @@ public class MainActivity extends Activity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        if (webView != null) webView.saveState(outState);
+        if (webView != null) {
+            Bundle webState = new Bundle();
+            webView.saveState(webState);
+            outState.putBundle("web_state", webState);
+        }
     }
 
     @Override
@@ -108,7 +274,9 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        handler.removeCallbacks(loadTimeout);
         if (webView != null) {
+            webView.stopLoading();
             webView.destroy();
             webView = null;
         }

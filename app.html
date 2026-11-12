@@ -2189,7 +2189,7 @@ async function uploadAndSendFile(file,kind='media'){
  try{
   const chat=activeChat();if(!chat)throw new Error('اول یه گفت‌وگو باز کن 🙂');
   if(!remoteMode||!currentUser||!chat.remote)throw new Error('برای ارسال فایل وارد حساب آنلاین شو.');
-  if(chat.type==='channels'&&chat.memberRole!=='owner')throw new Error('فقط مدیر کانال می‌تواند در کانال فایل بفرستد.');
+  if(chat.type==='channels'&&!['owner','admin'].includes(chat.memberRole))throw new Error('فقط مالک یا مدیر کانال می‌تواند در کانال فایل بفرستد.');
   if(!file||!file.size)throw new Error('فایل خالی است؛ دوباره انتخاب یا ضبط کن.');
   if(file.size>100*1024*1024)throw new Error('حجم فایل انتخابی بیش از ۱۰۰ مگابایت است.');
   let mime=iranGramFileMime(file);
@@ -2277,27 +2277,65 @@ function newChat(){
 }
 async function addConversationMember(chatId){
  const chat=state.chats.find(x=>x.id===chatId);
- if(!remoteMode||!currentUser||!chat?.remote||chat.memberRole!=='owner'){toast('فقط سازنده گروه یا کانال می‌تواند عضو اضافه کند');return}
- showModal('افزودن عضو','<label>نام کاربری یا نام نمایشی</label><input id="memberLookup" placeholder="مثلاً @username"><div id="memberResults" style="margin-top:12px"></div><div class="modalactions"><button class="secondary" data-close>بستن</button><button class="primary" id="findConversationMember">جست‌وجو</button></div>');
+ if(!remoteMode||!currentUser||!chat?.remote||chat.memberRole!=='owner'){toast('فقط مالک گروه یا کانال می‌تواند اعضا را مدیریت کند');return}
+ showModal('مدیریت اعضا','<p class="subtle">مالک می‌تواند اعضا را به مدیر تبدیل کند یا دسترسی آن‌ها را بردارد.</p><div id="conversationMemberList" class="settings-list"><p class="subtle">در حال دریافت اعضا…</p></div><hr><label>افزودن عضو با نام کاربری</label><input id="memberLookup" placeholder="مثلاً @username"><div id="memberResults" style="margin-top:12px"></div><div class="modalactions"><button class="secondary" data-close>بستن</button><button class="primary" id="findConversationMember">جست‌وجو</button></div>');
+ const list=$('#conversationMemberList'),results=$('#memberResults');
+ const refresh=async()=>{
+  list.innerHTML='<p class="subtle">در حال دریافت اعضا…</p>';
+  const {data:members,error}=await supabaseClient.from('conversation_members').select('user_id,role').eq('conversation_id',chat.id);
+  if(error){list.innerHTML='<p class="subtle">دریافت اعضا ناموفق بود: '+esc(error.message)+'</p>';return}
+  const ids=(members||[]).map(x=>x.user_id);
+  let profiles=[];
+  if(ids.length){
+   const p=await supabaseClient.from('profiles').select('id,display_name,username').in('id',ids);
+   if(!p.error)profiles=p.data||[];
+  }
+  const byId=new Map(profiles.map(x=>[x.id,x]));
+  list.innerHTML=(members||[]).map(m=>{
+   const profile=byId.get(m.user_id)||{},name=profile.display_name||profile.username||'کاربر';
+   const roleLabel=m.role==='owner'?'مالک':m.role==='admin'?'مدیر':'عضو';
+   const controls=m.role==='owner'?'':('<button type="button" class="tiny" data-member-role="'+(m.role==='admin'?'member':'admin')+'" data-member-user="'+esc(m.user_id)+'">'+(m.role==='admin'?'عزل مدیر':'ارتقا به مدیر')+'</button><button type="button" class="tiny" data-remove-member="'+esc(m.user_id)+'">حذف</button>');
+   return '<div class="setting-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="min-width:0"><b>'+esc(name)+'</b><small class="subtle" style="display:block">'+(profile.username?'@'+esc(profile.username):'')+' · '+roleLabel+'</small></div><div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">'+controls+'</div></div>';
+  }).join('')||'<p class="subtle">هنوز عضوی وجود ندارد.</p>';
+ };
  const search=async()=>{
   const term=$('#memberLookup').value.trim().replace(/^@/,'');
-  if(!term){toast('یک نام وارد کن');return}
+  if(!term){toast('یک نام کاربری وارد کن');return}
   let {data:users,error}=await supabaseClient.from('profiles').select('id,display_name,username').eq('username',term.toLowerCase()).neq('id',currentUser.id).limit(5);
-  if(error){$('#memberResults').textContent='جست‌وجو ناموفق بود: '+error.message;return}
+  if(error){results.textContent='جست‌وجو ناموفق بود: '+error.message;return}
   if(!users?.length){
    const byName=await supabaseClient.from('profiles').select('id,display_name,username').eq('display_name',term).neq('id',currentUser.id).limit(5);
-   if(byName.error){$('#memberResults').textContent='جست‌وجو ناموفق بود: '+byName.error.message;return}
+   if(byName.error){results.textContent='جست‌وجو ناموفق بود: '+byName.error.message;return}
    users=byName.data||[];
   }
-  $('#memberResults').innerHTML=(users||[]).map(u=>'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)"><span><b>'+esc(u.display_name||'کاربر')+'</b><small class="subtle"> @'+esc(u.username||'')+'</small></span><button class="secondary" data-add-member="'+esc(u.id)+'">افزودن</button></div>').join('')||'<p class="subtle">کاربری پیدا نشد.</p>';
+  results.innerHTML=(users||[]).map(u=>'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)"><span><b>'+esc(u.display_name||'کاربر')+'</b><small class="subtle"> @'+esc(u.username||'')+'</small></span><button type="button" class="secondary" data-add-member="'+esc(u.id)+'">افزودن</button></div>').join('')||'<p class="subtle">کاربری پیدا نشد.</p>';
  };
  $('#findConversationMember').onclick=search;
- $('#memberResults').onclick=async e=>{
+ results.onclick=async e=>{
   const button=e.target.closest('[data-add-member]');if(!button)return;
+  button.disabled=true;
   const {error}=await supabaseClient.from('conversation_members').insert({conversation_id:chat.id,user_id:button.dataset.addMember,role:'member'});
-  if(error){toast(error.code==='23505'?'این کاربر از قبل عضو است.':'افزودن عضو ناموفق بود: '+error.message);return}
-  closeModal();await loadOnlineChats();openChat(chat.id);toast('عضو به گفت‌وگو اضافه شد');
+  if(error){button.disabled=false;toast(error.code==='23505'?'این کاربر از قبل عضو است.':'افزودن عضو ناموفق بود: '+error.message);return}
+  results.innerHTML='';$('#memberLookup').value='';await refresh();toast('عضو اضافه شد');
  };
+ list.onclick=async e=>{
+  const roleButton=e.target.closest('[data-member-role]');
+  const removeButton=e.target.closest('[data-remove-member]');
+  if(roleButton){
+   roleButton.disabled=true;
+   const {error}=await supabaseClient.from('conversation_members').update({role:roleButton.dataset.memberRole}).eq('conversation_id',chat.id).eq('user_id',roleButton.dataset.memberUser);
+   if(error){roleButton.disabled=false;toast('تغییر نقش ناموفق بود: '+error.message);return}
+   await refresh();toast(roleButton.dataset.memberRole==='admin'?'کاربر مدیر شد':'دسترسی مدیریت برداشته شد');return;
+  }
+  if(removeButton){
+   if(!confirm('این عضو از گروه یا کانال حذف شود؟'))return;
+   removeButton.disabled=true;
+   const {error}=await supabaseClient.from('conversation_members').delete().eq('conversation_id',chat.id).eq('user_id',removeButton.dataset.removeMember);
+   if(error){removeButton.disabled=false;toast('حذف عضو ناموفق بود: '+error.message);return}
+   await refresh();toast('عضو حذف شد');
+  }
+ };
+ await refresh();
 }
 
 async function conversationProfileModal(chat){

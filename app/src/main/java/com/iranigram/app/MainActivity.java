@@ -32,7 +32,7 @@ import androidx.core.content.ContextCompat;
 
 public class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 41;
-    private static final String APP_URL = "https://iran-gram.onrender.com/app.html?v=877f655";
+    private static final String APP_URL = "https://iran-gram.onrender.com/app.html?v=1.1.1-0844e48";
     private static final int NAVY = Color.rgb(7, 22, 55);
 
     private FrameLayout root;
@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setAllowFileAccess(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         CookieManager.getInstance().setAcceptCookie(true);
 
         webView.setWebViewClient(new WebViewClient() {

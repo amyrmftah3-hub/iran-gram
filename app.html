@@ -1427,7 +1427,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
   <div class="drawer-section">حساب کاربری</div>
   <button data-action="profile"><span>👤</span> پروفایل من</button><button data-action="contacts"><span>♙</span> مخاطبین</button><button data-action="saved"><span>🔖</span> پیام‌های ذخیره‌شده</button>
   <div class="drawer-section">ایرانگرام</div>
-  <button data-action="group"><span>👥</span> ساخت گروه</button><button data-action="channel"><span>📢</span> ساخت کانال</button><button data-action="bot"><span>🤖</span> ساخت بات</button><button data-action="anonymous"><span>🕵️</span> پیام‌های ناشناس</button><button data-action="ads"><span>📣</span> تبلیغات</button><button data-action="rewards"><span>🎁</span> جایزه و امتیازها</button><button data-action="adrequest"><span>📝</span> ثبت تبلیغ</button><button data-action="settings"><span>⚙️</span> تنظیمات</button>
+  <button data-action="group"><span>👥</span> ساخت گروه</button><button data-action="channel"><span>📢</span> ساخت کانال</button><button data-action="bot"><span>🤖</span> ساخت بات</button><button data-action="anonymous"><span>🕵️</span> پیام‌های ناشناس</button><button data-action="channelcomments"><span>💬</span> صندوق نظرات کانال‌ها</button><button data-action="ads"><span>📣</span> تبلیغات</button><button data-action="rewards"><span>🎁</span> جایزه و امتیازها</button><button data-action="adrequest"><span>📝</span> ثبت تبلیغ</button><button data-action="settings"><span>⚙️</span> تنظیمات</button>
   <div class="drawer-section">ابزارها</div>
   <button data-action="admin"><span>🛡️</span> مدیریت ایرانگرام</button><button data-action="export"><span>⬇️</span> خروجی پشتیبان</button><button data-action="about"><span>ℹ️</span> درباره ایرانگرام</button><button data-action="logout"><span>🚪</span> خروج از حساب</button>
   <div class="drawer-footer">ایرانگرام · پیام‌رسان فارسی</div>
@@ -1623,7 +1623,7 @@ function renderMessages(){
    ${realRows.length?`<div class="reaction-summary" aria-label="واکنش‌های واقعی">${realRows.map(([emoji,count])=>`<button class="reaction-chip ${m.reactions?.includes(emoji)?"is-liked":""}" data-react="${m.id}" data-emoji="${emoji}" aria-pressed="${m.reactions?.includes(emoji)?"true":"false"}"><span>${emoji}</span><b>${count.toLocaleString("fa-IR")}</b></button>`).join('')}</div>`:''}
    <div class="msgactions">${["👍","❤️","😂","🔥","👏","🚀"].map(em=>`<button class="tiny reaction-btn ${m.reactions?.includes(em)?"is-liked":""}" data-react="${m.id}" data-emoji="${em}" aria-label="واکنش ${em}" aria-pressed="${m.reactions?.includes(em)?"true":"false"}">${em}</button>`).join('')}
    ${m.mine?`<button class="tiny" data-edit="${m.id}">ویرایش</button><button class="tiny" data-delete="${m.id}">حذف</button>`:''}
-   <button class="tiny" data-reply="${m.id}">پاسخ</button><button class="tiny" data-pin="${m.id}">${c.pinnedMessageId===m.id?'برداشتن سنجاق':'📌 سنجاق'}</button><button class="tiny" data-forward="${m.id}">فوروارد</button><button class="tiny" data-copy="${m.id}">کپی</button><button class="tiny" data-save="${m.id}">ذخیره</button></div>
+   <button class="tiny" data-reply="${m.id}">پاسخ</button>${c.type==="channels"?`<button class="tiny" data-channel-comments="${m.id}">💬 نظرات</button>`:""}<button class="tiny" data-pin="${m.id}">${c.pinnedMessageId===m.id?'برداشتن سنجاق':'📌 سنجاق'}</button><button class="tiny" data-forward="${m.id}">فوروارد</button><button class="tiny" data-copy="${m.id}">کپی</button><button class="tiny" data-save="${m.id}">ذخیره</button></div>
   </article>`
  }).join('');
  $('#messages').scrollTop=$('#messages').scrollHeight;
@@ -2511,6 +2511,71 @@ async function createCollection(type){
   }
  };
 }
+
+async function openChannelComments(postId, focusCommentId=null){
+ const chat=activeChat();
+ if(!remoteMode||!currentUser||!chat||chat.type!=='channels'){toast('برای دیدن نظرات، یک کانال آنلاین را باز کن');return}
+ const {data:post,error:postError}=await supabaseClient.from('messages').select('id,body,created_at').eq('id',postId).eq('conversation_id',chat.id).maybeSingle();
+ if(postError||!post){toast('پست پیدا نشد یا دسترسی نداری');return}
+ const load=async()=>{
+  const {data:rows,error}=await supabaseClient.from('channel_comments').select('id,channel_id,post_id,author_id,parent_comment_id,body,created_at').eq('channel_id',chat.id).eq('post_id',postId).order('created_at',{ascending:true}).limit(250);
+  if(error){toast('دریافت نظرات ناموفق بود: '+error.message);return null}
+  const ids=[...new Set((rows||[]).map(x=>x.author_id))];
+  let profiles=[];
+  if(ids.length){const p=await supabaseClient.from('profiles').select('id,display_name,username').in('id',ids);if(!p.error)profiles=p.data||[]}
+  const names=new Map(profiles.map(x=>[x.id,x.display_name||x.username||'کاربر']));
+  const isAdmin=chat.memberRole==='owner'||chat.memberRole==='admin';
+  const html=(rows||[]).map(x=>'<article style="padding:11px;margin:8px 0;border:1px solid var(--line);border-radius:12px;background:var(--panel)" id="channel-comment-'+esc(x.id)+'"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted)"><b>'+esc(names.get(x.author_id)||'کاربر')+(x.parent_comment_id?' · پاسخ مدیر':'')+'</b><span>'+esc(new Date(x.created_at).toLocaleString('fa-IR'))+'</span></div><p style="white-space:pre-wrap;line-height:1.8;margin:7px 0">'+esc(x.body)+'</p>'+(isAdmin&&!x.parent_comment_id?'<button class="tiny" data-comment-reply="'+esc(x.id)+'">پاسخ به این نظر</button>':'')+'</article>').join('');
+  return {rows,html};
+ };
+ const result=await load();if(!result)return;
+ const admin=chat.memberRole==='owner'||chat.memberRole==='admin';
+ showModal('نظرات پست کانال','<div style="padding:10px;border-radius:12px;background:var(--panel2);margin-bottom:12px"><b>پست اصلی</b><p style="white-space:pre-wrap;margin:6px 0 0">'+esc(post.body||'')+'</p></div><div id="channelCommentRows">'+(result.html||'<p class="subtle">هنوز نظری ثبت نشده؛ اولین نفر باش!</p>')+'</div><div style="border-top:1px solid var(--line);padding-top:12px;margin-top:12px"><div id="commentReplyHint" class="subtle">'+(admin?'می‌توانی نظر بگذاری یا به یکی از نظرات پاسخ بدهی.':'نظر خودت را بنویس.')+'</div><input type="hidden" id="channelCommentParent" value=""><textarea id="channelCommentBody" maxlength="4000" rows="3" placeholder="نظر خودت را بنویس..." style="width:100%;margin-top:7px"></textarea><div class="modalactions"><button class="secondary" data-close>بستن</button><button class="primary" id="sendChannelComment">ارسال نظر</button></div></div>');
+ if(focusCommentId){$('#channelCommentParent').value=focusCommentId;$('#commentReplyHint').textContent='در حال پاسخ به نظر انتخاب‌شده';$('#channelCommentBody').placeholder='پاسخ خودت را بنویس...';}
+ $('#channelCommentRows').onclick=e=>{
+  const b=e.target.closest('[data-comment-reply]');if(!b)return;
+  $('#channelCommentParent').value=b.dataset.commentReply;
+  $('#commentReplyHint').textContent='پاسخ به نظر انتخاب‌شده';
+  $('#channelCommentBody').placeholder='پاسخ خودت را بنویس...';
+  $('#channelCommentBody').focus();
+ };
+ $('#sendChannelComment').onclick=async()=>{
+  const body=$('#channelCommentBody').value.trim(),parent=$('#channelCommentParent').value||null;
+  if(!body){toast('متن نظر را بنویس');return}
+  const button=$('#sendChannelComment');button.disabled=true;button.textContent='در حال ارسال...';
+  const {error}=await supabaseClient.from('channel_comments').insert({channel_id:chat.id,post_id:postId,author_id:currentUser.id,parent_comment_id:parent,body});
+  if(error){button.disabled=false;button.textContent='ارسال نظر';toast('ارسال نظر ناموفق بود: '+error.message);return}
+  toast(parent?'پاسخت ثبت شد':'نظرت ثبت شد');
+  await openChannelComments(postId);
+ };
+}
+async function channelCommentsInboxModal(){
+ if(!remoteMode||!currentUser){authModal();return}
+ const owned=state.chats.filter(c=>c.type==='channels'&&c.remote&&['owner','admin'].includes(c.memberRole));
+ if(!owned.length){showModal('صندوق نظرات کانال‌ها','<p class="subtle">هنوز مدیر یا مالک کانالی نیستی که نظراتش در این صندوق نمایش داده شود.</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>');return}
+ const channelIds=owned.map(c=>c.id);
+ const {data:rows,error}=await supabaseClient.from('channel_comments').select('id,channel_id,post_id,author_id,parent_comment_id,body,created_at').in('channel_id',channelIds).order('created_at',{ascending:false}).limit(150);
+ if(error){showModal('صندوق نظرات کانال‌ها','<p class="subtle">دریافت صندوق نظرات ناموفق بود: '+esc(error.message)+'</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>');return}
+ const postIds=[...new Set((rows||[]).map(x=>x.post_id))],authorIds=[...new Set((rows||[]).map(x=>x.author_id))];
+ const [postsResult,profilesResult]=await Promise.all([
+  postIds.length?supabaseClient.from('messages').select('id,body').in('id',postIds):Promise.resolve({data:[]}),
+  authorIds.length?supabaseClient.from('profiles').select('id,display_name,username').in('id',authorIds):Promise.resolve({data:[]})
+ ]);
+ const posts=new Map((postsResult.data||[]).map(x=>[x.id,x.body]));
+ const names=new Map((profilesResult.data||[]).map(x=>[x.id,x.display_name||x.username||'کاربر']));
+ const channels=new Map(owned.map(x=>[x.id,x]));
+ const html=(rows||[]).map(x=>'<article style="padding:12px;margin:9px 0;border:1px solid var(--line);border-radius:13px;background:var(--panel)"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted)"><b>'+esc(channels.get(x.channel_id)?.name||'کانال')+' · '+esc(names.get(x.author_id)||'کاربر')+'</b><span>'+esc(new Date(x.created_at).toLocaleString('fa-IR'))+'</span></div><div style="font-size:12px;color:var(--muted);margin-top:7px">پست: '+esc(String(posts.get(x.post_id)||'').slice(0,160))+'</div><p style="white-space:pre-wrap;line-height:1.8;margin:8px 0">'+esc(x.body)+'</p><button class="primary" data-open-comment-thread="'+esc(x.post_id)+'" data-focus-comment="'+esc(x.id)+'">بازکردن گفت‌وگو و پاسخ</button></article>').join('');
+ showModal('صندوق یکپارچه نظرات','<p class="subtle">نظرات کانال‌هایی که مدیر یا مالک آن‌ها هستی، اینجا یک‌جا جمع شده‌اند. برای پاسخ، گفت‌وگوی همان پست را باز کن.</p><div id="channelInboxRows">'+(html||'<p class="subtle">هنوز نظری برای کانال‌ها ثبت نشده.</p>')+'</div><div class="modalactions"><button class="secondary" id="refreshChannelInbox">تازه‌سازی</button><button class="primary" data-close>بستن</button></div>');
+ $('#refreshChannelInbox').onclick=channelCommentsInboxModal;
+ $('#channelInboxRows').onclick=e=>{
+  const b=e.target.closest('[data-open-comment-thread]');if(!b)return;
+  const postId=b.dataset.openCommentThread,commentId=b.dataset.focusComment;
+  const channel=owned.find(c=>c.messages.some(m=>m.id===postId))||owned.find(c=>c.id===rows.find(x=>x.post_id===postId)?.channel_id);
+  if(!channel){toast('کانال مربوط به این نظر پیدا نشد');return}
+  closeModal();openChat(channel.id);setTimeout(()=>openChannelComments(postId,commentId),80);
+ };
+}
+
 function showModal(title,body){$('#modal').innerHTML=`<h3>${title}</h3>${body}`;$('#modalBack').classList.add('open')}
 
 async function savedMessagesModal(){
@@ -2799,7 +2864,7 @@ function quickCreateModal(){
  $('#quickNewChat').onclick=()=>newChat();$('#quickNewGroup').onclick=()=>createCollection('groups');$('#quickNewChannel').onclick=()=>createCollection('channels');
 }
 $('#newBtn').onclick=quickCreateModal;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
-$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
+$('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,channelcomments:channelCommentsInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 // Reliable tap routing for the main navigation and conversation settings.
 document.addEventListener('click',e=>{
  const nav=e.target.closest('#bottomNav [data-nav]');
@@ -2818,7 +2883,7 @@ document.addEventListener('click',e=>{
  }
  const menuItem=e.target.closest('#mainMenu button[data-action]');
  if(menuItem){
-  const actions={login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,about:()=>showModal('درباره ایرانگرام','<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p>')};
+  const actions={login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,channelcomments:channelCommentsInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,about:()=>showModal('درباره ایرانگرام','<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p>')};
   const action=actions[menuItem.dataset.action];
   if(action){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();$('#mainMenu').classList.remove('open');try{action()}catch(err){console.error('IranGram menu action failed:',err);toast('باز کردن این بخش ناموفق بود؛ دوباره تلاش کن.')} }
  }
@@ -2894,7 +2959,13 @@ async function refreshMessageReactions(messageId){
  }
  return true;
 }
-$('#messages').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const c=activeChat();if(!c)return;if(b.dataset.refreshMedia!==undefined){const mediaMessage=c.messages.find(x=>x.id===b.dataset.refreshMedia);if(!mediaMessage)return;mediaMessage.mediaUrl='';mediaMessage.mediaUrlExpiresAt=0;mediaMessage.mediaLoadError='';renderMessages();return}if(b.dataset.retryMedia!==undefined){const failed=c.messages.find(x=>x.id===b.dataset.retryMedia);if(!failed?.retryFile)return;const file=failed.retryFile,kind=failed.retryKind;c.messages=c.messages.filter(x=>x!==failed);renderMessages();await uploadAndSendFile(file,kind);return}if(b.dataset.jumpPinned){document.querySelector('[data-msg="'+CSS.escape(b.dataset.jumpPinned)+'"]')?.scrollIntoView({behavior:'smooth',block:'center'});return}const id=b.dataset.react||b.dataset.edit||b.dataset.delete||b.dataset.reply||b.dataset.pin||b.dataset.forward||b.dataset.copy||b.dataset.save;const m=c.messages.find(x=>x.id===id);if(!m)return;if(b.dataset.save!==undefined){if(remoteMode&&currentUser&&c.remote){const {error}=await supabaseClient.from('saved_messages').insert({user_id:currentUser.id,conversation_id:c.id,original_message_id:m.id,body:m.text||''});if(error){toast(error.code==='23505'?'این پیام قبلاً ذخیره شده است':'ذخیره پیام ناموفق بود: '+error.message);return}}else{const list=JSON.parse(localStorage.getItem('ig_saved_messages')||'[]');if(list.some(x=>x.id===m.id)){toast('این پیام قبلاً ذخیره شده است');return}list.unshift({id:m.id,conversation:c.name,body:m.text||'',saved_at:new Date().toISOString()});localStorage.setItem('ig_saved_messages',JSON.stringify(list))}toast('پیام به ذخیره‌شده‌ها اضافه شد')}else if(b.dataset.react!==undefined){
+
+$('#messages').addEventListener('click',e=>{
+ const b=e.target.closest('[data-channel-comments]');if(!b)return;
+ e.preventDefault();e.stopPropagation();
+ openChannelComments(b.dataset.channelComments);
+},true);
+\n$('#messages').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const c=activeChat();if(!c)return;if(b.dataset.refreshMedia!==undefined){const mediaMessage=c.messages.find(x=>x.id===b.dataset.refreshMedia);if(!mediaMessage)return;mediaMessage.mediaUrl='';mediaMessage.mediaUrlExpiresAt=0;mediaMessage.mediaLoadError='';renderMessages();return}if(b.dataset.retryMedia!==undefined){const failed=c.messages.find(x=>x.id===b.dataset.retryMedia);if(!failed?.retryFile)return;const file=failed.retryFile,kind=failed.retryKind;c.messages=c.messages.filter(x=>x!==failed);renderMessages();await uploadAndSendFile(file,kind);return}if(b.dataset.jumpPinned){document.querySelector('[data-msg="'+CSS.escape(b.dataset.jumpPinned)+'"]')?.scrollIntoView({behavior:'smooth',block:'center'});return}const id=b.dataset.react||b.dataset.edit||b.dataset.delete||b.dataset.reply||b.dataset.pin||b.dataset.forward||b.dataset.copy||b.dataset.save;const m=c.messages.find(x=>x.id===id);if(!m)return;if(b.dataset.save!==undefined){if(remoteMode&&currentUser&&c.remote){const {error}=await supabaseClient.from('saved_messages').insert({user_id:currentUser.id,conversation_id:c.id,original_message_id:m.id,body:m.text||''});if(error){toast(error.code==='23505'?'این پیام قبلاً ذخیره شده است':'ذخیره پیام ناموفق بود: '+error.message);return}}else{const list=JSON.parse(localStorage.getItem('ig_saved_messages')||'[]');if(list.some(x=>x.id===m.id)){toast('این پیام قبلاً ذخیره شده است');return}list.unshift({id:m.id,conversation:c.name,body:m.text||'',saved_at:new Date().toISOString()});localStorage.setItem('ig_saved_messages',JSON.stringify(list))}toast('پیام به ذخیره‌شده‌ها اضافه شد')}else if(b.dataset.react!==undefined){
  const emoji=b.dataset.emoji||'❤️';
  m.reactions=Array.isArray(m.reactions)?m.reactions:[];
  const previous=m.reactions[0]||null;

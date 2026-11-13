@@ -32,11 +32,14 @@ import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 41;
     private static final int FILE_CHOOSER_REQUEST = 42;
-    private static final String APP_URL = "https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.2.0";
+    private static final String APP_URL = "https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.2.1";
     private static final int NAVY = Color.rgb(7, 22, 55);
 
     private FrameLayout root;
@@ -60,6 +63,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(NAVY);
         getWindow().setNavigationBarColor(NAVY);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         buildScreen();
         createWebView();
         if (savedInstanceState != null) {
@@ -76,6 +80,11 @@ public class MainActivity extends Activity {
     private void buildScreen() {
         root = new FrameLayout(this);
         root.setBackgroundColor(NAVY);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
+            androidx.core.graphics.Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            return insets;
+        });
         setContentView(root);
 
         loadingPanel = new LinearLayout(this);

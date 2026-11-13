@@ -2554,7 +2554,7 @@ async function channelCommentsInboxModal(){
  const owned=state.chats.filter(c=>c.type==='channels'&&c.remote&&['owner','admin'].includes(c.memberRole));
  if(!owned.length){showModal('صندوق نظرات کانال‌ها','<p class="subtle">هنوز مدیر یا مالک کانالی نیستی که نظراتش در این صندوق نمایش داده شود.</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>');return}
  const channelIds=owned.map(c=>c.id);
- const {data:rows,error}=await supabaseClient.from('channel_comments').select('id,channel_id,post_id,author_id,parent_comment_id,body,created_at').in('channel_id',channelIds).order('created_at',{ascending:false}).limit(150);
+ const {data:rows,error}=await supabaseClient.from('channel_comments').select('id,channel_id,post_id,author_id,parent_comment_id,body,created_at').in('channel_id',channelIds).is('parent_comment_id',null).order('created_at',{ascending:false}).limit(150);
  if(error){showModal('صندوق نظرات کانال‌ها','<p class="subtle">دریافت صندوق نظرات ناموفق بود: '+esc(error.message)+'</p><div class="modalactions"><button class="primary" data-close>بستن</button></div>');return}
  const postIds=[...new Set((rows||[]).map(x=>x.post_id))],authorIds=[...new Set((rows||[]).map(x=>x.author_id))];
  const [postsResult,profilesResult]=await Promise.all([

@@ -1600,17 +1600,19 @@ async function runGlobalSearch(term,requestId){
  panel.innerHTML='<div class="sr-note">در حال جست‌وجو…</div>';panel.hidden=false;
  const safe=term.replace(/[,%()]/g,' ').trim();
  try{
-  const [peopleResult,publicResult]=await Promise.all([
+  const [peopleResult,publicResult,botsResult]=await Promise.all([
    supabaseClient.from('profiles').select('id,display_name,username').neq('id',currentUser.id).or('display_name.ilike.%'+safe+'%,username.ilike.%'+safe+'%').limit(8),
-   supabaseClient.from('conversations').select('id,title,type,description,username,is_public').eq('is_public',true).in('type',['group','channel','bot']).or('title.ilike.%'+safe+'%,username.ilike.%'+safe+'%').limit(18)
+   supabaseClient.from('conversations').select('id,title,type,description,username,is_public').eq('is_public',true).in('type',['group','channel']).or('title.ilike.%'+safe+'%,username.ilike.%'+safe+'%').limit(18),
+   supabaseClient.from('bots').select('id,display_name,username,description,is_active').eq('is_active',true).or('display_name.ilike.%'+safe+'%,username.ilike.%'+safe+'%').limit(8)
   ]);
   if(requestId!==globalSearchRequest)return;
-  if(peopleResult.error&&publicResult.error)throw new Error(peopleResult.error.message);
+  if(peopleResult.error&&publicResult.error&&botsResult.error)throw new Error(peopleResult.error.message);
   const items=[];
   for(const p of peopleResult.data||[])items.push({id:p.id,userId:p.id,title:p.display_name||p.username||'کاربر',subtitle:p.username?'@'+p.username:'کاربر ایرانگرام',kind:'کاربر'});
-  for(const c of publicResult.data||[])items.push({id:c.id,title:c.title||c.username||'گفت‌وگوی عمومی',subtitle:(c.username?'@'+c.username+' · ':'')+(c.description||'برای پیوستن لمس کن'),kind:c.type==='channel'?'کانال':c.type==='bot'?'بات':'گروه'});
+  for(const c of publicResult.data||[])items.push({id:c.id,title:c.title||c.username||'گفت‌وگوی عمومی',subtitle:(c.username?'@'+c.username+' · ':'')+(c.description||'برای پیوستن لمس کن'),kind:c.type==='channel'?'کانال':'گروه'});
+  for(const b of botsResult.data||[])items.push({id:b.id,title:b.display_name||b.username||'بات',subtitle:(b.username?'@'+b.username+' · ':'')+(b.description||'بات فعال ایرانگرام'),kind:'بات'});
   panel.innerHTML=items.length?items.map(searchResultMarkup).join(''):'<div class="sr-note">نتیجه‌ای پیدا نشد. نام یا عبارت دیگری را امتحان کن.</div>';
-  if(peopleResult.error||publicResult.error)panel.insertAdjacentHTML('beforeend','<div class="sr-note">بخشی از نتایج به دلیل محدودیت دسترسی بارگذاری نشد.</div>');
+  if(peopleResult.error||publicResult.error||botsResult.error)panel.insertAdjacentHTML('beforeend','<div class="sr-note">بخشی از نتایج به دلیل محدودیت دسترسی بارگذاری نشد.</div>');
  }catch(error){
   if(requestId!==globalSearchRequest)return;
   panel.innerHTML='<div class="sr-note">جست‌وجوی آنلاین انجام نشد؛ اتصال را بررسی کن.</div>';
@@ -1620,6 +1622,11 @@ async function runGlobalSearch(term,requestId){
 async function openGlobalSearchResult(button){
  const kind=button.dataset.searchKind,id=button.dataset.searchId;
  hideGlobalSearch();
+ if(kind==='بات'){
+  const {data:bot,error}=await supabaseClient.from('bots').select('display_name,username,description,is_active').eq('id',id).maybeSingle();
+  if(error||!bot){toast('اطلاعات بات در دسترس نیست');return}
+  showModal('🤖 '+(bot.display_name||bot.username),'<p class="subtle">'+esc(bot.description||'بات فعال ایرانگرام')+'</p><p class="subtle" dir="ltr">@'+esc(bot.username||'')+'</p><p class="subtle">نمایش بات در جست‌وجو فعال است؛ گفت‌وگوی مستقیم با بات هنوز به سامانه پیام‌رسان بات‌ها متصل نشده.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>');return;
+ }
  if(kind==='کاربر'){
   const existing=state.chats.find(c=>c.type==='people'&&c.recipientUserId===id);
   if(existing){openChat(existing.id);return}

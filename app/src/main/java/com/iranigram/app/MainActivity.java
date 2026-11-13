@@ -1,4 +1,4 @@
-package com.iranigram.app;
+package ir.irangram.messenger;
 
 import android.Manifest;
 import android.app.Activity;

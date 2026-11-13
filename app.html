@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b8fd3">
-<meta name="application-version" content="1.2.2">
+<meta name="application-version" content="1.2.3">
 <title>ایرانگرام | پیام‌رسان ایرانی</title>
 <style>
 :root{--blue:#168acd;--blue2:#087fbd;--bg:#e9f1f6;--panel:#fff;--text:#17212b;--muted:#71808f;--line:#e6edf2;--chat:#dcecf4;--bubble:#fff;--mine:#d9fdd3;--shadow:0 5px 24px #0a3a5510}
@@ -3225,5 +3225,68 @@ html,body{width:100%;height:100%;min-height:0;overflow:hidden;overscroll-behavio
 #profileAvatarPreview,#collectionAvatarPreview{cursor:pointer;-webkit-tap-highlight-color:transparent}
 #fileInput,#photoInput{display:none!important}
 </style>
+
+<style id="iranGramAndroidViewportFix123">
+/* Stable mobile viewport: keep chat controls clear of Android's 3-button navigation bar. */
+@media (max-width:760px){
+  html,body{width:100%;height:100%;min-height:0;overflow:hidden}
+  body{position:fixed;inset:0}
+  .app{
+    height:calc(100dvh - max(30px, env(safe-area-inset-bottom, 0px)))!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  .sidebar,.main{
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    overflow:hidden!important;
+  }
+  .main{display:none;flex-direction:column}
+  .app.chat-open .main{display:flex!important}
+  #chatView.chatview{
+    display:flex;
+    flex:1 1 auto;
+    width:100%;
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%;
+    overflow:hidden;
+  }
+  #chatView .chatheader{flex:0 0 48px}
+  #chatView #messages{
+    flex:1 1 auto;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  #chatView .composer{
+    position:relative!important;
+    inset:auto!important;
+    z-index:20!important;
+    display:flex;
+    flex:0 0 auto!important;
+    width:100%;
+    min-height:58px;
+    padding:6px 7px max(8px,env(safe-area-inset-bottom,0px))!important;
+    margin:0!important;
+    background:#17212b;
+  }
+  #chatView .composefield{min-width:0;flex:1 1 0}
+  #chatView #messageInput{min-width:0;width:100%}
+  .sidebar .bottom-nav{
+    flex:0 0 auto;
+    padding-bottom:max(6px,env(safe-area-inset-bottom,0px))!important;
+  }
+}
+@media (max-width:760px) and (max-height:700px){
+  #chatView .chatheader{flex-basis:44px}
+  #chatView .composer{min-height:52px;padding-top:4px!important;padding-bottom:6px!important}
+  #chatView .round{width:34px!important;height:34px!important;min-width:34px!important}
+  #chatView .send{width:36px!important;height:36px!important;min-width:36px!important}
+}
+</style>
+
 </body>
 

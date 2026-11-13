@@ -13,6 +13,7 @@ on:
     branches: [native-android-migration-v2]
     paths:
       - 'app/**'
+      - 'app.html'
       - 'build.gradle'
       - 'settings.gradle'
       - '.github/workflows/android-build.yml'

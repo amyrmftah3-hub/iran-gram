@@ -1,4 +1,4 @@
-package com.iranigram.app;
+package ir.irangram.messenger;
 
 import android.Manifest;
 import android.app.Activity;
@@ -32,7 +32,7 @@ import androidx.core.content.ContextCompat;
 
 public class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 41;
-    private static final String APP_URL = "https://iran-gram.onrender.com/app.html?v=1.1.3-admin";
+    private static final String APP_URL = "https://iran-gram.onrender.com/app.html?v=1.1.5-comments";
     private static final int NAVY = Color.rgb(7, 22, 55);
 
     private FrameLayout root;

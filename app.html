@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b8fd3">
-<meta name="application-version" content="1.1.5">
+<meta name="application-version" content="1.1.6">
 <title>ایرانگرام | پیام‌رسان ایرانی</title>
 <style>
 :root{--blue:#168acd;--blue2:#087fbd;--bg:#e9f1f6;--panel:#fff;--text:#17212b;--muted:#71808f;--line:#e6edf2;--chat:#dcecf4;--bubble:#fff;--mine:#d9fdd3;--shadow:0 5px 24px #0a3a5510}
@@ -3117,4 +3117,36 @@ setTimeout(startIranGramOnline,2500);
 <script>
 (()=>{const side=document.querySelector('.sidebar'),btn=document.querySelector('#listSearchBtn'),input=document.querySelector('#search');if(!side||!btn||!input)return;btn.addEventListener('click',()=>{const open=side.classList.toggle('search-open');if(open)input.focus();else{input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));}});input.addEventListener('keydown',e=>{if(e.key==='Escape'){side.classList.remove('search-open');input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));}});})();
 </script>
+
+<style id="iranGramLiveUpdateStyle">
+#iranGramLiveUpdate{position:fixed;z-index:99999;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;right:12px;max-width:520px;margin:auto;display:flex;align-items:center;gap:10px;padding:13px 15px;border:1px solid #36a7e8;border-radius:15px;background:linear-gradient(135deg,#092b55,#075b91);color:#fff;box-shadow:0 12px 36px #001b3b55;font:13px Tahoma,Arial,sans-serif;direction:rtl;opacity:0;transform:translateY(-12px);transition:opacity .25s,transform .25s;pointer-events:none}
+#iranGramLiveUpdate.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+#iranGramLiveUpdate .update-mark{font-size:22px;flex:0 0 auto}
+#iranGramLiveUpdate .update-copy{flex:1;line-height:1.8}
+#iranGramLiveUpdate button{background:#ffffff20;color:white;border:1px solid #ffffff45;border-radius:9px;padding:7px 10px;font:12px Tahoma;cursor:pointer}
+</style>
+<script id="iranGramLiveUpdater">
+(()=>{ 
+ const meta=document.querySelector('meta[name="application-version"]');
+ const version=meta?.content||'1.1.6';
+ const key='iranGramLastOnlineVersion';
+ let previous='';
+ try{previous=localStorage.getItem(key)||'';localStorage.setItem(key,version)}catch(e){}
+ const show=message=>{
+  if(document.getElementById('iranGramLiveUpdate'))return;
+  const bar=document.createElement('div');bar.id='iranGramLiveUpdate';bar.setAttribute('role','status');
+  bar.innerHTML='<span class="update-mark">✨</span><span class="update-copy"></span><button type="button" aria-label="بستن">باشه</button>';
+  bar.querySelector('.update-copy').textContent=message;
+  bar.querySelector('button').addEventListener('click',()=>bar.remove());
+  (document.body||document.documentElement).appendChild(bar);
+  requestAnimationFrame(()=>bar.classList.add('visible'));
+  window.setTimeout(()=>bar.remove(),6500);
+ };
+ window.addEventListener('load',()=>{
+  if(previous&&previous!==version)show('ایران‌گرام به نسخه '+version+' به‌روزرسانی شد؛ تغییرات آنلاین دریافت شدند.');
+  else if(!previous)show('دریافت خودکار به‌روزرسانی‌های ایران‌گرام فعال شد.');
+ });
+})();
+</script>
+
 </body>

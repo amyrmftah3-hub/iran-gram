@@ -1554,6 +1554,8 @@ function renderChats(){
   ?'<div class="folder-empty"><span class="folder-icon">📂</span><b>بایگانی خالی است</b><p>گفت‌وگوها اینجا می‌مانند تا دوباره به فهرست اصلی برگردانده شوند.</p></div>'
   :state.filter==='hidden'
   ?'<div class="folder-empty"><span class="folder-icon">🗂️</span><b>پوشه مخفی خالی است</b><p>برای بازگرداندن گفت‌وگو، آن را به چپ بکش.</p></div>'
+  :state.filter==='channels'
+  ?'<div class="folder-empty"><span class="folder-icon">📢</span><b>کانالی نمایش داده نشد</b><p>اتصال را بررسی کن و فهرست کانال‌ها را دوباره بارگذاری کن.</p><button class="primary" id="refreshChannels" type="button" style="margin-top:12px">بارگذاری دوباره</button></div>'
   :'<div class="folder-empty"><span class="folder-icon">✈️</span><b>گفت‌وگویی پیدا نشد</b><p>یک گفت‌وگوی تازه بساز و شروع کن.</p></div>';
  $('#chatList').innerHTML=arr.map(c=>{
   const m=c.messages.at(-1)||{};
@@ -1642,7 +1644,7 @@ async function updateMyPresence(isOnline=true){
 }
 
 function authModal(){
- if(!supabaseClient){showModal('اتصال اینترنت', '<p>کتابخانه ورود آنلاین بارگذاری نشد. اینترنت را بررسی کن و صفحه را تازه‌سازی کن تا بتوانی وارد حساب شوی.</p><div class="modalactions"><button class="primary" data-close>باشه</button></div>');return}
+ if(!supabaseClient){showModal('اتصال اینترنت', '<p>کتابخانه ورود آنلاین بارگذاری نشد. اتصال را بررسی کن و دوباره تلاش کن.</p><div class="modalactions"><button class="secondary" data-close>بستن</button><button class="primary" id="retryOnlineSdk">تلاش دوباره</button></div>');$('#retryOnlineSdk').onclick=()=>{closeModal();startIranGramOnline(true)};return}
  showModal('ورود به ایرانگرام',`<p class="subtle">برای استفاده از حساب آنلاین، با ایمیل و رمز عبور وارد شو یا حساب بساز.</p><label>ایمیل</label><input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com"><label>رمز عبور</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="حداقل ۶ کاراکتر"><div class="modalactions"><button class="secondary" id="signUpBtn">ساخت حساب</button><button class="primary" id="signInBtn">ورود</button></div><p class="subtle" id="authHint" role="status"></p>`);
  $('#signInBtn').onclick=async()=>{const email=$('#authEmail').value.trim(),password=$('#authPassword').value;if(!email||!password){$('#authHint').textContent='ایمیل و رمز عبور را وارد کن.';return}const {error}=await supabaseClient.auth.signInWithPassword({email,password});$('#authHint').textContent=error?error.message:'ورود انجام شد.';if(!error){closeModal();await startOnline()}};
  $('#signUpBtn').onclick=async()=>{const email=$('#authEmail').value.trim(),password=$('#authPassword').value;if(!email||password.length<6){$('#authHint').textContent='ایمیل معتبر و رمز حداقل ۶ کاراکتری وارد کن.';return}const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{name:email.split('@')[0]}}});$('#authHint').textContent=error?error.message:(data.session?'حساب ساخته شد.':'حساب ساخته شد؛ ایمیلت را برای تأیید بررسی کن.');if(data.session){closeModal();await startOnline()}};
@@ -2863,7 +2865,7 @@ function quickCreateModal(){
  showModal('شروع گفت‌وگوی تازه','<p class="subtle">چه چیزی می‌خواهی بسازی؟</p><button class="secondary" id="quickNewChat" style="width:100%;margin:5px 0">✉️ گفت‌وگوی شخصی</button><button class="secondary" id="quickNewGroup" style="width:100%;margin:5px 0">👥 ساخت گروه</button><button class="secondary" id="quickNewChannel" style="width:100%;margin:5px 0">📢 ساخت کانال</button><div class="modalactions"><button class="secondary" data-close>بستن</button></div>');
  $('#quickNewChat').onclick=()=>newChat();$('#quickNewGroup').onclick=()=>createCollection('groups');$('#quickNewChannel').onclick=()=>createCollection('channels');
 }
-$('#newBtn').onclick=quickCreateModal;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;renderChats()});
+$('#newBtn').onclick=quickCreateModal;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=async()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;if(state.filter==='channels'&&remoteMode&&currentUser){try{await loadOnlineChats()}catch(error){console.error('Channel refresh failed:',error);toast('بارگذاری کانال‌ها ناموفق بود؛ دوباره تلاش کن.')}}else renderChats()});
 $('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,channelcomments:channelCommentsInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 // Reliable tap routing for the main navigation and conversation settings.
 document.addEventListener('click',e=>{
@@ -2883,13 +2885,15 @@ document.addEventListener('click',e=>{
  }
  const menuItem=e.target.closest('#mainMenu button[data-action]');
  if(menuItem){
-  const actions={login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,channelcomments:channelCommentsInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,about:()=>showModal('درباره ایرانگرام','<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p>')};
+  const actions={login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,channelcomments:channelCommentsInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode&&supabaseClient)await supabaseClient.auth.signOut();else toast('حساب آنلاینی وارد نشده است')},about:()=>showModal('درباره ایرانگرام','<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p>')};
   const action=actions[menuItem.dataset.action];
   if(action){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();$('#mainMenu').classList.remove('open');try{action()}catch(err){console.error('IranGram menu action failed:',err);toast('باز کردن این بخش ناموفق بود؛ دوباره تلاش کن.')} }
  }
 },true);
 let suppressChatClick=false;
 $('#chatList').onclick=e=>{
+ const refreshButton=e.target.closest('#refreshChannels');
+ if(refreshButton){e.preventDefault();e.stopPropagation();if(remoteMode&&currentUser){loadOnlineChats().catch(error=>{console.error('Channel retry failed:',error);toast('بارگذاری کانال‌ها ناموفق بود؛ دوباره تلاش کن.')})}else authModal();return}
  const actionButton=e.target.closest('[data-chat-actions]');
  if(actionButton){e.stopPropagation();const chat=state.chats.find(x=>x.id===actionButton.dataset.chatActions);showChatFolderActions(chat);return}
  if(e.target.closest('[data-chat-folder-action]'))return;
@@ -3091,8 +3095,8 @@ function finishSplash(){
 // صفحه برنامه مستقل از CDN نمایش داده می‌شود؛ اتصال آنلاین پس از نمایش رابط شروع می‌شود.
 finishSplash();setTimeout(finishSplash,1200);
 let iranGramStartupStarted=false;
-function startIranGramOnline(){
- if(iranGramStartupStarted)return;iranGramStartupStarted=true;
+function startIranGramOnline(force=false){
+ if(iranGramStartupStarted&&!force)return;iranGramStartupStarted=true;
  setTimeout(async()=>{
   try{
    const sdkTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('کتابخانه ورود آنلاین در دسترس نیست؛ می‌توانی دوباره تلاش کنی.')),10000));
@@ -3102,8 +3106,8 @@ function startIranGramOnline(){
    await initAuth();
    if(new URLSearchParams(location.search).has('anon'))anonymousSendPage();
   }catch(error){
-   console.error('IranGram startup failed:',error);finishSplash();authModal();
-   toast(error&&error.message?error.message:'اتصال آنلاین برقرار نشد؛ صفحه را تازه‌سازی کن.');
+   console.error('IranGram startup failed:',error);iranGramStartupStarted=false;finishSplash();authModal();
+   toast(error&&error.message?error.message:'اتصال آنلاین برقرار نشد؛ دوباره تلاش کن.');
   }
  },700);
 }

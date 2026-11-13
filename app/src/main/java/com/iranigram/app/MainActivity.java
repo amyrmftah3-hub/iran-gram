@@ -39,7 +39,7 @@ import androidx.core.view.WindowInsetsCompat;
 public class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 41;
     private static final int FILE_CHOOSER_REQUEST = 42;
-    private static final String APP_URL = "https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.2.1";
+    private static final String APP_URL = "https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.2.2";
     private static final int NAVY = Color.rgb(7, 22, 55);
 
     private FrameLayout root;
@@ -63,7 +63,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(NAVY);
         getWindow().setNavigationBarColor(NAVY);
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
         buildScreen();
         createWebView();
         if (savedInstanceState != null) {
@@ -80,11 +80,6 @@ public class MainActivity extends Activity {
     private void buildScreen() {
         root = new FrameLayout(this);
         root.setBackgroundColor(NAVY);
-        ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
-            androidx.core.graphics.Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
-            return insets;
-        });
         setContentView(root);
 
         loadingPanel = new LinearLayout(this);
@@ -203,39 +198,41 @@ public class MainActivity extends Activity {
                 if (filePathCallback != null) filePathCallback.onReceiveValue(null);
                 filePathCallback = callback;
                 try {
-                    Intent intent;
-                    try {
-                        intent = params.createIntent();
-                    } catch (Exception unsupportedPicker) {
-                        intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                        intent.addCategory(Intent.CATEGORY_OPENABLE);
-                        String[] accepted = params.getAcceptTypes();
-                        java.util.ArrayList<String> mimeTypes = new java.util.ArrayList<>();
-                        if (accepted != null) {
-                            for (String value : accepted) {
-                                if (value == null) continue;
-                                for (String type : value.split(",")) {
-                                    String clean = type.trim();
-                                    if (clean.contains("/")) mimeTypes.add(clean);
-                                }
+                    java.util.LinkedHashSet<String> accepted = new java.util.LinkedHashSet<>();
+                    String[] acceptTypes = params.getAcceptTypes();
+                    if (acceptTypes != null) {
+                        for (String value : acceptTypes) {
+                            if (value == null) continue;
+                            for (String type : value.split(",")) {
+                                String clean = type.trim().toLowerCase(java.util.Locale.ROOT);
+                                if (clean.contains("/")) accepted.add(clean);
                             }
                         }
-                        if (mimeTypes.isEmpty()) intent.setType("*/*");
-                        else if (mimeTypes.size() == 1) intent.setType(mimeTypes.get(0));
-                        else {
-                            intent.setType("*/*");
-                            intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes.toArray(new String[0]));
-                        }
                     }
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                    startActivityForResult(intent, FILE_CHOOSER_REQUEST);
+                    String mime = accepted.isEmpty() ? "*/*" : (accepted.size() == 1 ? accepted.iterator().next() : "*/*");
+                    Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
+                    picker.addCategory(Intent.CATEGORY_OPENABLE);
+                    picker.setType(mime);
+                    if (accepted.size() > 1) picker.putExtra(Intent.EXTRA_MIME_TYPES, accepted.toArray(new String[0]));
+                    if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) picker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    picker.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivityForResult(Intent.createChooser(picker, "انتخاب عکس، ویدئو یا فایل"), FILE_CHOOSER_REQUEST);
                     return true;
-                } catch (Exception error) {
-                    if (filePathCallback != null) filePathCallback.onReceiveValue(null);
-                    filePathCallback = null;
-                    Toast.makeText(MainActivity.this, "باز کردن فایل‌گزین ممکن نشد؛ دوباره تلاش کن.", Toast.LENGTH_LONG).show();
-                    return true;
+                } catch (Exception firstError) {
+                    try {
+                        Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                        picker.addCategory(Intent.CATEGORY_OPENABLE);
+                        picker.setType("*/*");
+                        picker.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) picker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                        startActivityForResult(Intent.createChooser(picker, "انتخاب فایل"), FILE_CHOOSER_REQUEST);
+                        return true;
+                    } catch (Exception secondError) {
+                        if (filePathCallback != null) filePathCallback.onReceiveValue(null);
+                        filePathCallback = null;
+                        Toast.makeText(MainActivity.this, "باز کردن گالری یا فایل‌گزین ممکن نشد؛ دوباره تلاش کن.", Toast.LENGTH_LONG).show();
+                        return true;
+                    }
                 }
             }
 

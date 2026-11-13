@@ -32,7 +32,7 @@ import androidx.core.content.ContextCompat;
 
 public class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 41;
-    private static final String APP_URL = "https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.1.6";
+    private static final String APP_URL = "https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.1.7";
     private static final int NAVY = Color.rgb(7, 22, 55);
 
     private FrameLayout root;

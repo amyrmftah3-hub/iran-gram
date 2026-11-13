@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b8fd3">
-<meta name="application-version" content="1.1.8">
+<meta name="application-version" content="1.1.9">
 <title>ایرانگرام | پیام‌رسان ایرانی</title>
 <style>
 :root{--blue:#168acd;--blue2:#087fbd;--bg:#e9f1f6;--panel:#fff;--text:#17212b;--muted:#71808f;--line:#e6edf2;--chat:#dcecf4;--bubble:#fff;--mine:#d9fdd3;--shadow:0 5px 24px #0a3a5510}
@@ -1325,6 +1325,48 @@ body{font-family:Tahoma,"Vazirmatn","Segoe UI",Arial,sans-serif;letter-spacing:0
  .composer{gap:3px!important;padding-left:5px!important;padding-right:5px!important}
 }
 .reward-card{background:linear-gradient(145deg,#142d4d,#1d5278);border:1px solid #347eb2;border-radius:16px;padding:16px;text-align:center;margin-bottom:14px;color:#fff}.reward-points{font-size:38px;font-weight:800;color:#7dd3fc}.reward-card p{font-size:13px;line-height:1.8;color:#e1f2ff}.reward-video{display:inline-block;color:#fff;text-decoration:none;background:#e53955;padding:10px 15px;border-radius:10px;font-size:13px;margin:4px}.reward-success{background:#153d31;color:#a8f0cd;padding:10px;border-radius:10px;font-size:13px}.reward-pending{background:#493a16;color:#ffe6a1;padding:10px;border-radius:10px;font-size:13px}.reward-rejected{background:#4b2228;color:#ffd3d7;padding:10px;border-radius:10px;font-size:13px}.reward-submit{padding:12px;border:1px solid var(--line);border-radius:12px;margin:12px 0}.reward-submit input{margin:8px 0}.reward-submit button{width:100%;margin-top:10px}.reward-redeem{margin-top:15px;padding-top:12px;border-top:1px solid var(--line)}.reward-redeem .primary{width:100%;margin-top:12px}
+
+/* 1.1.9 mobile-fit layout and compact stories */
+html,body{width:100%;height:100%;min-height:100%;overflow:hidden;overscroll-behavior:none}
+body{margin:0}
+.app{width:100%;max-width:none;height:100dvh;height:100svh;min-height:0;overflow:hidden}
+.sidebar,.main{height:100%;min-height:0;min-width:0;overflow:hidden}
+.sidebar{padding-bottom:env(safe-area-inset-bottom)!important}
+.topbar,.chatheader{flex:0 0 54px;min-height:54px}
+.searchbox{position:relative;z-index:12;flex:0 0 auto}
+.filters,.stories{flex:0 0 auto}
+.stories{gap:9px;padding:6px 10px 7px;max-height:76px;overflow-x:auto;overflow-y:hidden}
+.story{min-width:50px;font-size:10px}
+.storyring{width:40px;height:40px;padding:2px;margin-bottom:3px}
+.storyring.add{width:40px;height:40px;padding:2px}
+.storyring.add span{font-size:17px!important;font-weight:600}
+.storyring span{font-size:14px}
+.chats{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.search-results{position:absolute;top:calc(100% - 3px);right:12px;left:12px;max-height:min(62dvh,480px);overflow-y:auto;overscroll-behavior:contain;background:#202d3a;border:1px solid #35495b;border-radius:12px;box-shadow:0 12px 32px #0008;padding:7px;z-index:50}
+.search-results[hidden]{display:none}
+.search-result{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border:0;border-radius:9px;background:transparent;color:#eef5fa;text-align:right}
+.search-result:active,.search-result:hover{background:#2b3d4d}
+.search-result .sr-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:50%;background:#30485d;font-size:18px}
+.search-result .sr-copy{min-width:0;flex:1}
+.search-result b{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search-result small{display:block;color:#a9bac8;font-size:11px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search-result .sr-kind{font-size:10px;color:#7fc2f7;white-space:nowrap}
+.search-results .sr-note{padding:12px;text-align:center;color:#a9bac8;font-size:12px}
+@media(max-width:760px){
+ .app{display:block;height:100dvh;height:100svh}
+ .sidebar{height:100dvh;height:100svh}
+ .main{height:100dvh;height:100svh}
+ .app.chat-open .sidebar{display:none}
+ .app.chat-open .main{display:flex}
+ .stories{max-height:69px;padding-top:4px;padding-bottom:5px}
+ .storyring,.storyring.add{width:36px;height:36px}
+ .story{min-width:46px}
+ .storyring.add span{font-size:16px!important}
+ .chatrow{min-height:64px;padding:7px 10px}
+ .chatrow .avatar{width:46px;height:46px}
+ .filters{padding-top:2px;padding-bottom:3px}
+}
+
 </style>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
@@ -1432,7 +1474,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
   <button data-action="admin"><span>🛡️</span> مدیریت ایرانگرام</button><button data-action="export"><span>⬇️</span> خروجی پشتیبان</button><button data-action="about"><span>ℹ️</span> درباره ایرانگرام</button><button data-action="logout"><span>🚪</span> خروج از حساب</button>
   <div class="drawer-footer">ایرانگرام · پیام‌رسان فارسی</div>
  </div>
- <div class="searchbox"><input id="search" placeholder="جست‌وجو" autocomplete="off"></div>
+ <div class="searchbox"><input id="search" placeholder="جست‌وجوی چت، کاربر، گروه، کانال یا بات…" autocomplete="off" aria-expanded="false"><div id="searchResultsPanel" class="search-results" hidden></div></div>
  <div id="adBanner" class="ad-banner" hidden aria-label="تبلیغات"></div>
  <div class="filters" role="tablist" aria-label="پوشه گفتگوها"><button class="filter active" role="tab" aria-selected="true" data-filter="all">همه چت‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="people">شخصی</button><button class="filter" role="tab" aria-selected="false" data-filter="unread">خوانده‌نشده</button><button class="filter" role="tab" aria-selected="false" data-filter="groups">گروه‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="channels">کانال‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="archive">آرشیو</button><button class="filter" role="tab" aria-selected="false" data-filter="hidden">مخفی</button></div>
  <div class="stories" id="storyStrip" aria-label="داستان‌های کاربران"></div>
@@ -1542,6 +1584,63 @@ async function persistChatPreference(chat){
  const {error}=await supabaseClient.from('conversation_user_preferences').upsert({user_id:currentUser.id,conversation_id:chat.id,archived:!!chat.archived,hidden:!!chat.hidden,pinned:!!chat.pinned,pinned_message_id:chat.pinnedMessageId||null,muted:!!chat.muted,updated_at:new Date().toISOString()},{onConflict:'user_id,conversation_id'});
  if(error)toast('ذخیره پوشه گفت‌وگو ناموفق بود: '+error.message);
 }
+
+let globalSearchTimer=null,globalSearchRequest=0;
+function hideGlobalSearch(){
+ const panel=$('#searchResultsPanel');if(panel){panel.hidden=true;panel.innerHTML=''}
+ $('#search')?.setAttribute('aria-expanded','false');
+}
+function searchResultMarkup(item){
+ const icon=item.kind==='کانال'?'📢':item.kind==='گروه'?'👥':item.kind==='بات'?'🤖':'👤';
+ return '<button type="button" class="search-result" data-search-kind="'+esc(item.kind)+'" data-search-id="'+esc(item.id)+'" data-search-user="'+esc(item.userId||'')+'"><span class="sr-icon">'+icon+'</span><span class="sr-copy"><b>'+esc(item.title)+'</b><small>'+esc(item.subtitle||'')+'</small></span><span class="sr-kind">'+esc(item.kind)+'</span></button>';
+}
+async function runGlobalSearch(term,requestId){
+ const panel=$('#searchResultsPanel');if(!panel)return;
+ if(!remoteMode||!currentUser||!supabaseClient){panel.innerHTML='<div class="sr-note">برای جست‌وجوی سراسری، اول وارد حسابت شو.</div>';panel.hidden=false;return}
+ panel.innerHTML='<div class="sr-note">در حال جست‌وجو…</div>';panel.hidden=false;
+ const safe=term.replace(/[,%()]/g,' ').trim();
+ try{
+  const [peopleResult,publicResult]=await Promise.all([
+   supabaseClient.from('profiles').select('id,display_name,username').neq('id',currentUser.id).or('display_name.ilike.%'+safe+'%,username.ilike.%'+safe+'%').limit(8),
+   supabaseClient.from('conversations').select('id,title,type,description,username,is_public').eq('is_public',true).in('type',['group','channel','bot']).or('title.ilike.%'+safe+'%,username.ilike.%'+safe+'%').limit(18)
+  ]);
+  if(requestId!==globalSearchRequest)return;
+  if(peopleResult.error&&publicResult.error)throw new Error(peopleResult.error.message);
+  const items=[];
+  for(const p of peopleResult.data||[])items.push({id:p.id,userId:p.id,title:p.display_name||p.username||'کاربر',subtitle:p.username?'@'+p.username:'کاربر ایرانگرام',kind:'کاربر'});
+  for(const c of publicResult.data||[])items.push({id:c.id,title:c.title||c.username||'گفت‌وگوی عمومی',subtitle:(c.username?'@'+c.username+' · ':'')+(c.description||'برای پیوستن لمس کن'),kind:c.type==='channel'?'کانال':c.type==='bot'?'بات':'گروه'});
+  panel.innerHTML=items.length?items.map(searchResultMarkup).join(''):'<div class="sr-note">نتیجه‌ای پیدا نشد. نام یا عبارت دیگری را امتحان کن.</div>';
+  if(peopleResult.error||publicResult.error)panel.insertAdjacentHTML('beforeend','<div class="sr-note">بخشی از نتایج به دلیل محدودیت دسترسی بارگذاری نشد.</div>');
+ }catch(error){
+  if(requestId!==globalSearchRequest)return;
+  panel.innerHTML='<div class="sr-note">جست‌وجوی آنلاین انجام نشد؛ اتصال را بررسی کن.</div>';
+  console.warn('Global search failed',error);
+ }
+}
+async function openGlobalSearchResult(button){
+ const kind=button.dataset.searchKind,id=button.dataset.searchId;
+ hideGlobalSearch();
+ if(kind==='کاربر'){
+  const existing=state.chats.find(c=>c.type==='people'&&c.recipientUserId===id);
+  if(existing){openChat(existing.id);return}
+  const profileResult=await supabaseClient.from('profiles').select('id,display_name,username').eq('id',id).maybeSingle();
+  if(profileResult.error||!profileResult.data){toast('اطلاعات این کاربر در دسترس نیست');return}
+  const p=profileResult.data;
+  const {data:conv,error}=await supabaseClient.from('conversations').insert({title:p.display_name||p.username||'گفت‌وگو',type:'private',created_by:currentUser.id}).select('id').single();
+  if(error){toast('ساخت گفت‌وگو ناموفق بود: '+error.message);return}
+  const members=await supabaseClient.from('conversation_members').insert([{conversation_id:conv.id,user_id:currentUser.id,role:'owner'},{conversation_id:conv.id,user_id:p.id,role:'member'}]);
+  if(members.error){toast('افزودن مخاطب ناموفق بود: '+members.error.message);return}
+  await loadOnlineChats();openChat(conv.id);return;
+ }
+ const existing=state.chats.find(c=>c.id===id);
+ if(existing){openChat(id);return}
+ const {error}=await supabaseClient.from('conversation_members').insert({conversation_id:id,user_id:currentUser.id,role:'member'});
+ if(error&&error.code!=='23505'){toast('عضویت انجام نشد: '+error.message);return}
+ await loadOnlineChats();
+ const joined=state.chats.find(c=>c.id===id);
+ if(joined)openChat(id);else toast('عضویت ثبت شد، اما گفت‌وگو در فهرست قابل نمایش نیست.');
+}
+
 function renderChats(){
  const arr=state.chats.filter(c=>{
   const inFolder=state.filter==='all'?!c.archived&&!c.hidden:
@@ -2873,7 +2972,7 @@ function quickCreateModal(){
  showModal('شروع گفت‌وگوی تازه','<p class="subtle">چه چیزی می‌خواهی بسازی؟</p><button class="secondary" id="quickNewChat" style="width:100%;margin:5px 0">✉️ گفت‌وگوی شخصی</button><button class="secondary" id="quickNewGroup" style="width:100%;margin:5px 0">👥 ساخت گروه</button><button class="secondary" id="quickNewChannel" style="width:100%;margin:5px 0">📢 ساخت کانال</button><div class="modalactions"><button class="secondary" data-close>بستن</button></div>');
  $('#quickNewChat').onclick=()=>newChat();$('#quickNewGroup').onclick=()=>createCollection('groups');$('#quickNewChannel').onclick=()=>createCollection('channels');
 }
-$('#newBtn').onclick=quickCreateModal;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats()};document.querySelectorAll('.filter').forEach(b=>b.onclick=async()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;if(state.filter==='channels'&&remoteMode&&currentUser){try{await loadOnlineChats()}catch(error){console.error('Channel refresh failed:',error);toast('بارگذاری کانال‌ها ناموفق بود؛ دوباره تلاش کن.')}}else renderChats()});
+$('#newBtn').onclick=quickCreateModal;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats();const term=e.target.value.trim();clearTimeout(globalSearchTimer);if(term.length<2){hideGlobalSearch();return}$('#search').setAttribute('aria-expanded','true');globalSearchTimer=setTimeout(()=>runGlobalSearch(term,++globalSearchRequest),320)};$('#searchResultsPanel').onclick=e=>{const b=e.target.closest('[data-search-kind]');if(b)openGlobalSearchResult(b)};document.addEventListener('click',e=>{if(!e.target.closest('.searchbox'))hideGlobalSearch()});document.querySelectorAll('.filter').forEach(b=>b.onclick=async()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;if(state.filter==='channels'&&remoteMode&&currentUser){try{await loadOnlineChats()}catch(error){console.error('Channel refresh failed:',error);toast('بارگذاری کانال‌ها ناموفق بود؛ دوباره تلاش کن.')}}else renderChats()});
 $('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,channelcomments:channelCommentsInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">ورود ایمیلی، گفت‌وگوهای آنلاین، گروه‌ها، کانال‌ها و استوری به سرور متصل شده‌اند. برخی امکانات هنوز در مرحله تکمیل و آزمایش هستند؛ نسخه اندروید نیز پس از آماده‌سازی و تست منتشر می‌شود.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 // Reliable tap routing for the main navigation and conversation settings.
 document.addEventListener('click',e=>{

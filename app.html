@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b8fd3">
-<meta name="application-version" content="1.1.9">
+<meta name="application-version" content="1.2.0">
 <title>ایرانگرام | پیام‌رسان ایرانی</title>
 <style>
 :root{--blue:#168acd;--blue2:#087fbd;--bg:#e9f1f6;--panel:#fff;--text:#17212b;--muted:#71808f;--line:#e6edf2;--chat:#dcecf4;--bubble:#fff;--mine:#d9fdd3;--shadow:0 5px 24px #0a3a5510}
@@ -1521,7 +1521,9 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
 <script>
 const SUPABASE_URL = 'https://gqitvlgdcrbwejaadorc.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_2NkURiHcD4ceRzqXUNsYlQ_jZzsVbhf';
-let supabaseClient = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_KEY) || null;
+const IRANGRAM_AUTH_OPTIONS = { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storage: window.localStorage, storageKey: 'sb-gqitvlgdcrbwejaadorc-auth-token' } };
+function createIranGramSupabaseClient(){ return window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_KEY, IRANGRAM_AUTH_OPTIONS) || null; }
+let supabaseClient = createIranGramSupabaseClient();
 function loadSupabaseSdk(){
  if(window.supabase?.createClient)return Promise.resolve(window.supabase);
  return new Promise((resolve,reject)=>{
@@ -1977,9 +1979,10 @@ async function ensureOfficialChannelMembership(){
  if(error)console.warn('Could not join official channel automatically',error.message);
 }
 async function startOnline(){
- const {data,error}=await supabaseClient.auth.getUser();
- if(error||!data.user){authModal();return}
- currentUser=data.user;remoteMode=true;
+  const [{data:userData,error:userError},{data:sessionData,error:sessionError}]=await Promise.all([supabaseClient.auth.getUser(),supabaseClient.auth.getSession()]);
+  const resolvedUser=userData?.user||sessionData?.session?.user||null;
+  if(!resolvedUser){if(userError||sessionError)console.warn('IranGram session check failed; local data is preserved.',userError||sessionError);authModal();return}
+  currentUser=resolvedUser;remoteMode=true;
  const [profileResult]=await Promise.all([
   supabaseClient.from('profiles').select('display_name,bio,username,avatar_url').eq('id',currentUser.id).maybeSingle(),
   ensureOfficialChannelMembership(),
@@ -2160,10 +2163,11 @@ async function finishCall(notify=true){
 }
 
 async function initAuth(){
- const {data}=await supabaseClient.auth.getSession();
- if(data.session){await startOnline()}else{state.chats=[];state.active=null;save();render();authModal()}
- document.addEventListener('visibilitychange',()=>{if(currentUser&&remoteMode)updateMyPresence(document.visibilityState==='visible')});
- supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){if(presenceHeartbeat)clearInterval(presenceHeartbeat);presenceHeartbeat=null;if(storyRealtimeChannel){supabaseClient.removeChannel(storyRealtimeChannel);storyRealtimeChannel=null}storyRows=[];currentUser=null;remoteMode=false;renderStories();state.chats=[];state.active=null;authModal()}});
+  const {data,error}=await supabaseClient.auth.getSession();
+  if(error)console.warn('IranGram could not read the saved session yet:',error.message);
+  if(data?.session){await startOnline()}else{render();authModal()}
+  document.addEventListener('visibilitychange',async()=>{if(document.visibilityState!=='visible')return;const {data:sessionState,error:sessionCheckError}=await supabaseClient.auth.getSession();if(sessionCheckError)console.warn('Session restore check failed:',sessionCheckError.message);if(sessionState?.session&&!currentUser){startOnline().catch(err=>console.warn('Session resume failed:',err))}else if(currentUser&&remoteMode)updateMyPresence(true)});
+  supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){if(presenceHeartbeat)clearInterval(presenceHeartbeat);presenceHeartbeat=null;if(storyRealtimeChannel){supabaseClient.removeChannel(storyRealtimeChannel);storyRealtimeChannel=null}storyRows=[];currentUser=null;remoteMode=false;renderStories();render();authModal()}else if(event==='TOKEN_REFRESHED'&&session?.user){currentUser=session.user}});
 }
 
 
@@ -3216,7 +3220,7 @@ function startIranGramOnline(force=false){
    const sdkTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('کتابخانه ورود آنلاین در دسترس نیست؛ می‌توانی دوباره تلاش کنی.')),10000));
    await Promise.race([loadSupabaseSdk(),sdkTimeout]);
    if(!window.supabase?.createClient)throw new Error('کتابخانه ورود آنلاین در دسترس نیست.');
-   supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+   supabaseClient=createIranGramSupabaseClient();
    await initAuth();
    if(new URLSearchParams(location.search).has('anon'))anonymousSendPage();
   }catch(error){

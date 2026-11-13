@@ -28,7 +28,7 @@ jobs:
           for attempt in $(seq 1 60); do
             pages="$(curl --max-time 10 -fsSL "$pages_url" || true)"
             
-            if printf '%s' "$pages" | grep -Fq 'app.html?v=1.1.9'; then
+            if printf '%s' "$pages" | grep -Fq 'app.html?v=1.2.1'; then
               echo "PASS both live hosts published the story build"
               exit 0
             fi
@@ -44,7 +44,7 @@ jobs:
           try {
             for (const [name, url] of [
               ['landing-pages', 'https://amyrmftah3-hub.github.io/iran-gram/'],
-              ['app-pages', 'https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.1.9']
+              ['app-pages', 'https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.2.1']
             ]) {
               const page = await browser.newPage();
               const errors = [];
@@ -56,7 +56,7 @@ jobs:
                 if (!(await page.title()).includes('ایرانگرام')) throw new Error('Landing title missing');
                 const appLinks = await page.locator('a[href*="app.html"]').evaluateAll(nodes => nodes.map(a => a.href));
                 if (!appLinks.length) throw new Error('App entry link missing');
-                if (appLinks.some(href => !href.includes('app.html?v=1.1.9'))) throw new Error('Landing page contains a stale app link: ' + JSON.stringify(appLinks));
+                if (appLinks.some(href => !href.includes('app.html?v=1.2.1'))) throw new Error('Landing page contains a stale app link: ' + JSON.stringify(appLinks));
               } else {
                 await page.waitForFunction(() => !!document.querySelector('#authEmail') || document.querySelector('#modalBack')?.classList.contains('open'), { timeout: 15000 }).catch(() => {});
                 const startupState = await page.evaluate(() => ({authEmail:!!document.querySelector('#authEmail'), modalOpen:document.querySelector('#modalBack')?.classList.contains('open'), runtimeError:document.querySelector('#igRuntimeError')?.textContent || '', supabase:!!window.supabase?.createClient}));

@@ -3,15 +3,15 @@ plugins { id 'com.android.application' }
 def releaseStoreFile = System.getenv('ANDROID_KEYSTORE_FILE')
 
 android {
-    namespace 'ir.irangram.messenger'
+    namespace 'com.amyrmftah3.irangram'
     compileSdk 35
 
     defaultConfig {
-        applicationId 'ir.irangram.messenger'
+        applicationId 'com.amyrmftah3.irangram'
         minSdk 23
         targetSdk 34
-        versionCode 22
-        versionName '1.2.2'
+        versionCode 23
+        versionName '1.2.3'
     }
 
     signingConfigs {

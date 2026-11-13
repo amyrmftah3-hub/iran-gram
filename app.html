@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b8fd3">
-<meta name="application-version" content="1.1.6">
+<meta name="application-version" content="1.1.7">
 <title>ایرانگرام | پیام‌رسان ایرانی</title>
 <style>
 :root{--blue:#168acd;--blue2:#087fbd;--bg:#e9f1f6;--panel:#fff;--text:#17212b;--muted:#71808f;--line:#e6edf2;--chat:#dcecf4;--bubble:#fff;--mine:#d9fdd3;--shadow:0 5px 24px #0a3a5510}
@@ -1645,7 +1645,7 @@ async function updateMyPresence(isOnline=true){
 
 function authModal(){
  if(!supabaseClient){showModal('اتصال اینترنت', '<p>کتابخانه ورود آنلاین بارگذاری نشد. اتصال را بررسی کن و دوباره تلاش کن.</p><div class="modalactions"><button class="secondary" data-close>بستن</button><button class="primary" id="retryOnlineSdk">تلاش دوباره</button></div>');$('#retryOnlineSdk').onclick=()=>{closeModal();startIranGramOnline(true)};return}
- showModal('ورود به ایرانگرام',`<p class="subtle">برای استفاده از حساب آنلاین، با ایمیل و رمز عبور وارد شو یا حساب بساز.</p><label>ایمیل</label><input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com"><label>رمز عبور</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="حداقل ۶ کاراکتر"><div class="modalactions"><button class="secondary" id="signUpBtn">ساخت حساب</button><button class="primary" id="signInBtn">ورود</button></div><p class="subtle" id="authHint" role="status"></p>`);
+ showModal('ورود به ایرانگرام',`<p class="subtle">برای استفاده از حساب آنلاین، با ایمیل و رمز عبور وارد شو یا حساب بساز.</p><label>ایمیل</label><input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com"><label>رمز عبور</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="حداقل ۶ کاراکتر"><div class="modalactions"><button class="secondary" data-close>بعداً</button><button class="secondary" id="signUpBtn">ساخت حساب</button><button class="primary" id="signInBtn">ورود</button></div><p class="subtle" id="authHint" role="status"></p>`);
  $('#signInBtn').onclick=async()=>{const email=$('#authEmail').value.trim(),password=$('#authPassword').value;if(!email||!password){$('#authHint').textContent='ایمیل و رمز عبور را وارد کن.';return}const {error}=await supabaseClient.auth.signInWithPassword({email,password});$('#authHint').textContent=error?error.message:'ورود انجام شد.';if(!error){closeModal();await startOnline()}};
  $('#signUpBtn').onclick=async()=>{const email=$('#authEmail').value.trim(),password=$('#authPassword').value;if(!email||password.length<6){$('#authHint').textContent='ایمیل معتبر و رمز حداقل ۶ کاراکتری وارد کن.';return}const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{name:email.split('@')[0]}}});$('#authHint').textContent=error?error.message:(data.session?'حساب ساخته شد.':'حساب ساخته شد؛ ایمیلت را برای تأیید بررسی کن.');if(data.session){closeModal();await startOnline()}};
 }
@@ -3132,7 +3132,7 @@ setTimeout(startIranGramOnline,2500);
 <script id="iranGramLiveUpdater">
 (()=>{ 
  const meta=document.querySelector('meta[name="application-version"]');
- const version=meta?.content||'1.1.6';
+ const version=meta?.content||'1.1.7';
  const key='iranGramLastOnlineVersion';
  let previous='';
  try{previous=localStorage.getItem(key)||'';localStorage.setItem(key,version)}catch(e){}

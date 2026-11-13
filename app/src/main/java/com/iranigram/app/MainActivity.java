@@ -36,7 +36,7 @@ import androidx.core.content.ContextCompat;
 public class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 41;
     private static final int FILE_CHOOSER_REQUEST = 42;
-    private static final String APP_URL = "https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.1.8";
+    private static final String APP_URL = "https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.2.0";
     private static final int NAVY = Color.rgb(7, 22, 55);
 
     private FrameLayout root;
@@ -194,13 +194,39 @@ public class MainActivity extends Activity {
                 if (filePathCallback != null) filePathCallback.onReceiveValue(null);
                 filePathCallback = callback;
                 try {
-                    Intent intent = params.createIntent();
+                    Intent intent;
+                    try {
+                        intent = params.createIntent();
+                    } catch (Exception unsupportedPicker) {
+                        intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                        intent.addCategory(Intent.CATEGORY_OPENABLE);
+                        String[] accepted = params.getAcceptTypes();
+                        java.util.ArrayList<String> mimeTypes = new java.util.ArrayList<>();
+                        if (accepted != null) {
+                            for (String value : accepted) {
+                                if (value == null) continue;
+                                for (String type : value.split(",")) {
+                                    String clean = type.trim();
+                                    if (clean.contains("/")) mimeTypes.add(clean);
+                                }
+                            }
+                        }
+                        if (mimeTypes.isEmpty()) intent.setType("*/*");
+                        else if (mimeTypes.size() == 1) intent.setType(mimeTypes.get(0));
+                        else {
+                            intent.setType("*/*");
+                            intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes.toArray(new String[0]));
+                        }
+                    }
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                     startActivityForResult(intent, FILE_CHOOSER_REQUEST);
                     return true;
                 } catch (Exception error) {
+                    if (filePathCallback != null) filePathCallback.onReceiveValue(null);
                     filePathCallback = null;
-                    Toast.makeText(MainActivity.this, "باز کردن فایل‌گزین ممکن نشد.", Toast.LENGTH_LONG).show();
-                    return false;
+                    Toast.makeText(MainActivity.this, "باز کردن فایل‌گزین ممکن نشد؛ دوباره تلاش کن.", Toast.LENGTH_LONG).show();
+                    return true;
                 }
             }
 
@@ -265,9 +291,19 @@ public class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == FILE_CHOOSER_REQUEST) {
             if (filePathCallback != null) {
-                Uri[] results = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
-                filePathCallback.onReceiveValue(results);
+                Uri[] results = null;
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    results = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                    if ((results == null || results.length == 0) && data.getClipData() != null) {
+                        android.content.ClipData clip = data.getClipData();
+                        results = new Uri[clip.getItemCount()];
+                        for (int i = 0; i < clip.getItemCount(); i++) results[i] = clip.getItemAt(i).getUri();
+                    }
+                    if ((results == null || results.length == 0) && data.getData() != null) results = new Uri[]{data.getData()};
+                }
+                ValueCallback<Uri[]> callback = filePathCallback;
                 filePathCallback = null;
+                callback.onReceiveValue(results);
             }
         }
     }
@@ -307,6 +343,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         handler.removeCallbacks(loadTimeout);
+        if (filePathCallback != null) { filePathCallback.onReceiveValue(null); filePathCallback = null; }
         if (webView != null) {
             webView.stopLoading();
             webView.destroy();

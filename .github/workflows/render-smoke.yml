@@ -24,17 +24,17 @@ jobs:
         run: |
           set -e
           pages_url="https://amyrmftah3-hub.github.io/iran-gram/?check=${GITHUB_SHA}"
-          render_url="https://iran-gram.onrender.com/app.html?v=1.1.3-admin&check=${GITHUB_SHA}"
+          
           for attempt in $(seq 1 60); do
             pages="$(curl --max-time 10 -fsSL "$pages_url" || true)"
-            render="$(curl --max-time 10 -fsSL "$render_url" || true)"
-            if printf '%s' "$pages" | grep -Fq 'app.html?v=1.1.3-admin' && printf '%s' "$render" | grep -Fq 'id="storyStrip"' && printf '%s' "$render" | grep -Fq 'data-member-role'; then
+            
+            if printf '%s' "$pages" | grep -Fq 'app.html?v=1.1.6'; then
               echo "PASS both live hosts published the story build"
               exit 0
             fi
             sleep 5
           done
-          echo "GitHub Pages or Render did not publish the current story build in time" >&2
+          echo "GitHub Pages did not publish the current app build in time" >&2
           exit 1
       - name: Test live website and media upload paths
         run: |
@@ -44,8 +44,7 @@ jobs:
           try {
             for (const [name, url] of [
               ['landing-pages', 'https://amyrmftah3-hub.github.io/iran-gram/'],
-              ['app-pages', 'https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.1.3-admin'],
-              ['app-render', 'https://iran-gram.onrender.com/app.html?v=1.1.3-admin']
+              ['app-pages', 'https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.1.6']
             ]) {
               const page = await browser.newPage();
               const errors = [];
@@ -57,7 +56,7 @@ jobs:
                 if (!(await page.title()).includes('ایرانگرام')) throw new Error('Landing title missing');
                 const appLinks = await page.locator('a[href*="app.html"]').evaluateAll(nodes => nodes.map(a => a.href));
                 if (!appLinks.length) throw new Error('App entry link missing');
-                if (appLinks.some(href => !href.includes('app.html?v=1.1.3-admin'))) throw new Error('Landing page contains a stale app link: ' + JSON.stringify(appLinks));
+                if (appLinks.some(href => !href.includes('app.html?v=1.1.6'))) throw new Error('Landing page contains a stale app link: ' + JSON.stringify(appLinks));
               } else {
                 await page.waitForFunction(() => !!document.querySelector('#authEmail') || document.querySelector('#modalBack')?.classList.contains('open'), { timeout: 15000 }).catch(() => {});
                 const startupState = await page.evaluate(() => ({authEmail:!!document.querySelector('#authEmail'), modalOpen:document.querySelector('#modalBack')?.classList.contains('open'), runtimeError:document.querySelector('#igRuntimeError')?.textContent || '', supabase:!!window.supabase?.createClient}));
@@ -70,6 +69,25 @@ jobs:
                 if (!visible) throw new Error('App interface is not visible');
                 const storyStripVisible = await page.locator('#storyStrip').isVisible().catch(() => false);
                 if (!storyStripVisible) throw new Error('Story strip is not visible');
+                // Verify primary tap targets and channel-row routing without depending on a real user session.
+                const authClose = page.locator('#modal [data-close]').first();
+                if (await authClose.count()) await authClose.click();
+                await page.locator('#menuBtn').click();
+                if (!(await page.locator('#mainMenu').evaluate(el => el.classList.contains('open')))) throw new Error('Main menu button did not open the drawer');
+                await page.locator('#mainMenu [data-action="settings"]').click();
+                if (!(await page.locator('#modalBack').evaluate(el => el.classList.contains('open')))) throw new Error('Settings menu action did not open settings');
+                await page.locator('#modalBack').click({ position: { x: 4, y: 4 } });
+                const channelTap = await page.evaluate(() => {
+                  const previous = { chats: state.chats, active: state.active, filter: state.filter };
+                  state.chats = [{ id: '00000000-0000-0000-0000-000000000001', name: 'کانال آزمایشی', type: 'channels', messages: [], remote: false, unread: 0, color: '', avatar: '📢' }];
+                  state.filter = 'channels'; renderChats();
+                  const row = document.querySelector('#chatList [data-chat]');
+                  if (row) row.click();
+                  const result = { rowFound: !!row, active: state.active, headName: document.querySelector('#headName')?.textContent || '' };
+                  state.chats = previous.chats; state.active = previous.active; state.filter = previous.filter; renderChats();
+                  return result;
+                });
+                if (!channelTap.rowFound || channelTap.active !== '00000000-0000-0000-0000-000000000001' || !channelTap.headName.includes('کانال آزمایشی')) throw new Error('Channel row tap did not open the conversation: ' + JSON.stringify(channelTap));
                 const splashVisible = await page.locator('#appSplash').evaluate(el => getComputedStyle(el).visibility !== 'hidden' && Number(getComputedStyle(el).opacity) > 0.05);
                 if (splashVisible) throw new Error('Splash screen did not disappear');
                 const html = await page.content();

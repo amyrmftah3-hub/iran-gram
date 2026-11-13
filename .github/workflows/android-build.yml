@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'app/**'
+      - 'app.html'
       - 'build.gradle'
       - 'settings.gradle'
       - '.github/workflows/android-build.yml'

@@ -1,4 +1,4 @@
-package ir.irangram.messenger;
+package com.amyrmftah3.irangram;
 
 import android.Manifest;
 import android.app.Activity;
@@ -39,7 +39,7 @@ import androidx.core.view.WindowInsetsCompat;
 public class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 41;
     private static final int FILE_CHOOSER_REQUEST = 42;
-    private static final String APP_URL = "https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.2.2";
+    private static final String APP_URL = "https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.2.3";
     private static final int NAVY = Color.rgb(7, 22, 55);
 
     private FrameLayout root;

@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b8fd3">
-<meta name="application-version" content="1.1.7">
+<meta name="application-version" content="1.1.8">
 <title>ایرانگرام | پیام‌رسان ایرانی</title>
 <style>
 :root{--blue:#168acd;--blue2:#087fbd;--bg:#e9f1f6;--panel:#fff;--text:#17212b;--muted:#71808f;--line:#e6edf2;--chat:#dcecf4;--bubble:#fff;--mine:#d9fdd3;--shadow:0 5px 24px #0a3a5510}
@@ -1412,7 +1412,7 @@ body.dark .composefield textarea::placeholder{color:#8293a1}
 .ig-voice-time{display:flex;justify-content:space-between;font-size:10px;color:var(--muted,#91a3b3);margin-top:3px}.ig-voice audio{display:none}.msg.mine .ig-voice{background:rgba(51,144,236,.18)}
 .media-video{width:min(100%,420px);height:auto;max-height:360px;object-fit:contain;border-radius:10px;display:block;background:#101923}.ig-voice-wave{cursor:pointer;touch-action:pan-y}.ig-voice-wave i{transition:background .12s}
 </style>
-</head>
+<style id="iranGramBugfix118">#mainMenu{max-height:calc(100dvh - 78px)!important;overflow-y:auto!important;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}#mainMenu button{flex-shrink:0}#fileInput,#photoInput{display:none}#attachBtn,#photoBtn{touch-action:manipulation;pointer-events:auto}</style>\n</head>
  
 <body>
 <div class="splash" id="appSplash"><div class="cyrus-mark" role="img" aria-label="نشان کوروش بزرگ"><svg viewBox="0 0 120 120" width="104" height="104" aria-hidden="true"><defs><linearGradient id="cyrusGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0b3"/><stop offset=".55" stop-color="#d5a947"/><stop offset="1" stop-color="#8b5d19"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="#071b48" stroke="#23b9ff" stroke-width="3"/><path d="M25 44 33 19 47 31 60 12 73 31 88 19 96 45 84 53 36 53Z" fill="url(#cyrusGold)" stroke="#fff0b3" stroke-width="2"/><path d="M35 49 Q60 35 85 49 L81 80 Q74 100 60 105 Q43 98 38 80Z" fill="url(#cyrusGold)"/><path d="M40 62 Q52 52 69 60 L82 67 70 72 60 69 48 76 39 72Z" fill="#071b48"/><path d="M45 81 Q61 87 77 78 Q74 96 60 99 Q48 94 45 81Z" fill="#071b48"/><path d="M36 52 20 63 30 76 40 70 M84 52 100 63 90 76 80 70" fill="none" stroke="url(#cyrusGold)" stroke-width="6" stroke-linecap="round"/></svg></div><h2>ایرانگرام</h2><p id="splashPoem">...</p><div class="splashbar"><span></span></div></div>
@@ -2199,7 +2199,7 @@ async function uploadAndSendFile(file,kind='media'){
   mime=iranGramFileMime(file)||mime;
   if(file.size>50*1024*1024)throw new Error('حجم فایل پس از آماده‌سازی باید کمتر از ۵۰ مگابایت باشد.');
   const safeName=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'file',ext=(safeName.split('.').pop()||'').toLowerCase();
-  const extensionTypes={pdf:'application/pdf',zip:'application/zip',txt:'text/plain'};
+  const extensionTypes={pdf:'application/pdf',zip:'application/zip',txt:'text/plain',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',ppt:'application/vnd.ms-powerpoint',pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',csv:'text/csv',json:'application/json',mp3:'audio/mpeg',m4a:'audio/mp4',ogg:'audio/ogg',wav:'audio/wav',mp4:'video/mp4',webm:'video/webm'};
   if(!mime||mime==='application/octet-stream')mime=extensionTypes[ext]||'';
   const allowed=/^(image\/(jpeg|png|webp|gif|avif|heic|heif)|video\/(mp4|webm|quicktime|3gpp)|audio\/(mpeg|ogg|mp4|webm|aac|wav|3gpp|amr)|application\/(pdf|zip)|text\/plain)$/i;
   if(!allowed.test(mime))throw new Error('این نوع فایل پشتیبانی نمی‌شود: '+(mime||'ناشناخته'));
@@ -2757,16 +2757,24 @@ async function requestAdModal(){
  if(!remoteMode||!currentUser){toast('برای ثبت تبلیغ ابتدا وارد حسابت شو.');authModal();return}
  showModal('ثبت تبلیغ در ایرانگرام',`<p class="subtle">اطلاعات تبلیغت رو بفرست؛ درخواست به‌صورت خصوصی برای مدیر تبلیغات ارسال می‌شه و بعد از بررسی، در نوار بالای گفتگوها نمایش داده می‌شه.</p>
  <label>اسم نمایشی تبلیغ (نام کانال یا پروفایل)</label><input id="requestAdName" maxlength="60" placeholder="مثلاً کانال تکنولوژی">
- <label>لینک کانال یا پروفایل</label><input id="requestAdUrl" type="url" inputmode="url" placeholder="https://...">
+ <label>نام کاربری گپ یا لینک کانال / پروفایل</label><input id="requestAdUrl" type="text" inputmode="url" placeholder="@username یا https://..."><p class="subtle">می‌توانی نام کاربری را با @ وارد کنی؛ به لینک گپ تبدیل می‌شود.</p>
  <label>مدت نمایش تبلیغ</label><select id="requestAdDuration"><option value="1">۱ روز</option><option value="3">۳ روز</option><option value="7" selected>۷ روز</option><option value="14">۱۴ روز</option><option value="30">۳۰ روز</option></select>
  <p class="subtle">ارسال درخواست رایگان است؛ هزینه و شرایط احتمالی تبلیغ را مدیر با شما هماهنگ می‌کند.</p>
  <div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="sendAdRequest">ارسال درخواست</button></div>`);
  $('#sendAdRequest').onclick=async()=>{
-  const name=$('#requestAdName').value.trim(),url=$('#requestAdUrl').value.trim(),days=Number($('#requestAdDuration').value);
-  let parsed;try{parsed=new URL(url)}catch(e){toast('لینک معتبر وارد کن.');return}
-  if(name.length<2||name.length>60||parsed.protocol!=='https:'||![1,3,7,14,30].includes(days)){toast('اسم، لینک HTTPS و مدت تبلیغ رو درست وارد کن.');return}
+  const raw=$('#requestAdUrl').value.trim(),days=Number($('#requestAdDuration').value);
+  let targetUrl='',handle='';
+  const bare=raw.replace(/^@/,'');
+  if(/^[A-Za-z0-9_.]{3,32}$/.test(bare)){
+   handle=bare;targetUrl='https://gap.im/'+encodeURIComponent(handle);
+  }else{
+   try{const parsed=new URL(raw);if(parsed.protocol!=='https:')throw new Error('protocol');targetUrl=parsed.href}
+   catch(e){toast('لینک یا نام کاربری معتبر وارد کن؛ مثلاً @mychannel');return}
+  }
+  const nameInput=$('#requestAdName').value.trim(),name=nameInput||(handle?'@'+handle:'');
+  if(name.length<2||name.length>60||![1,3,7,14,30].includes(days)){toast('نام تبلیغ و مدت نمایش را درست وارد کن.');return}
   const button=$('#sendAdRequest');button.disabled=true;button.textContent='در حال ارسال...';
-  const {error}=await supabaseClient.from('ad_requests').insert({requester_id:currentUser.id,display_name:name,target_url:parsed.href,duration_days:days});
+  const {error}=await supabaseClient.from('ad_requests').insert({requester_id:currentUser.id,display_name:name,target_url:targetUrl,duration_days:days});
   if(error){button.disabled=false;button.textContent='ارسال درخواست';toast('ارسال درخواست ناموفق بود: '+error.message);return}
   closeModal();toast('درخواست تبلیغ خصوصی برای مدیر ارسال شد.');
  };

@@ -9,7 +9,7 @@
 - `compileSdk: 35` و `targetSdk: 34`
 - گردش‌کار GitHub Actions، کد JavaScript توکار `app.html` را با `node --check` بررسی می‌کند و APK آزمایشی و APK نسخه Release امضاشده می‌سازد.
 - فایل‌ها به‌صورت Artifact در صفحه اجرای گردش‌کار نگه‌داری می‌شوند (۳۰ روز)؛ این مخزن فعلاً GitHub Release دائمی ندارد.
-- نسخه وب: https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.1.7
+- نسخه وب: https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.2.3
 - لینک اجرای ساخت: https://github.com/amyrmftah3-hub/iran-gram/actions/workflows/build-apk.yml
 
 کلید امضای Android باید فقط در GitHub Actions Secrets نگه‌داری شود:

@@ -210,7 +210,7 @@ public class MainActivity extends Activity {
                         }
                     }
                     String mime = accepted.isEmpty() ? "*/*" : (accepted.size() == 1 ? accepted.iterator().next() : "*/*");
-                    Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
+                    Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                     picker.addCategory(Intent.CATEGORY_OPENABLE);
                     picker.setType(mime);
                     if (accepted.size() > 1) picker.putExtra(Intent.EXTRA_MIME_TYPES, accepted.toArray(new String[0]));
@@ -220,7 +220,7 @@ public class MainActivity extends Activity {
                     return true;
                 } catch (Exception firstError) {
                     try {
-                        Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                        Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
                         picker.addCategory(Intent.CATEGORY_OPENABLE);
                         picker.setType("*/*");
                         picker.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

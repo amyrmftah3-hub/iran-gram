@@ -72,6 +72,24 @@ jobs:
                 // Verify primary tap targets and channel-row routing without depending on a real user session.
                 const authClose = page.locator('#modal [data-close]').first();
                 if (await authClose.count()) await authClose.click();
+                const storyLogin = page.locator('#storyStrip [data-story-action="login"]');
+                if (!(await storyLogin.count())) throw new Error('Story login action is missing');
+                await storyLogin.click();
+                if (!(await page.locator('#modalBack').evaluate(el => el.classList.contains('open')))) throw new Error('Story login action did not open authentication');
+                await page.locator('#modalBack').click({ position: { x: 4, y: 4 } });
+                const storyComposerReady = await page.evaluate(async () => {
+                  const previousRemote = remoteMode, previousUser = currentUser;
+                  remoteMode = true;
+                  currentUser = { id: '00000000-0000-0000-0000-000000000002' };
+                  await createStory();
+                  const ready = !!document.querySelector('#storyFile') && !!document.querySelector('#publishStory');
+                  closeModal();
+                  remoteMode = previousRemote;
+                  currentUser = previousUser;
+                  renderStories();
+                  return ready;
+                });
+                if (!storyComposerReady) throw new Error('Story composer did not open');
                 await page.locator('#menuBtn').click();
                 if (!(await page.locator('#mainMenu').evaluate(el => el.classList.contains('open')))) throw new Error('Main menu button did not open the drawer');
                 await page.locator('#mainMenu [data-action="settings"]').click();

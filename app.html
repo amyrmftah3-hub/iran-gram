@@ -2584,31 +2584,54 @@ async function manageBotCommands(bot){
 async function createCollection(type){
  if(!remoteMode||!currentUser){authModal();return}
  const channel=type==='channels';
- showModal(channel?'ساخت کانال':'ساخت گروه',`<div style="display:flex;align-items:center;gap:13px;margin-bottom:14px"><div id="collectionAvatarPreview" style="width:76px;height:76px;flex:0 0 76px;border-radius:50%;overflow:hidden;background:#263746;border:1px solid #405366;display:grid;place-items:center;color:#9ecdf0;font-size:30px">＋</div><div style="flex:1"><b>عکس ${channel?'کانال':'گروه'}</b><p class="subtle" style="margin:4px 0">اختیاری · عکس مربع و دایره‌ای نمایش داده می‌شود</p><input id="collectionAvatarFile" type="file" accept="image/*"></div></div><label>نام ${channel?'کانال':'گروه'}</label><input id="collectionName" maxlength="80" placeholder="${channel?'مثلاً اطلاعیه‌های من':'مثلاً خانواده'}"><label>توضیحات</label><textarea id="collectionBio" maxlength="500" placeholder="توضیح کوتاه (اختیاری)"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="createCollection">ساخت ${channel?'کانال':'گروه'}</button></div><p class="subtle">ساخت در حساب آنلاین و ذخیره روی سرور انجام می‌شود.</p>`);
+ showModal(channel?'ساخت کانال':'ساخت گروه',`<div style="display:flex;align-items:center;gap:13px;margin-bottom:14px"><div id="collectionAvatarPreview" style="width:76px;height:76px;flex:0 0 76px;border-radius:50%;overflow:hidden;background:#263746;border:1px solid #405366;display:grid;place-items:center;color:#9ecdf0;font-size:30px">＋</div><div style="flex:1;min-width:0"><b>عکس ${channel?'کانال':'گروه'}</b><p class="subtle" style="margin:4px 0">اختیاری · عکس مربع و دایره‌ای نمایش داده می‌شود</p><label for="collectionAvatarFile" class="secondary" style="display:inline-block;padding:8px 12px;border-radius:9px;cursor:pointer">انتخاب عکس</label><input id="collectionAvatarFile" type="file" accept="image/jpeg,image/png,image/webp,image/*" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none" aria-label="انتخاب عکس ${channel?'کانال':'گروه'}"></div></div><label>نام ${channel?'کانال':'گروه'}</label><input id="collectionName" maxlength="80" placeholder="${channel?'مثلاً اطلاعیه‌های من':'مثلاً خانواده'}"><label>توضیحات</label><textarea id="collectionBio" maxlength="500" placeholder="توضیح کوتاه (اختیاری)"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="createCollection">ساخت ${channel?'کانال':'گروه'}</button></div><p class="subtle">ساخت در حساب آنلاین و ذخیره روی سرور انجام می‌شود.</p>`);
  const button=$('#createCollection'),avatarInput=$('#collectionAvatarFile'),preview=$('#collectionAvatarPreview');
- preview.style.cursor='pointer';preview.title='برای انتخاب عکس لمس کن';preview.onclick=()=>avatarInput?.click();
- let previewUrl='';
- avatarInput.onchange=()=>{
-  const file=avatarInput.files?.[0];if(!file)return;
-  if(!iranGramFileMime(file).startsWith('image/')){avatarInput.value='';toast('لطفاً یک فایل تصویری JPG، PNG یا WEBP انتخاب کن.');return}
-  if(file.size>15*1024*1024){avatarInput.value='';toast('حجم عکس باید کمتر از ۱۵ مگابایت باشد.');return}
-  if(previewUrl)URL.revokeObjectURL(previewUrl);
-  previewUrl=URL.createObjectURL(file);
-  preview.innerHTML='<img src="'+previewUrl+'" alt="پیش‌نمایش عکس گروه" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+ const pickerLabel=document.querySelector('label[for="collectionAvatarFile"]');
+ let previewUrl='',preparedAvatarFile=null;
+ const clearAvatarPreview=()=>{
+  if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=''}
+  preparedAvatarFile=null;
+  preview.textContent='＋';
  };
+ preview.style.cursor='pointer';preview.title='برای انتخاب عکس لمس کن';
+ const openAvatarPicker=()=>{
+  try{if(typeof avatarInput.showPicker==='function')avatarInput.showPicker();else avatarInput.click()}
+  catch(_){avatarInput.click()}
+ };
+ preview.addEventListener('click',openAvatarPicker);
+ pickerLabel?.addEventListener('click',e=>{e.preventDefault();openAvatarPicker()});
+ avatarInput.addEventListener('change',async()=>{
+  const file=avatarInput.files?.[0];if(!file)return;
+  if(!iranGramFileMime(file).startsWith('image/')){avatarInput.value='';clearAvatarPreview();toast('لطفاً یک عکس JPG، PNG یا WEBP انتخاب کن.');return}
+  if(file.size>15*1024*1024){avatarInput.value='';clearAvatarPreview();toast('حجم عکس باید کمتر از ۱۵ مگابایت باشد.');return}
+  const label=pickerLabel;
+  if(label){label.textContent='در حال آماده‌سازی عکس…';label.style.pointerEvents='none'}
+  try{
+   const normalized=await prepareIranGramAvatar(file,512);
+   if(previewUrl)URL.revokeObjectURL(previewUrl);
+   preparedAvatarFile=normalized;
+   previewUrl=URL.createObjectURL(normalized);
+   preview.innerHTML='<img src="'+previewUrl+'" alt="پیش‌نمایش عکس" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+   if(label)label.textContent='تغییر عکس';
+  }catch(error){
+   avatarInput.value='';clearAvatarPreview();
+   if(label)label.textContent='انتخاب عکس';
+   toast('آماده‌سازی عکس ناموفق بود: '+(error.message||'فرمت عکس پشتیبانی نمی‌شود.'));
+  }finally{if(label)label.style.pointerEvents='auto'}
+ });
  button.onclick=async()=>{
-  const name=$('#collectionName').value.trim(),bio=$('#collectionBio').value.trim(),selectedFile=avatarInput.files?.[0]||null;
+  const name=$('#collectionName').value.trim(),bio=$('#collectionBio').value.trim(),selectedFile=preparedAvatarFile;
   if(!name){toast('نام را وارد کن');return}
   button.disabled=true;button.textContent='در حال آماده‌سازی…';
   let avatarPath=null,convId=null;
   try{
    let avatarUrl=null;
    if(selectedFile){
-    const avatarFile=await prepareIranGramAvatar(selectedFile,512);
     avatarPath=currentUser.id+'/'+Date.now()+'_collection_avatar.jpg';
-    const upload=await supabaseClient.storage.from('iran-gram-avatars').upload(avatarPath,avatarFile,{upsert:false,contentType:'image/jpeg',cacheControl:'3600'});
+    const upload=await supabaseClient.storage.from('iran-gram-avatars').upload(avatarPath,selectedFile,{upsert:false,contentType:'image/jpeg',cacheControl:'3600'});
     if(upload.error)throw new Error('آپلود عکس: '+upload.error.message);
     avatarUrl=supabaseClient.storage.from('iran-gram-avatars').getPublicUrl(avatarPath).data.publicUrl;
+    if(!avatarUrl)throw new Error('ساخت لینک عکس ناموفق بود.');
    }
    button.textContent='در حال ساخت…';
    const {data:conv,error}=await supabaseClient.from('conversations').insert({title:name,type:channel?'channel':'group',description:bio,is_public:channel,avatar_url:avatarUrl,created_by:currentUser.id}).select('id').single();
@@ -2617,17 +2640,18 @@ async function createCollection(type){
    const {error:memberError}=await supabaseClient.from('conversation_members').insert({conversation_id:conv.id,user_id:currentUser.id,role:'owner'});
    if(memberError)throw new Error('ثبت مالکیت: '+memberError.message);
    if(bio){const {error:msgError}=await supabaseClient.from('messages').insert({conversation_id:conv.id,sender_id:currentUser.id,body:bio});if(msgError)console.warn('Description message was not added:',msgError.message)}
-   if(previewUrl)URL.revokeObjectURL(previewUrl);
+   if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=''}
    closeModal();await loadOnlineChats();if(state.chats.some(x=>x.id===conv.id))openChat(conv.id);
    toast((channel?'کانال':'گروه')+' ساخته شد ✓');
   }catch(error){
    if(convId)await supabaseClient.from('conversations').delete().eq('id',convId).eq('created_by',currentUser.id);
    if(avatarPath)await supabaseClient.storage.from('iran-gram-avatars').remove([avatarPath]);
-   console.error('IranGram create collection failed:',error);button.disabled=false;button.textContent='تلاش دوباره';toast('ساخت ناموفق بود: '+(error.message||'خطای ارتباط'));
+   console.error('IranGram create collection failed:',error);
+   button.disabled=false;button.textContent='تلاش دوباره';
+   toast('ساخت ناموفق بود: '+(error.message||'خطای ارتباط'));
   }
  };
 }
-
 async function openChannelComments(postId, focusCommentId=null){
  const chat=activeChat();
  if(!remoteMode||!currentUser||!chat||chat.type!=='channels'){toast('برای دیدن نظرات، یک کانال آنلاین را باز کن');return}

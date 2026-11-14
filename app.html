@@ -2314,8 +2314,8 @@ async function uploadAndSendFile(file,kind='media'){
   const safeName=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'file',ext=(safeName.split('.').pop()||'').toLowerCase();
   const extensionTypes={pdf:'application/pdf',zip:'application/zip',rar:'application/vnd.rar','7z':'application/x-7z-compressed',tar:'application/x-tar',gz:'application/gzip',txt:'text/plain',md:'text/markdown',rtf:'application/rtf',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',odt:'application/vnd.oasis.opendocument.text',xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',ods:'application/vnd.oasis.opendocument.spreadsheet',ppt:'application/vnd.ms-powerpoint',pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',odp:'application/vnd.oasis.opendocument.presentation',csv:'text/csv',json:'application/json',xml:'application/xml',apk:'application/vnd.android.package-archive',epub:'application/epub+zip',mp3:'audio/mpeg',m4a:'audio/mp4',ogg:'audio/ogg',wav:'audio/wav',mp4:'video/mp4',webm:'video/webm',mov:'video/quicktime'};
   if(!mime||mime==='application/octet-stream')mime=extensionTypes[ext]||'application/octet-stream';
-  const allowed=/^(image\/[a-z0-9.+-]+|video\/[a-z0-9.+-]+|audio\/[a-z0-9.+-]+|application\/[a-z0-9.+-]+|text\/[a-z0-9.+-]+)$/i;
-  if(!allowed.test(mime))throw new Error('نوع فایل قابل تشخیص نیست؛ نام فایل و پسوندش را بررسی کن.');
+   const supportedMime=mime.startsWith('image/')||mime.startsWith('video/')||mime.startsWith('audio/')||Object.values(extensionTypes).includes(mime);
+   if(!supportedMime)throw new Error('این نوع فایل پشتیبانی نمی‌شود؛ لطفاً عکس، ویدیو، صدا یا یکی از قالب‌های رایج سند را انتخاب کن.');
   const path=chat.id+'/'+currentUser.id+'/'+Date.now()+'_'+safeName,markerKind=kind==='voice'?'voice':'media';
   const body='[['+markerKind+':'+encodeURIComponent(path)+'|'+encodeURIComponent(mime)+'|'+encodeURIComponent(file.name||safeName)+']]';
   pending={id:'pending-'+Date.now(),text:body,mine:true,time:new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],sendStatus:'در حال ارسال…'};
@@ -2584,9 +2584,9 @@ async function manageBotCommands(bot){
 async function createCollection(type){
  if(!remoteMode||!currentUser){authModal();return}
  const channel=type==='channels';
- showModal(channel?'ساخت کانال':'ساخت گروه',`<div style="display:flex;align-items:center;gap:13px;margin-bottom:14px"><div id="collectionAvatarPreview" style="width:76px;height:76px;flex:0 0 76px;border-radius:50%;overflow:hidden;background:#263746;border:1px solid #405366;display:grid;place-items:center;color:#9ecdf0;font-size:30px">＋</div><div style="flex:1;min-width:0"><b>عکس ${channel?'کانال':'گروه'}</b><p class="subtle" style="margin:4px 0">اختیاری · عکس مربع و دایره‌ای نمایش داده می‌شود</p><label for="collectionAvatarFile" class="secondary" style="display:inline-block;padding:8px 12px;border-radius:9px;cursor:pointer">انتخاب عکس</label><input id="collectionAvatarFile" type="file" accept="image/jpeg,image/png,image/webp,image/*" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none" aria-label="انتخاب عکس ${channel?'کانال':'گروه'}"></div></div><label>نام ${channel?'کانال':'گروه'}</label><input id="collectionName" maxlength="80" placeholder="${channel?'مثلاً اطلاعیه‌های من':'مثلاً خانواده'}"><label>توضیحات</label><textarea id="collectionBio" maxlength="500" placeholder="توضیح کوتاه (اختیاری)"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="createCollection">ساخت ${channel?'کانال':'گروه'}</button></div><p class="subtle">ساخت در حساب آنلاین و ذخیره روی سرور انجام می‌شود.</p>`);
+ showModal(channel?'ساخت کانال':'ساخت گروه',`<div style="display:flex;align-items:center;gap:13px;margin-bottom:14px"><div id="collectionAvatarPreview" style="width:76px;height:76px;flex:0 0 76px;border-radius:50%;overflow:hidden;background:#263746;border:1px solid #405366;display:grid;place-items:center;color:#9ecdf0;font-size:30px">＋</div><div style="flex:1;min-width:0"><b>عکس ${channel?'کانال':'گروه'}</b><p class="subtle" style="margin:4px 0">اختیاری · عکس مربع و دایره‌ای نمایش داده می‌شود</p><label id="collectionAvatarPicker" for="collectionAvatarFile" class="secondary" style="display:inline-block;padding:8px 12px;border-radius:9px;cursor:pointer"><span id="collectionAvatarPickerText">انتخاب عکس</span></label><input id="collectionAvatarFile" type="file" accept="image/jpeg,image/png,image/webp,image/*" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden" aria-label="انتخاب عکس ${channel?'کانال':'گروه'}"></div></div><label>نام ${channel?'کانال':'گروه'}</label><input id="collectionName" maxlength="80" placeholder="${channel?'مثلاً اطلاعیه‌های من':'مثلاً خانواده'}"><label>توضیحات</label><textarea id="collectionBio" maxlength="500" placeholder="توضیح کوتاه (اختیاری)"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="createCollection">ساخت ${channel?'کانال':'گروه'}</button></div><p class="subtle">ساخت در حساب آنلاین و ذخیره روی سرور انجام می‌شود.</p>`);
  const button=$('#createCollection'),avatarInput=$('#collectionAvatarFile'),preview=$('#collectionAvatarPreview');
- const pickerLabel=document.querySelector('label[for="collectionAvatarFile"]');
+ const pickerLabel=$('#collectionAvatarPicker'),pickerText=$('#collectionAvatarPickerText');
  let previewUrl='',preparedAvatarFile=null;
  const clearAvatarPreview=()=>{
   if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=''}
@@ -2594,30 +2594,25 @@ async function createCollection(type){
   preview.textContent='＋';
  };
  preview.style.cursor='pointer';preview.title='برای انتخاب عکس لمس کن';
- const openAvatarPicker=()=>{
-  try{if(typeof avatarInput.showPicker==='function')avatarInput.showPicker();else avatarInput.click()}
-  catch(_){avatarInput.click()}
- };
+ const openAvatarPicker=()=>avatarInput.click();
  preview.addEventListener('click',openAvatarPicker);
- pickerLabel?.addEventListener('click',e=>{e.preventDefault();openAvatarPicker()});
  avatarInput.addEventListener('change',async()=>{
   const file=avatarInput.files?.[0];if(!file)return;
   if(!iranGramFileMime(file).startsWith('image/')){avatarInput.value='';clearAvatarPreview();toast('لطفاً یک عکس JPG، PNG یا WEBP انتخاب کن.');return}
   if(file.size>15*1024*1024){avatarInput.value='';clearAvatarPreview();toast('حجم عکس باید کمتر از ۱۵ مگابایت باشد.');return}
-  const label=pickerLabel;
-  if(label){label.textContent='در حال آماده‌سازی عکس…';label.style.pointerEvents='none'}
+  if(pickerText)pickerText.textContent='در حال آماده‌سازی عکس…';
   try{
    const normalized=await prepareIranGramAvatar(file,512);
    if(previewUrl)URL.revokeObjectURL(previewUrl);
    preparedAvatarFile=normalized;
    previewUrl=URL.createObjectURL(normalized);
    preview.innerHTML='<img src="'+previewUrl+'" alt="پیش‌نمایش عکس" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
-   if(label)label.textContent='تغییر عکس';
+   if(pickerText)pickerText.textContent='تغییر عکس';
   }catch(error){
    avatarInput.value='';clearAvatarPreview();
-   if(label)label.textContent='انتخاب عکس';
+   if(pickerText)pickerText.textContent='انتخاب عکس';
    toast('آماده‌سازی عکس ناموفق بود: '+(error.message||'فرمت عکس پشتیبانی نمی‌شود.'));
-  }finally{if(label)label.style.pointerEvents='auto'}
+  }finally{}
  });
  button.onclick=async()=>{
   const name=$('#collectionName').value.trim(),bio=$('#collectionBio').value.trim(),selectedFile=preparedAvatarFile;

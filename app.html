@@ -1637,8 +1637,13 @@ async function openGlobalSearchResult(button){
   const p=profileResult.data;
   const {data:conv,error}=await supabaseClient.from('conversations').insert({title:p.display_name||p.username||'گفت‌وگو',type:'private',created_by:currentUser.id}).select('id').single();
   if(error){toast('ساخت گفت‌وگو ناموفق بود: '+error.message);return}
-  const members=await supabaseClient.from('conversation_members').insert([{conversation_id:conv.id,user_id:currentUser.id,role:'owner'},{conversation_id:conv.id,user_id:p.id,role:'member'}]);
-  if(members.error){toast('افزودن مخاطب ناموفق بود: '+members.error.message);return}
+  const ownerResult=await supabaseClient.from('conversation_members').insert({conversation_id:conv.id,user_id:currentUser.id,role:'owner'});
+  if(ownerResult.error){toast('ثبت مالک گفت‌وگو ناموفق بود: '+ownerResult.error.message);return}
+  const memberResult=await supabaseClient.from('conversation_members').insert({conversation_id:conv.id,user_id:p.id,role:'member'});
+  if(memberResult.error){
+   await supabaseClient.from('conversations').delete().eq('id',conv.id).eq('created_by',currentUser.id);
+   toast('افزودن مخاطب ناموفق بود: '+memberResult.error.message);return;
+  }
   await loadOnlineChats();openChat(conv.id);return;
  }
  const existing=state.chats.find(c=>c.id===id);

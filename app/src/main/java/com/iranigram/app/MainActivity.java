@@ -49,7 +49,7 @@ public class MainActivity extends Activity {
     private static final String NOTIFICATION_CHANNEL_ID = "irangram_messages";
     private int nextNotificationId = 1000;
     private static final int FILE_CHOOSER_REQUEST = 42;
-    private static final String APP_URL = "https://appassets.androidplatform.net/assets/app.html?v=1.3.0";
+    private static final String APP_URL = "https://appassets.androidplatform.net/assets/app.html?v=1.3.1";
     private static final int NAVY = Color.rgb(7, 22, 55);
 
     private FrameLayout root;

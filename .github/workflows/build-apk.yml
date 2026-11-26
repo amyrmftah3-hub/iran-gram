@@ -20,47 +20,61 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Validate embedded app JavaScript
         run: |
           python3 - <<'PY'
           import re
           from pathlib import Path
           html = Path('app.html').read_text(encoding='utf-8')
-          scripts = re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', html, re.S | re.I)
+          scripts = re.findall(r'<script(?![^>]*\\bsrc=)[^>]*>(.*?)</script>', html, re.S | re.I)
           if not scripts:
               raise SystemExit('No inline application script found')
-          Path('/tmp/iran-gram-inline.js').write_text('\n'.join(scripts), encoding='utf-8')
+          Path('/tmp/iran-gram-inline.js').write_text('\\n'.join(scripts), encoding='utf-8')
           PY
           node --check /tmp/iran-gram-inline.js
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-      - name: Restore Android release keystore
+
+      - name: Restore Android release keystore (optional for test builds)
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
-            echo "Missing GitHub Actions secret: ANDROID_KEYSTORE_BASE64"
-            exit 1
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/iran-gram-release.jks"
+            chmod 600 "$RUNNER_TEMP/iran-gram-release.jks"
+            echo "SIGNING_AVAILABLE=true" >> "$GITHUB_ENV"
+          else
+            echo "SIGNING_AVAILABLE=false" >> "$GITHUB_ENV"
+            echo "Release keystore is not configured; building installable debug and unsigned release APKs only."
           fi
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/iran-gram-release.jks"
-          chmod 600 "$RUNNER_TEMP/iran-gram-release.jks"
-      - name: Build signed release and debug APKs
+
+      - name: Build Android APKs
         env:
           ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/iran-gram-release.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          test -n "$ANDROID_KEYSTORE_PASSWORD"
-          test -n "$ANDROID_KEY_ALIAS"
-          test -n "$ANDROID_KEY_PASSWORD"
+          if [ "$SIGNING_AVAILABLE" = "true" ]; then
+            test -s "$ANDROID_KEYSTORE_FILE"
+            test -n "$ANDROID_KEYSTORE_PASSWORD"
+            test -n "$ANDROID_KEY_ALIAS"
+            test -n "$ANDROID_KEY_PASSWORD"
+          else
+            unset ANDROID_KEYSTORE_FILE ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD
+          fi
           gradle --no-daemon assembleDebug assembleRelease
+
       - name: Verify signed release APK
+        if: env.SIGNING_AVAILABLE == 'true'
         run: |
           APK="app/build/outputs/apk/release/app-release.apk"
           SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
@@ -68,37 +82,33 @@ jobs:
           APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose "$APK"
-      - name: Publish public Android APK release
+
+      - name: Publish signed public Android APK release
+        if: env.SIGNING_AVAILABLE == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.3.0
-          name: IranGram 1.3.0
+          tag_name: v1.3.0-build-${{ github.run_number }}
+          name: IranGram 1.3.0 (build ${{ github.run_number }})
           make_latest: true
           draft: false
           prerelease: false
           body: |
             IranGram 1.3.0 for Android.
 
-            - Telegram-inspired dark interface refresh
-            - Bot command shortcuts in bot conversations
-            - Playable mini-games: Snake, Tic-Tac-Toe and Memory
-            - App interface bundled inside the APK; it no longer fetches app.html from GitHub Pages
-            - Online account, messaging and media still require an internet connection
+            - Telegram-inspired dark interface
+            - Bot command shortcuts and mini-games
+            - App interface bundled inside the APK
+            - Online messaging and media require an internet connection
           files: app/build/outputs/apk/release/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload debug APK
+      - name: Upload Android APK build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: IranGram-Android-DEBUG-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 30
-      - name: Upload signed release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: IranGram-Android-RELEASE-SIGNED
-          path: app/build/outputs/apk/release/app-release.apk
+          name: IranGram-Android-APKs-build-${{ github.run_number }}
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 30

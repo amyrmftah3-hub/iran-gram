@@ -1530,6 +1530,7 @@ html,body{background:#0e1621;color:var(--text);font-family:Tahoma,Arial,sans-ser
  </div>
  <div class="searchbox"><input id="search" placeholder="جست‌وجوی چت، کاربر، گروه، کانال یا بات…" autocomplete="off" aria-expanded="false"><div id="searchResultsPanel" class="search-results" hidden></div></div>
  <div id="adBanner" class="ad-banner" hidden aria-label="تبلیغات"></div>
+ <div id="globalAnnouncement" hidden style="margin:8px 12px 10px;padding:11px 13px;border:1px solid #3c78a8;border-right:4px solid #3390ec;border-radius:12px;background:#172b3b;color:#e8f4ff;line-height:1.8;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere"></div>
  <div class="filters" role="tablist" aria-label="پوشه گفتگوها"><button class="filter active" role="tab" aria-selected="true" data-filter="all">همه چت‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="people">شخصی</button><button class="filter" role="tab" aria-selected="false" data-filter="unread">خوانده‌نشده</button><button class="filter" role="tab" aria-selected="false" data-filter="groups">گروه‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="channels">کانال‌ها</button><button class="filter" role="tab" aria-selected="false" data-filter="archive">آرشیو</button><button class="filter" role="tab" aria-selected="false" data-filter="hidden">مخفی</button></div>
  <div class="stories" id="storyStrip" aria-label="داستان‌های کاربران"></div>
  <div class="chats" id="chatList"></div>
@@ -1976,7 +1977,8 @@ async function loadOnlineChats(){
   }
  }
  if(!state.chats.some(c=>c.id===state.active))state.active=null;
- renderChats();loadAdBanner();
+ renderChats();loadAdBanner();loadGlobalAnnouncement();
+ if(!window.__igGlobalAnnouncementTimer)window.__igGlobalAnnouncementTimer=setInterval(loadGlobalAnnouncement,60000);
  if(state.active)openChatNoFocus();else{$('#chatView').style.display='none';$('#emptyState').style.display='grid'}
 }
 async function recordChannelActivity(channelId){if(!remoteMode||!currentUser||!channelId)return;const {error}=await supabaseClient.rpc('record_channel_activity',{p_channel_id:channelId});if(error){console.warn('Channel activity update failed',error.message);return}const {data}=await supabaseClient.rpc('get_channel_verification_status');const status=(data||[]).find(x=>x.channel_id===channelId),c=state.chats.find(x=>x.id===channelId);if(status&&c){c.verified=status.is_verified;c.active_users_30d=status.active_users_30d;renderChats()}}
@@ -3040,6 +3042,16 @@ async function loadAdBanner(){
  el.innerHTML='<div class="ad-banner-head"><span>📣 پیشنهادهای تبلیغاتی</span><button type="button" data-ad-register>ثبت تبلیغ</button></div><div class="ad-banner-list">'+data.map(a=>'<a class="ad-banner-item" href="'+esc(a.target_url)+'" target="_blank" rel="noopener noreferrer"><span class="ad-banner-icon">✦</span><span class="ad-banner-title">'+esc(a.title)+'</span><span class="ad-banner-open">مشاهده ↗</span></a>').join('')+'</div>';
  el.hidden=false;
 }
+async function loadGlobalAnnouncement(){
+ const el=$('#globalAnnouncement');if(!el)return;
+ if(!remoteMode||!currentUser||!supabaseClient){el.hidden=true;el.textContent='';return}
+ const nowIso=new Date().toISOString();
+ const {data,error}=await supabaseClient.from('global_announcements').select('id,body,starts_at,expires_at').lte('starts_at',nowIso).gt('expires_at',nowIso).order('created_at',{ascending:false}).limit(1).maybeSingle();
+ if(error){console.warn('Global announcement unavailable:',error.message);el.hidden=true;return}
+ if(!data){el.hidden=true;el.textContent='';return}
+ el.textContent='📌 اطلاعیه ایرانگرام\n'+data.body+'\nتا '+new Date(data.expires_at).toLocaleString('fa-IR');
+ el.hidden=false;
+}
 async function advertisementsModal(){
  if(!remoteMode){toast('برای دیدن تبلیغات وارد حساب شو.');return}
  const {data,error}=await supabaseClient.from('advertisements').select('id,title,target_url,ends_at').eq('status','active').lte('starts_at',new Date().toISOString()).gt('ends_at',new Date().toISOString()).order('created_at',{ascending:false});
@@ -3060,15 +3072,37 @@ async function adminPanel(){
  const userOptions=(usersResult.data||[]).map(u=>'<option value="'+u.id+'">'+esc(u.display_name)+'</option>').join('');
  const channelOptions=(channelsResult.data||[]).map(c=>'<option value="'+c.id+'">'+esc(c.title)+'</option>').join('');
  const adRows=(adsResult.data||[]).map(a=>'<p class="subtle">• '+esc(a.title)+' — '+esc(a.status)+' — '+new Date(a.ends_at).toLocaleDateString('fa-IR')+'</p>').join('')||'<p class="subtle">هنوز تبلیغی ثبت نشده.</p>';
+ const globalResult=await supabaseClient.from('global_announcements').select('id,body,expires_at').gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false}).limit(5);
+ const globalRows=(globalResult.data||[]).map(a=>'<article style="padding:9px;margin:6px 0;border:1px solid var(--line);border-radius:10px"><div>'+esc(a.body)+'</div><small class="subtle">پایان: '+new Date(a.expires_at).toLocaleString('fa-IR')+'</small><button class="secondary" data-announcement-delete="'+a.id+'" style="margin-top:6px">حذف اطلاعیه</button></article>').join('')||'<p class="subtle">اطلاعیه فعالی وجود ندارد.</p>';
  const requestRows=(requestsResult.data||[]).map(a=>'<article class="ad-request-row"><b>'+esc(a.display_name)+'</b><p class="subtle">'+esc(a.target_url)+'<br>مدت: '+a.duration_days+' روز · '+esc(a.status)+' · '+new Date(a.created_at).toLocaleString('fa-IR')+'</p>'+(a.status==='pending'?'<div class="modalactions"><button class="primary" data-ad-approve="'+a.id+'">تأیید و انتشار</button><button class="secondary" data-ad-reject="'+a.id+'">رد درخواست</button></div>':'')+'</article>').join('')||'<p class="subtle">درخواستی ثبت نشده.</p>';
  showModal('مدیریت ایرانگرام',`<p class="subtle">مدیر اصلی: amyrmftah3@gmail.com</p>
  <h4>تیک آبی کاربران</h4><label>انتخاب کاربر</label><select id="adminUser"><option value="">انتخاب کن</option>${userOptions}</select><div class="modalactions"><button class="primary" id="giveUserTick">دادن تیک آبی</button><button class="secondary" id="removeUserTick">برداشتن تیک</button></div>
  <h4>تیک آبی کانال</h4><label>انتخاب کانال</label><select id="adminChannel"><option value="">انتخاب کن</option>${channelOptions}</select><div class="modalactions"><button class="primary" id="giveChannelTick">دادن تیک</button><button class="secondary" id="removeChannelTick">برداشتن تیک دستی</button></div><p class="subtle">شرط خودکار: حداقل ۱۵٬۰۰۰ کاربر فعال یکتا در ۳۰ روز گذشته.</p>
+ <h4>📌 پیام سراسری زمان‌دار</h4>
+ <p class="subtle">این جمله بالای فهرست پیام‌ها برای همه کاربران نمایش داده می‌شود و در زمان تعیین‌شده خودکار ناپدید می‌شود.</p>
+ <label>متن پیام (حداکثر ۵۰۰ نویسه)</label><textarea id="globalAnnouncementText" maxlength="500" rows="3" placeholder="جمله یا اطلاعیه‌ای که همه ببینند..."></textarea>
+ <label>زمان پایان نمایش</label><input id="globalAnnouncementEnd" type="datetime-local">
+ <button class="primary" id="createGlobalAnnouncement" style="width:100%;margin-top:8px">انتشار پیام سراسری</button>
+ <div id="globalAnnouncementAdminRows" style="margin-top:10px">${globalRows}</div>
  <h4>تبلیغ کانال</h4><label>عنوان تبلیغ</label><input id="adTitle" placeholder="مثلاً کانال فناوری"><label>لینک مقصد (HTTPS)</label><input id="adUrl" type="url" placeholder="https://..."><label>کانال ایرانگرام (اختیاری)</label><select id="adChannel"><option value="">فقط لینک خارجی</option>${channelOptions}</select><label>پایان تبلیغ</label><input id="adEnd" type="datetime-local"><button class="primary" id="createAd" style="width:100%;margin-top:10px">ثبت و فعال‌سازی تبلیغ</button>
  <h4>درخواست‌های تبلیغ (خصوصی)</h4><div id="adRequestsList">${requestRows}</div><h4>تبلیغات ثبت‌شده</h4>${adRows}<div class="modalactions"><button class="secondary" data-close>بستن</button></div>`);
  const setTick=async(kind,enabled)=>{const id=kind==='user'?$('#adminUser').value:$('#adminChannel').value;if(!id){toast('ابتدا یک مورد انتخاب کن.');return}const table=kind==='user'?'user_verification_overrides':'channel_verification_overrides',key=kind==='user'?'user_id':'channel_id';const {error}=await supabaseClient.from(table).upsert({[key]:id,is_verified:enabled,reason:enabled?'تأیید توسط مدیر اصلی': 'لغو تیک دستی',updated_by:currentUser.id},{onConflict:key});if(error){toast('ثبت تیک ناموفق بود: '+error.message);return}toast(enabled?'تیک آبی ثبت شد.':'تیک دستی برداشته شد.');await loadOnlineChats();adminPanel()};
  $('#giveUserTick').onclick=()=>setTick('user',true);$('#removeUserTick').onclick=()=>setTick('user',false);
  $('#giveChannelTick').onclick=()=>setTick('channel',true);$('#removeChannelTick').onclick=()=>setTick('channel',false);
+ $('#createGlobalAnnouncement').onclick=async()=>{
+  const body=$('#globalAnnouncementText').value.trim(),end=$('#globalAnnouncementEnd').value;
+  if(!body||body.length>500||!end||new Date(end)<=new Date()){toast('متن و زمان پایان آینده را درست وارد کن.');return}
+  const button=$('#createGlobalAnnouncement');button.disabled=true;button.textContent='در حال انتشار...';
+  const {error}=await supabaseClient.from('global_announcements').insert({body,starts_at:new Date().toISOString(),expires_at:new Date(end).toISOString(),created_by:currentUser.id});
+  if(error){button.disabled=false;button.textContent='انتشار پیام سراسری';toast('انتشار پیام ناموفق بود: '+error.message);return}
+  toast('پیام سراسری برای همه منتشر شد.');await loadGlobalAnnouncement();adminPanel();
+ };
+ $('#globalAnnouncementAdminRows').onclick=async e=>{
+  const b=e.target.closest('[data-announcement-delete]');if(!b)return;
+  b.disabled=true;const {error}=await supabaseClient.from('global_announcements').delete().eq('id',b.dataset.announcementDelete);
+  if(error){b.disabled=false;toast('حذف پیام ناموفق بود: '+error.message);return}
+  toast('پیام سراسری حذف شد.');await loadGlobalAnnouncement();adminPanel();
+ };
  $('#createAd').onclick=async()=>{const title=$('#adTitle').value.trim(),url=$('#adUrl').value.trim(),end=$('#adEnd').value;if(!title||!url.startsWith('https://')||!end||new Date(end)<=new Date()){toast('عنوان، لینک HTTPS و زمان پایان آینده را کامل کن.');return}const {error}=await supabaseClient.from('advertisements').insert({title,target_url:url,channel_id:$('#adChannel').value||null,starts_at:new Date().toISOString(),ends_at:new Date(end).toISOString(),status:'active',created_by:currentUser.id});if(error){toast('ثبت تبلیغ ناموفق بود: '+error.message);return}toast('تبلیغ ثبت و فعال شد.');adminPanel()};
  
  const rewardResult=await supabaseClient.from('youtube_reward_submissions').select('id,user_id,proof_path,status,created_at,platform').eq('status','pending').order('created_at',{ascending:true}).limit(50);

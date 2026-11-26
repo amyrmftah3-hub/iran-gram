@@ -10,8 +10,8 @@ android {
         applicationId 'com.amyrmftah3.irangram'
         minSdk 23
         targetSdk 34
-        versionCode 25
-        versionName '1.2.5'
+        versionCode 26
+        versionName '1.3.0'
     }
 
     signingConfigs {
@@ -36,4 +36,15 @@ android {
 
 dependencies {
     implementation 'androidx.core:core:1.15.0'
+    implementation 'androidx.webkit:webkit:1.12.1'
+}
+
+tasks.register('syncIranGramAssets', Copy) {
+    from(rootProject.file('app.html'))
+    from(rootProject.file('icon.svg'))
+    into(layout.projectDirectory.dir('src/main/assets'))
+}
+
+tasks.named('preBuild').configure {
+    dependsOn tasks.named('syncIranGramAssets')
 }

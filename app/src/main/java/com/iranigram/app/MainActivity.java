@@ -2,6 +2,10 @@ package com.amyrmftah3.irangram;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.net.Uri;
@@ -9,11 +13,13 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.http.SslError;
 import android.os.Bundle;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
@@ -38,6 +44,9 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 41;
+    private static final int NOTIFICATION_PERMISSION_REQUEST = 43;
+    private static final String NOTIFICATION_CHANNEL_ID = "irangram_messages";
+    private int nextNotificationId = 1000;
     private static final int FILE_CHOOSER_REQUEST = 42;
     private static final String APP_URL = "https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.2.4";
     private static final int NAVY = Color.rgb(7, 22, 55);
@@ -134,6 +143,7 @@ public class MainActivity extends Activity {
         webView = new WebView(this);
         webView.setBackgroundColor(NAVY);
         WebSettings settings = webView.getSettings();
+        webView.addJavascriptInterface(new AndroidNotificationBridge(), "IranGramAndroid");
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
@@ -268,6 +278,57 @@ public class MainActivity extends Activity {
         root.addView(webView, 0, new FrameLayout.LayoutParams(-1, -1));
     }
 
+    private final class AndroidNotificationBridge {
+        @JavascriptInterface
+        public void requestPermission() {
+            runOnUiThread(() -> requestNativeNotificationPermission());
+        }
+
+        @JavascriptInterface
+        public void showNotification(String title, String body) {
+            String currentUrl = webView == null ? "" : String.valueOf(webView.getUrl());
+            if (!currentUrl.startsWith("https://amyrmftah3-hub.github.io/iran-gram/")) return;
+            runOnUiThread(() -> showNativeNotification(title, body));
+        }
+    }
+
+    private void requestNativeNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_REQUEST);
+        } else {
+            ensureNotificationChannel();
+            Toast.makeText(this, "اعلان‌های ایرانگرام فعال است.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void ensureNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, "پیام‌های ایرانگرام", NotificationManager.IMPORTANCE_DEFAULT);
+                channel.setDescription("اعلان پیام‌های جدید ایرانگرام");
+                manager.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    private void showNativeNotification(String title, String body) {
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
+        ensureNotificationChannel();
+        Intent openIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, openIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        Notification.Builder builder = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                ? new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
+                : new Notification.Builder(this);
+        builder.setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle(title == null || title.trim().isEmpty() ? "ایرانگرام" : title.substring(0, Math.min(title.length(), 80)))
+                .setContentText(body == null ? "پیام جدید" : body.substring(0, Math.min(body.length(), 180)))
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent);
+        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (manager != null) manager.notify(nextNotificationId++, builder.build());
+    }
+
     private void showLoading(String message) {
         statusText.setText(message);
         progressBar.setVisibility(View.VISIBLE);
@@ -317,6 +378,15 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                ensureNotificationChannel();
+                Toast.makeText(this, "اعلان‌های ایرانگرام فعال شد.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "اجازه اعلان داده نشد.", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
         if (requestCode == MEDIA_PERMISSION_REQUEST && pendingWebPermission != null) {
             boolean allGranted = grantResults.length == pendingAndroidPermissions.length;
             for (int result : grantResults) if (result != PackageManager.PERMISSION_GRANTED) allGranted = false;

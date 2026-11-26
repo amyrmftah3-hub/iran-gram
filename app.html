@@ -1959,8 +1959,8 @@ async function loadOnlineChats(){
   if(botLinksError)console.warn('Bot conversation links unavailable',botLinksError.message);
   else if((botLinks||[]).length){
    const botIds=[...new Set(botLinks.map(x=>x.bot_id))];
-   const {data:botRows,error:botRowsError}=await supabaseClient.from('bots').select('id,display_name,username,description,is_active').in('id',botIds);
-   if(!botRowsError){const botMap=new Map((botRows||[]).map(b=>[b.id,b]));for(const link of botLinks){const chat=state.chats.find(c=>c.id===link.conversation_id),bot=botMap.get(link.bot_id);if(chat&&bot){chat.isBot=true;chat.botId=bot.id;chat.name=bot.display_name||bot.username||'بات';chat.avatar='🤖';chat.status=bot.description||'بات ایرانگرام';}}}
+   const {data:botRows,error:botRowsError}=await supabaseClient.from('bots').select('id,display_name,username,description,is_active,web_app_url').in('id',botIds);
+   if(!botRowsError){const botMap=new Map((botRows||[]).map(b=>[b.id,b]));for(const link of botLinks){const chat=state.chats.find(c=>c.id===link.conversation_id),bot=botMap.get(link.bot_id);if(chat&&bot){chat.isBot=true;chat.botId=bot.id;chat.name=bot.display_name||bot.username||'بات';chat.avatar='🤖';chat.status=bot.description||'بات ایرانگرام';chat.botWebAppUrl=bot.web_app_url||'';}}}
   }
   const {data:members}=await supabaseClient.from('conversation_members').select('conversation_id,user_id').in('conversation_id',ids);
   const authorIds=[...new Set([...(members||[]).map(m=>m.user_id),...state.chats.flatMap(c=>c.messages.map(m=>m.senderId).filter(Boolean))])];
@@ -2235,6 +2235,11 @@ async function finishCall(notify=true){
  }
 }
 
+function launchBotMiniApp(chat){
+ if(!chat||!chat.botWebAppUrl){toast('این بات مینی‌اپی تنظیم نکرده است');return}
+ let url;try{url=new URL(chat.botWebAppUrl);if(url.protocol!=='https:'||url.origin===location.origin||url.hostname==='appassets.androidplatform.net')throw new Error('origin')}catch(_){toast('لینک مینی‌اپ امن یا معتبر نیست');return}
+ showModal('🧩 '+esc(chat.name)+' · مینی‌اپ','<p class="subtle">این برنامه در یک قاب جدا و محدود اجرا می‌شود.</p><iframe title="مینی‌اپ '+esc(chat.name)+'" src="'+esc(url.href)+'" sandbox="allow-scripts allow-forms allow-same-origin" referrerpolicy="no-referrer" allow="clipboard-read; clipboard-write" style="width:100%;height:min(65vh,560px);border:0;border-radius:12px;background:#fff"></iframe><div class="modalactions"><button class="secondary" data-close>بستن مینی‌اپ</button></div>');
+}
 async function renderBotKeyboard(chat){
  const bar=$('#botKeyboard');if(!bar)return;
  bar.hidden=true;bar.innerHTML='';bar.onclick=null;
@@ -2244,10 +2249,10 @@ async function renderBotKeyboard(chat){
  if(error){console.warn('Bot command keyboard unavailable:',error.message);return}
  if(state.active!==chatId)return;
  const commands=(data||[]).filter(x=>x.command);
- if(!commands.length)return;
- bar.innerHTML=commands.map(x=>'<button type="button" data-bot-command="'+esc(x.command)+'" title="'+esc(x.description||x.command)+'">'+esc(x.command)+'</button>').join('');
+ if(!commands.length&&!chat.botWebAppUrl)return;
+ bar.innerHTML=commands.map(x=>'<button type="button" data-bot-command="'+esc(x.command)+'" title="'+esc(x.description||x.command)+'">'+esc(x.command)+'</button>').join('')+(chat.botWebAppUrl?'<button type="button" data-bot-miniapp="1">🧩 بازکردن مینی‌اپ</button>':'');
  bar.hidden=false;
- bar.onclick=e=>{const button=e.target.closest('[data-bot-command]');if(!button)return;$('#messageInput').value=button.dataset.botCommand;sendMessage()};
+ bar.onclick=e=>{const mini=e.target.closest('[data-bot-miniapp]');if(mini){launchBotMiniApp(chat);return}const button=e.target.closest('[data-bot-command]');if(!button)return;$('#messageInput').value=button.dataset.botCommand;sendMessage()};
 }
 function openGamesCenter(){
  showModal('🎮 بازی‌ها و مینی‌اپ‌ها','<p class="subtle">بازی‌های سبک ایرانگرام؛ همین حالا قابل اجرا روی همین دستگاه. بازی آنلاین و همگام‌سازی امتیازها در مرحله بعد اضافه می‌شود.</p><div class="game-catalog"><button class="game-card" data-open-game="snake"><span class="game-icon">🐍</span><b>مار</b><small>امتیاز جمع کن و به دیوار نخور</small></button><button class="game-card" data-open-game="xo"><span class="game-icon">⭕</span><b>دوز</b><small>دو نفره روی یک گوشی</small></button><button class="game-card" data-open-game="memory"><span class="game-icon">🧠</span><b>حافظه</b><small>جفت شکل‌های یکسان را پیدا کن</small></button><button class="game-card" data-open-game="about"><span class="game-icon">🧩</span><b>مینی‌اپ‌ها</b><small>بستر اجرای بازی‌های بیشتر</small></button></div><div class="modalactions"><button class="secondary" data-close>بستن</button></div>');
@@ -2651,7 +2656,7 @@ async function createBot(){
  showModal('🤖 بات‌ساز ایرانگرام',`<p class="subtle">بات‌هایت را بساز و فرمان‌ها و پاسخ‌های آماده‌شان را تنظیم کن.</p><div id="myBotsList" class="settings-list"><p class="subtle">در حال دریافت بات‌ها…</p></div><div class="modalactions"><button class="primary" id="openCreateBot">＋ ساخت بات جدید</button><button class="secondary" data-close>بستن</button></div>`);
  const list=$('#myBotsList');
  const refresh=async()=>{
-  const {data,error}=await supabaseClient.from('bots').select('id,display_name,username,description,is_active,created_at').eq('owner_id',currentUser.id).order('created_at',{ascending:false});
+  const {data,error}=await supabaseClient.from('bots').select('id,display_name,username,description,is_active,web_app_url,created_at').eq('owner_id',currentUser.id).order('created_at',{ascending:false});
   if(error){list.innerHTML='<p class="subtle">دریافت بات‌ها ناموفق بود: '+esc(error.message)+'</p>';return}
   list.innerHTML=(data||[]).length?(data||[]).map(b=>`<div class="setting-row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div style="flex:1;min-width:130px"><b>${esc(b.display_name)}</b><div class="subtle" dir="ltr">@${esc(b.username)}</div></div><button class="secondary" data-manage-bot="${b.id}">مدیریت فرمان‌ها</button><button class="secondary" data-toggle-bot="${b.id}" data-active="${b.is_active}">${b.is_active?'خاموش‌کردن':'روشن‌کردن'}</button></div>`).join(''):'<p class="subtle">هنوز باتی نساختی. اولین باتت را بساز.</p>';
   list.querySelectorAll('[data-manage-bot]').forEach(b=>b.onclick=()=>manageBotCommands((data||[]).find(x=>x.id===b.dataset.manageBot)));
@@ -2659,12 +2664,13 @@ async function createBot(){
  };
  await refresh();
  $('#openCreateBot').onclick=()=>{
-  showModal('ساخت بات جدید',`<p class="subtle">شناسه یکتا با حروف انگلیسی، عدد و زیرخط؛ شروع با حرف انگلیسی.</p><label>نام بات</label><input id="newBotName" maxlength="48" placeholder="مثلاً بات پشتیبانی"><label>شناسه بات</label><input id="newBotUsername" maxlength="32" dir="ltr" placeholder="MySupportBot"><label>توضیحات</label><textarea id="newBotDescription" maxlength="300" placeholder="این بات چه کاری انجام می‌دهد؟"></textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveNewBot">ساخت بات</button></div>`);
+  showModal('ساخت بات جدید',`<p class="subtle">شناسه یکتا با حروف انگلیسی، عدد و زیرخط؛ شروع با حرف انگلیسی.</p><label>نام بات</label><input id="newBotName" maxlength="48" placeholder="مثلاً بات پشتیبانی"><label>شناسه بات</label><input id="newBotUsername" maxlength="32" dir="ltr" placeholder="MySupportBot"><label>توضیحات</label><textarea id="newBotDescription" maxlength="300" placeholder="این بات چه کاری انجام می‌دهد؟"></textarea><label>لینک مینی‌اپ (اختیاری، HTTPS)</label><input id="newBotWebAppUrl" type="url" dir="ltr" placeholder="https://example.com/app"><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveNewBot">ساخت بات</button></div>`);
   $('#saveNewBot').onclick=async()=>{
-   const name=$('#newBotName').value.trim(),username=$('#newBotUsername').value.trim(),description=$('#newBotDescription').value.trim();
+   const name=$('#newBotName').value.trim(),username=$('#newBotUsername').value.trim(),description=$('#newBotDescription').value.trim(),web_app_url=$('#newBotWebAppUrl').value.trim();
    if(name.length<2){toast('نام بات حداقل ۲ حرف باشد');return}
    if(!/^[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(username)){toast('شناسه باید ۵ تا ۳۲ نویسه و با حرف انگلیسی شروع شود');return}
-   const {data,error}=await supabaseClient.from('bots').insert({owner_id:currentUser.id,display_name:name,username,description}).select('id,display_name,username').single();
+   if(web_app_url){try{const parsed=new URL(web_app_url);if(parsed.protocol!=='https:'){toast('لینک مینی‌اپ باید با HTTPS شروع شود');return}}catch(_){toast('لینک مینی‌اپ معتبر نیست');return}}
+   const {data,error}=await supabaseClient.from('bots').insert({owner_id:currentUser.id,display_name:name,username,description,web_app_url:web_app_url||null}).select('id,display_name,username').single();
    if(error){toast(error.code==='23505'?'این شناسه قبلاً گرفته شده است':'ساخت بات ناموفق بود: '+error.message);return}
    toast('بات ساخته شد 🤖');await createBot();
   };
@@ -2672,8 +2678,9 @@ async function createBot(){
 }
 async function manageBotCommands(bot){
  if(!bot)return;
- showModal('فرمان‌های بات · '+esc(bot.display_name),`<p class="subtle">برای هر فرمان یک پاسخ آماده تعیین کن. نمونه: /start</p><div id="botCommandList" class="settings-list"><p class="subtle">در حال دریافت…</p></div><hr><label>فرمان</label><input id="botCommandName" dir="ltr" maxlength="33" placeholder="/start"><label>توضیح فرمان</label><input id="botCommandDesc" maxlength="120" placeholder="شروع کار با بات"><label>متن پاسخ</label><textarea id="botCommandReply" maxlength="2000" placeholder="سلام! به بات من خوش اومدی."></textarea><div class="modalactions"><button class="secondary" data-close>بستن</button><button class="primary" id="saveBotCommand">ذخیره فرمان</button></div>`);
+ showModal('فرمان‌های بات · '+esc(bot.display_name),`<p class="subtle">فرمان‌ها به شکل کلید سریع در گفت‌وگوی بات نمایش داده می‌شوند. لینک مینی‌اپ فقط با HTTPS پذیرفته می‌شود.</p><label>لینک مینی‌اپ</label><input id="botWebAppUrl" type="url" dir="ltr" value="${esc(bot.web_app_url||'')}" placeholder="https://example.com/app"><div class="modalactions"><button class="secondary" id="saveBotWebApp">ذخیره لینک مینی‌اپ</button></div><div id="botCommandList" class="settings-list"><p class="subtle">در حال دریافت…</p></div><hr><label>فرمان</label><input id="botCommandName" dir="ltr" maxlength="33" placeholder="/start"><label>توضیح فرمان</label><input id="botCommandDesc" maxlength="120" placeholder="شروع کار با بات"><label>متن پاسخ</label><textarea id="botCommandReply" maxlength="2000" placeholder="سلام! به بات من خوش اومدی."></textarea><div class="modalactions"><button class="secondary" data-close>بستن</button><button class="primary" id="saveBotCommand">ذخیره فرمان</button></div>`);
  const list=$('#botCommandList');
+ $('#saveBotWebApp').onclick=async()=>{const value=$('#botWebAppUrl').value.trim();if(value){try{const parsed=new URL(value);if(parsed.protocol!=='https:'){toast('لینک مینی‌اپ باید HTTPS باشد');return}}catch(_){toast('لینک مینی‌اپ معتبر نیست');return}}const {error}=await supabaseClient.from('bots').update({web_app_url:value||null}).eq('id',bot.id).eq('owner_id',currentUser.id);if(error){toast('ذخیره لینک مینی‌اپ ناموفق بود: '+error.message);return}bot.web_app_url=value||null;toast('لینک مینی‌اپ ذخیره شد');};
  const refresh=async()=>{
   const {data,error}=await supabaseClient.from('bot_commands').select('id,command,description,response_text').eq('bot_id',bot.id).order('created_at');
   if(error){list.innerHTML='<p class="subtle">خطا در دریافت فرمان‌ها: '+esc(error.message)+'</p>';return}

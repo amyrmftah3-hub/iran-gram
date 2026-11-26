@@ -281,6 +281,8 @@ public class MainActivity extends Activity {
     private final class AndroidNotificationBridge {
         @JavascriptInterface
         public void requestPermission() {
+            String currentUrl = webView == null ? "" : String.valueOf(webView.getUrl());
+            if (!currentUrl.startsWith("https://amyrmftah3-hub.github.io/iran-gram/")) return;
             runOnUiThread(() -> requestNativeNotificationPermission());
         }
 

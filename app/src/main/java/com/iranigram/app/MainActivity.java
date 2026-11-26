@@ -41,6 +41,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.webkit.WebViewAssetLoader;
 
 public class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 41;
@@ -48,11 +49,12 @@ public class MainActivity extends Activity {
     private static final String NOTIFICATION_CHANNEL_ID = "irangram_messages";
     private int nextNotificationId = 1000;
     private static final int FILE_CHOOSER_REQUEST = 42;
-    private static final String APP_URL = "https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.2.5";
+    private static final String APP_URL = "https://appassets.androidplatform.net/assets/app.html?v=1.3.0";
     private static final int NAVY = Color.rgb(7, 22, 55);
 
     private FrameLayout root;
     private WebView webView;
+    private WebViewAssetLoader assetLoader;
     private ValueCallback<Uri[]> filePathCallback;
     private LinearLayout loadingPanel;
     private TextView statusText;
@@ -144,16 +146,24 @@ public class MainActivity extends Activity {
         webView.setBackgroundColor(NAVY);
         WebSettings settings = webView.getSettings();
         webView.addJavascriptInterface(new AndroidNotificationBridge(), "IranGramAndroid");
+        assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setAllowFileAccess(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
-        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         CookieManager.getInstance().setAcceptCookie(true);
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public android.webkit.WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
+
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 pageLoaded = false;
@@ -282,7 +292,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void requestPermission() {
             String currentUrl = webView == null ? "" : String.valueOf(webView.getUrl());
-            if (!currentUrl.startsWith("https://amyrmftah3-hub.github.io/iran-gram/")) return;
+            if (!currentUrl.startsWith("https://appassets.androidplatform.net/assets/")) return;
             runOnUiThread(() -> requestNativeNotificationPermission());
         }
 

@@ -117,18 +117,18 @@ jobs:
                 });
                 if (!channelTap.rowFound || channelTap.active !== '00000000-0000-0000-0000-000000000001' || !channelTap.headName.includes('کانال آزمایشی')) throw new Error('Channel row tap did not open the conversation: ' + JSON.stringify(channelTap));
                 const pollAndScheduleReady = await page.evaluate(() => {
-                  const pollButton = document.querySelector('#pollBtn');
-                  const scheduleButton = document.querySelector('#scheduleBtn');
+                  const toolsButton = document.querySelector('#messageToolsBtn');
                   const pollHtml = renderMessageContent({ id: 'poll-smoke', poll: { question: 'آزمایش نظرسنجی', options: ['بله', 'نه'], votes: [] } });
                   return {
-                    pollButton: !!pollButton,
-                    scheduleButton: !!scheduleButton,
+                    toolsButton: !!toolsButton,
+                    toolsMenu: typeof messageToolsModal === 'function',
+                    pollFlow: typeof createPoll === 'function',
                     pollRenderer: typeof renderPollCard === 'function',
                     scheduleFlow: typeof scheduledMessagesModal === 'function',
                     pollMarkup: pollHtml.includes('آزمایش نظرسنجی') && pollHtml.includes('data-poll-option="0"')
                   };
                 });
-                if (!pollAndScheduleReady.pollButton || !pollAndScheduleReady.scheduleButton || !pollAndScheduleReady.pollRenderer || !pollAndScheduleReady.scheduleFlow || !pollAndScheduleReady.pollMarkup) {
+                if (!pollAndScheduleReady.toolsButton || !pollAndScheduleReady.toolsMenu || !pollAndScheduleReady.pollFlow || !pollAndScheduleReady.pollRenderer || !pollAndScheduleReady.scheduleFlow || !pollAndScheduleReady.pollMarkup) {
                   throw new Error('Poll or scheduled-message UI test failed: ' + JSON.stringify(pollAndScheduleReady));
                 }
                 const splashVisible = await page.locator('#appSplash').evaluate(el => getComputedStyle(el).visibility !== 'hidden' && Number(getComputedStyle(el).opacity) > 0.05);

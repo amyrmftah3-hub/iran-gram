@@ -1606,7 +1606,7 @@ html,body{background:#0e1621;color:var(--text);font-family:Tahoma,Arial,sans-ser
   <div class="drawer-section">ایرانگرام</div>
   <button data-action="group"><span>👥</span> ساخت گروه</button><button data-action="channel"><span>📢</span> ساخت کانال</button><button data-action="bot"><span>🤖</span> ساخت بات</button><button data-action="games"><span>🎮</span> بازی‌ها و مینی‌اپ‌ها</button><button data-action="anonymous"><span>🕵️</span> پیام‌های ناشناس</button><button data-action="channelcomments"><span>💬</span> صندوق نظرات کانال‌ها</button><button data-action="ads"><span>📣</span> تبلیغات</button><button data-action="rewards"><span>🎁</span> جایزه و امتیازها</button><button data-action="adrequest"><span>📝</span> ثبت تبلیغ</button><button data-action="settings"><span>⚙️</span> تنظیمات</button>
   <div class="drawer-section">ابزارها</div>
-  <button data-action="admin"><span>🛡️</span> مدیریت ایرانگرام</button><button data-action="export"><span>⬇️</span> خروجی پشتیبان</button><button data-action="about"><span>ℹ️</span> درباره ایرانگرام</button><button data-action="logout"><span>🚪</span> خروج از حساب</button>
+  <button data-action="admin"><span>🛡️</span> مدیریت ایرانگرام</button><button data-action="export"><span>⬇️</span> خروجی پشتیبان</button><button data-action="about"><span>ℹ️</span> درباره ایرانگرام</button><button data-action="logout"><span>🚪</span> خروج از حساب</button><button id="myGlobalAnnouncementBtn" type="button" hidden><span>📌</span> جمله بالای ایرانگرام</button>
   <div class="drawer-footer">ایرانگرام · پیام‌رسان فارسی</div>
  </div>
  <div class="searchbox"><input id="search" placeholder="جست‌وجوی چت، کاربر، گروه، کانال یا بات…" autocomplete="off" aria-expanded="false"><div id="searchResultsPanel" class="search-results" hidden></div></div>
@@ -3137,8 +3137,28 @@ function settingsModal(){
 
 function isPrimaryAdmin(){return !!currentUser&&String(currentUser.email||'').toLowerCase()==='amyrmftah3@gmail.com'&&!!currentUser.email_confirmed_at}
 
+function openMyGlobalAnnouncementEditor(){
+ if(!isPrimaryAdmin()){toast('این امکان فقط برای مدیر اصلی است.');return}
+ const current=$('#topbarAnnouncementText')?.textContent||'ایرانگرام';
+ showModal('جمله بالای ایرانگرام',`<p class="subtle">جمله‌ای بنویس تا به‌جای «ایرانگرام» بالای صفحه همه کاربران نمایش داده شود. تا وقتی جمله را عوض نکنی، همان‌جا می‌ماند.</p><label>جمله دلخواه</label><textarea id="myGlobalAnnouncementBody" maxlength="500" rows="3" placeholder="جمله‌ات را برای همه بنویس...">${current==='ایرانگرام'?'':esc(current)}</textarea><div class="modalactions"><button class="secondary" data-close>انصراف</button><button class="primary" id="saveMyGlobalAnnouncement">ثبت برای همه</button></div>`);
+ const button=$('#saveMyGlobalAnnouncement');
+ button.onclick=async()=>{
+  const body=$('#myGlobalAnnouncementBody').value.trim();
+  if(!body||body.length>500){toast('یک جمله تا ۵۰۰ نویسه بنویس.');return}
+  if(!remoteMode||!supabaseClient||!currentUser){toast('برای انتشار باید به حساب آنلاین مدیر وارد باشی.');return}
+  button.disabled=true;button.textContent='در حال ثبت...';
+  const {error}=await supabaseClient.from('global_announcements').insert({body,starts_at:new Date().toISOString(),expires_at:'2099-12-31T23:59:59.000Z',created_by:currentUser.id});
+  if(error){button.disabled=false;button.textContent='ثبت برای همه';toast('ثبت جمله ناموفق بود: '+error.message);return}
+  await loadGlobalAnnouncement();
+  closeModal();
+  toast('جمله برای همه کاربران ثبت شد.');
+ };
+}
 
-const cyrusVerses=['به نام خرد، راه روشن شود؛ دل از مهر ایران گلشن شود.','جهان را به داد و خرد زنده دار؛ به نیکی بمان و بدی را سپار.','نه از تخت ماند و نه از تاج و گنج؛ آن‌چه بماند، نیکی‌ست و رنجِ گنج.','چراغ دانایی افروز و بس؛ که تاریکی از روشنایی شکست.','به فرهنگ و آزادی آباد شو؛ به مهر و به دانش، دلشاد شو.','اگر نام نیکو بجویی به جهان؛ به کردار نیکو بمان جاودان.','دلیر آن‌که با دانش و داد زیست؛ نه آن‌کس که تنها به شمشیر ایست.','ز خاک وطن، جوانه امید خیزد؛ به دست خرد، فردا پدید آید.','به هر جا که مهر است، ایران همان‌جاست؛ شکوهش به اندیشه و انسان‌گرایی‌ست.','جهان خانه مردم است و بس؛ به داد و مدارا بمان هم‌نفس.'];function setSplashPoem(){const special=localStorage.getItem('ig_special_splash');const el=document.getElementById('splashPoem');if(el)el.textContent=special||cyrusVerses[Math.floor(Math.random()*cyrusVerses.length)];}setSplashPoem();
+
+
+const cyrusVerses=['به نام خرد، راه روشن شود؛ دل از مهر ایران گلشن شود.','جهان را به داد و خرد زنده دار؛ به نیکی بمان و بدی را سپار.','نه از تخت ماند و نه از تاج و گنج؛ آن‌چه بماند، نیکی‌ست و رنجِ گنج.','چراغ دانایی افروز و بس؛ که تاریکی از روشنایی شکست.','به فرهنگ و آزادی آباد شو؛ به مهر و به دانش، دلشاد شو.','اگر نام نیکو بجویی به جهان؛ به کردار نیکو بمان جاودان.','دلیر آن‌که با دانش و داد زیست؛ نه آن‌کس که تنها به شمشیر ایست.','ز خاک وطن، جوانه امید خیزد؛ به دست خرد، فردا پدید آید.','به هر جا که مهر است، ایران همان‌جاست؛ شکوهش به اندیشه و انسان‌گرایی‌ست.','جهان خانه مردم است و بس؛ به داد و مدارا بمان هم‌نفس.'];const myAnnouncementButton=document.getElementById('myGlobalAnnouncementBtn');if(myAnnouncementButton){myAnnouncementButton.hidden=!isPrimaryAdmin();myAnnouncementButton.addEventListener('click',()=>{document.getElementById('mainMenu')?.classList.remove('open');openMyGlobalAnnouncementEditor()})}
+function setSplashPoem(){const special=localStorage.getItem('ig_special_splash');const el=document.getElementById('splashPoem');if(el)el.textContent=special||cyrusVerses[Math.floor(Math.random()*cyrusVerses.length)];}setSplashPoem();
 
 
 async function requestAdModal(){

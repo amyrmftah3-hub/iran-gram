@@ -1,9 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 120 120">
-<defs><linearGradient id="igBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#59b8ff"/><stop offset="1" stop-color="#1678d2"/></linearGradient><linearGradient id="igPlane" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#d8efff"/></linearGradient></defs>
-<rect x="3" y="3" width="114" height="114" rx="34" fill="#0e2942"/>
-<circle cx="60" cy="60" r="49" fill="url(#igBlue)"/>
-<path d="M24 56.5 96 25 73.5 96 57 68.5 24 56.5Z" fill="url(#igPlane)"/>
-<path d="M57 68.5 96 25 48 58.5Z" fill="#b9e1ff"/>
-<path d="M57 68.5 55 87 66 76" fill="#d9efff"/>
-<path d="M35 57.5 53 60.5 48 65Z" fill="#8bcaff" opacity=".9"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs>
+ <linearGradient id="goldFrame" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff2b9"/><stop offset=".48" stop-color="#d6b66d"/><stop offset="1" stop-color="#8e7138"/></linearGradient>
+ <linearGradient id="cyan" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#a5ffff"/><stop offset=".5" stop-color="#16dfff"/><stop offset="1" stop-color="#0788b9"/></linearGradient>
+ <linearGradient id="inner" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#075c8c"/><stop offset=".52" stop-color="#11145c"/><stop offset="1" stop-color="#4a176d"/></linearGradient>
+ <linearGradient id="plane" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#fff0b3"/><stop offset=".55" stop-color="#d9b66b"/><stop offset="1" stop-color="#a77c39"/></linearGradient>
+ <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <pattern id="circuit" width="64" height="64" patternUnits="userSpaceOnUse"><path d="M0 18h22v18h18V0M44 64V46h20M8 64V48h12" fill="none" stroke="#66b8e8" stroke-opacity=".12" stroke-width="2"/><circle cx="22" cy="18" r="2" fill="#9beeff" opacity=".22"/></pattern>
+</defs>
+<rect x="18" y="18" width="476" height="476" rx="116" fill="url(#goldFrame)"/>
+<rect x="42" y="42" width="428" height="428" rx="99" fill="#b79a5d" opacity=".55"/>
+<rect x="58" y="58" width="396" height="396" rx="88" fill="#062b4b" stroke="url(#cyan)" stroke-width="15" filter="url(#glow)"/>
+<rect x="77" y="77" width="358" height="358" rx="72" fill="url(#inner)" stroke="#28105e" stroke-width="11"/>
+<rect x="88" y="88" width="336" height="336" rx="62" fill="url(#circuit)"/>
+<path d="M144 250 359 158Q370 153 366 168L324 353Q320 370 305 360L231 307 203 345Q196 355 191 341L175 278 145 263Q130 256 144 250Z" fill="url(#plane)" stroke="#fff0b2" stroke-width="5" stroke-linejoin="round" filter="url(#glow)"/>
+<path d="m175 278 184-120-128 151Z" fill="#f8e3a0" opacity=".8"/>
+<path d="m231 307 74 53q15 10 19-7l42-185-163 132Z" fill="#cba45d" opacity=".65"/>
+<path d="m175 278 28 67q5 14 12 0l16-38" fill="none" stroke="#fff0b2" stroke-width="5" stroke-linejoin="round"/>
 </svg>

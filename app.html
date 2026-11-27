@@ -3197,9 +3197,9 @@ $('#menuBtn').onclick=()=>{const opening=!$('#mainMenu').classList.contains('ope
 const settingsQuickBtn=$('#settingsQuickBtn');if(settingsQuickBtn)settingsQuickBtn.onclick=()=>settingsModal();$('#audioCallBtn').onclick=()=>startOutgoingCall('audio');$('#videoCallBtn').onclick=()=>startOutgoingCall('video');$('#endCallBtn').onclick=()=>finishCall(true);$('#muteCallBtn').onclick=()=>{const track=activeCall?.localStream?.getAudioTracks()[0];if(track){track.enabled=!track.enabled;$('#muteCallBtn').textContent=track.enabled?'🎙️':'🔇'}};$('#cameraCallBtn').onclick=()=>{const track=activeCall?.localStream?.getVideoTracks()[0];if(track){track.enabled=!track.enabled;$('#cameraCallBtn').textContent=track.enabled?'📷':'🚫'}};
 let iranGramPhoneContacts=[];
 window.onIranGramContacts=function(payload){
- try{iranGramPhoneContacts=JSON.parse(payload||'[]').filter(x=>x&&x.phone).map(x=>({name:String(x.name||'بدون نام'),phone:String(x.phone)}));}
+ try{iranGramPhoneContacts=JSON.parse(payload||'[]').filter(x=>x&&x.phone).map(x=>({name:String(x.name||'بدون نام'),phone:String(x.phone)})).slice(0,5000);}
  catch(e){iranGramPhoneContacts=[];console.warn('Contacts payload invalid',e);}
- renderPhoneContacts();
+ lookupIranGramPhoneContacts();
 };
 function normalizeIranGramPhone(value){
  let n=String(value||'').replace(/[^0-9]/g,'');

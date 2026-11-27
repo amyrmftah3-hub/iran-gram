@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b8fd3">
-<meta name="application-version" content="1.3.6">
+<meta name="application-version" content="1.3.7">
 <title>ایرانگرام | پیام‌رسان ایرانی</title>
 <style>
 :root{--blue:#168acd;--blue2:#087fbd;--bg:#e9f1f6;--panel:#fff;--text:#17212b;--muted:#71808f;--line:#e6edf2;--chat:#dcecf4;--bubble:#fff;--mine:#d9fdd3;--shadow:0 5px 24px #0a3a5510}
@@ -3193,15 +3193,65 @@ async function adminPanel(){
 }
 
 $('#menuBtn').onclick=()=>{const opening=!$('#mainMenu').classList.contains('open');$('#mainMenu').classList.toggle('open',opening);if(opening){$('#drawerName').textContent=state.profile.name||'کاربر ایرانگرام';$('#drawerUsername').textContent=state.profile.username?'@'+state.profile.username:(currentUser?.email||'حساب ایرانگرام');const da=$('.drawer-avatar');if(da)da.innerHTML=state.profile.avatar_url?'<img src="'+esc(state.profile.avatar_url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':esc((state.profile.name||'ا').slice(0,1))}};$('#drawerClose').onclick=()=>$('#mainMenu').classList.remove('open');document.addEventListener('click',e=>{if($('#mainMenu').classList.contains('open')&&!$('#mainMenu').contains(e.target)&&!$('#menuBtn').contains(e.target))$('#mainMenu').classList.remove('open')});
-const settingsQuickBtn=$('#settingsQuickBtn');if(settingsQuickBtn)settingsQuickBtn.onclick=()=>settingsModal();$('#audioCallBtn').onclick=()=>startOutgoingCall('audio');$('#videoCallBtn').onclick=()=>startOutgoingCall('video');$('#endCallBtn').onclick=()=>finishCall(true);$('#muteCallBtn').onclick=()=>{const track=activeCall?.localStream?.getAudioTracks()[0];if(track){track.enabled=!track.enabled;$('#muteCallBtn').textContent=track.enabled?'🎙️':'🔇'}};$('#cameraCallBtn').onclick=()=>{const track=activeCall?.localStream?.getVideoTracks()[0];if(track){track.enabled=!track.enabled;$('#cameraCallBtn').textContent=track.enabled?'📷':'🚫'}};$('#bottomNav').onclick=e=>{
+const settingsQuickBtn=$('#settingsQuickBtn');if(settingsQuickBtn)settingsQuickBtn.onclick=()=>settingsModal();$('#audioCallBtn').onclick=()=>startOutgoingCall('audio');$('#videoCallBtn').onclick=()=>startOutgoingCall('video');$('#endCallBtn').onclick=()=>finishCall(true);$('#muteCallBtn').onclick=()=>{const track=activeCall?.localStream?.getAudioTracks()[0];if(track){track.enabled=!track.enabled;$('#muteCallBtn').textContent=track.enabled?'🎙️':'🔇'}};$('#cameraCallBtn').onclick=()=>{const track=activeCall?.localStream?.getVideoTracks()[0];if(track){track.enabled=!track.enabled;$('#cameraCallBtn').textContent=track.enabled?'📷':'🚫'}};
+let iranGramPhoneContacts=[];
+window.onIranGramContacts=function(payload){
+ try{iranGramPhoneContacts=JSON.parse(payload||'[]').filter(x=>x&&x.phone).map(x=>({name:String(x.name||'بدون نام'),phone:String(x.phone)}));}
+ catch(e){iranGramPhoneContacts=[];console.warn('Contacts payload invalid',e);}
+ renderPhoneContacts();
+};
+function normalizeIranGramPhone(value){
+ let n=String(value||'').replace(/[^0-9]/g,'');
+ if(n.startsWith('0098'))n=n.slice(4);
+ else if(n.startsWith('98'))n=n.slice(2);
+ if(n.startsWith('0'))n=n.slice(1);
+ return n;
+}
+function showPhoneContacts(){
+ if(!remoteMode||!currentUser){authModal();return}
+ showModal('مخاطبین گوشی',`<p class="subtle">فقط با اجازه تو مخاطبین گوشی خوانده می‌شوند. شماره‌ها روی سرور بارگذاری نمی‌شوند؛ برای شروع چت باید مخاطب حساب ایرانگرام داشته باشد.</p>
+ <input id="phoneContactSearch" placeholder="جست‌وجوی نام یا شماره…" autocomplete="off">
+ <div id="phoneContactsList" style="max-height:55vh;overflow:auto;margin-top:10px"><p class="subtle">در حال دریافت مخاطبین گوشی…</p></div>
+ <div class="modalactions"><button class="secondary" id="reloadPhoneContacts">بارگذاری دوباره</button><button class="secondary" data-close>بستن</button></div>`);
+ $('#phoneContactSearch').oninput=renderPhoneContacts;
+ $('#reloadPhoneContacts').onclick=()=>{if(window.IranGramAndroid?.requestContacts)window.IranGramAndroid.requestContacts();else toast('خواندن مخاطبین گوشی فقط در نسخه APK ایرانگرام پشتیبانی می‌شود.')};
+ if(window.IranGramAndroid?.requestContacts)window.IranGramAndroid.requestContacts();
+ else $('#phoneContactsList').innerHTML='<p class="subtle">برای دسترسی به مخاطبین گوشی، نسخه APK ایرانگرام را نصب کن.</p>';
+}
+function renderPhoneContacts(){
+ const list=$('#phoneContactsList');if(!list)return;
+ const q=($('#phoneContactSearch')?.value||'').trim().toLowerCase();
+ const rows=iranGramPhoneContacts.filter(c=>(c.name+' '+c.phone).toLowerCase().includes(q));
+ list.innerHTML=rows.length?rows.map((c,i)=>'<div class="setting-row" style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line)"><div class="avatar" style="width:42px;height:42px;flex:0 0 42px">'+esc((c.name||'؟').slice(0,1))+'</div><div style="flex:1;min-width:0"><b>'+esc(c.name)+'</b><small class="subtle" style="display:block;direction:ltr;text-align:right">'+esc(c.phone)+'</small></div><button class="tiny" data-contact-chat="'+i+'">چت</button><button class="tiny" data-contact-call="'+i+'">تماس</button></div>').join(''):'<p class="subtle">مخاطبی پیدا نشد.</p>';
+}
+async function openPhoneContactChat(index){
+ const c=iranGramPhoneContacts[index];if(!c)return;
+ const digits=normalizeIranGramPhone(c.phone);
+ if(!digits){toast('شماره این مخاطب معتبر نیست.');return}
+ const variants=[c.phone.trim(),digits,'0'+digits,'+98'+digits,'0098'+digits];
+ let profile=null;
+ for(const candidate of [...new Set(variants)]){
+  const r=await supabaseClient.from('profiles').select('id,display_name,username').eq('phone',candidate).neq('id',currentUser.id).limit(2);
+  if(r.error){console.warn('Phone profile lookup failed',r.error.message);continue}
+  if((r.data||[]).length===1){profile=r.data[0];break}
+  if((r.data||[]).length>1){toast('چند حساب با این شماره پیدا شد؛ از نام کاربری استفاده کن.');return}
+ }
+ if(!profile){toast('این مخاطب هنوز حساب ایرانگرام با شماره قابل تطبیق ندارد. می‌توانی با دکمه تماس با او تماس بگیری.');return}
+ const {data:conversationId,error}=await supabaseClient.rpc('create_private_conversation',{p_target_user_id:profile.id});
+ if(error||!conversationId){toast('ساخت گفت‌وگوی خصوصی ناموفق بود: '+(error?.message||'خطای سرور'));return}
+ closeModal();await loadOnlineChats();const chat=state.chats.find(x=>x.id===conversationId||x.recipientUserId===profile.id);
+ if(chat)openChat(chat.id);else toast('گفت‌وگو ساخته شد؛ فهرست را تازه کن.');
+}
+
+$('#bottomNav').onclick=e=>{
  const button=e.target.closest('[data-nav]');if(!button)return;
  document.querySelectorAll('.bottom-nav-item').forEach(x=>{x.classList.toggle('active',x===button);if(x===button)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});
  const action=button.dataset.nav;
  if(action==='chats'){
   $('#app').classList.remove('chat-open');state.filter='all';
   document.querySelectorAll('.filter').forEach(x=>{const active=x.dataset.filter==='all';x.classList.toggle('active',active);x.setAttribute('aria-selected',active?'true':'false')});
-  renderChats();
- }else if(action==='contacts')newChat();
+  if(remoteMode&&currentUser)loadOnlineChats();else renderChats();
+ }else if(action==='contacts')showPhoneContacts();
  else if(action==='settings')settingsModal();
  else if(action==='profile')profileModal();
 };
@@ -3210,6 +3260,11 @@ function quickCreateModal(){
  $('#quickNewChat').onclick=()=>newChat();$('#quickNewGroup').onclick=()=>createCollection('groups');$('#quickNewChannel').onclick=()=>createCollection('channels');
 }
 $('#newBtn').onclick=quickCreateModal;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats();const term=e.target.value.trim();clearTimeout(globalSearchTimer);if(term.length<2){hideGlobalSearch();return}$('#search').setAttribute('aria-expanded','true');globalSearchTimer=setTimeout(()=>runGlobalSearch(term,++globalSearchRequest),320)};$('#searchResultsPanel').onclick=e=>{const b=e.target.closest('[data-search-kind]');if(b)openGlobalSearchResult(b)};document.addEventListener('click',e=>{if(!e.target.closest('.searchbox'))hideGlobalSearch()});document.querySelectorAll('.filter').forEach(b=>b.onclick=async()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;if(state.filter==='channels'&&remoteMode&&currentUser){try{await loadOnlineChats()}catch(error){console.error('Channel refresh failed:',error);toast('بارگذاری کانال‌ها ناموفق بود؛ دوباره تلاش کن.')}}else renderChats()});
+document.addEventListener('click',e=>{
+ const chatButton=e.target.closest('[data-contact-chat]'),callButton=e.target.closest('[data-contact-call]');
+ if(chatButton){e.preventDefault();openPhoneContactChat(Number(chatButton.dataset.contactChat));}
+ if(callButton){e.preventDefault();const c=iranGramPhoneContacts[Number(callButton.dataset.contactCall)];if(c&&window.IranGramAndroid?.dialNumber)window.IranGramAndroid.dialNumber(c.phone);else toast('تماس تلفنی فقط در نسخه APK در دسترس است.');}
+});
 $('#mainMenu').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;$('#mainMenu').classList.remove('open');({login:authModal,profile:profileModal,contacts:newChat,anonymous:anonymousInboxModal,channelcomments:channelCommentsInboxModal,saved:savedMessagesModal,group:()=>createCollection('groups'),channel:()=>createCollection('channels'),bot:createBot,games:openGamesCenter,settings:settingsModal,ads:advertisementsModal,rewards:youtubeRewardModal,adrequest:requestAdModal,admin:adminPanel,export:exportData,logout:async()=>{if(remoteMode){await supabaseClient.auth.signOut()}else{toast('حساب آنلاینی وارد نشده است')}},about:()=>showModal('درباره ایرانگرام',`<p>ایرانگرام یک پیام‌رسان فارسی در حال توسعه است.</p><p class="subtle">رابط برنامه در APK اندروید همراه برنامه بسته‌بندی می‌شود؛ برای همگام‌سازی حساب‌ها، پیام‌ها و رسانه‌ها اتصال اینترنت لازم است.</p><div class="modalactions"><button class="primary" data-close>متوجه شدم</button></div>`)})[b.dataset.action]()};
 // Reliable tap routing for the main navigation and conversation settings.
 document.addEventListener('click',e=>{

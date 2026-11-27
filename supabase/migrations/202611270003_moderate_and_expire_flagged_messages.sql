@@ -55,3 +55,45 @@ delete from public.messages
 where moderation_reason is not null
   and expires_at is not null
   and expires_at <= now();
+
+
+-- User reporting for messages. Reports are private and deduplicated per user/message.
+create table if not exists public.message_reports (
+  id uuid primary key default gen_random_uuid(),
+  message_id uuid not null references public.messages(id) on delete cascade,
+  conversation_id uuid not null references public.conversations(id) on delete cascade,
+  reporter_id uuid not null references auth.users(id) on delete cascade,
+  reason text not null default 'inappropriate_content',
+  created_at timestamptz not null default now(),
+  unique (message_id, reporter_id)
+);
+
+alter table public.message_reports enable row level security;
+
+drop policy if exists "Members can report messages" on public.message_reports;
+create policy "Members can report messages"
+on public.message_reports
+for insert
+to authenticated
+with check (
+  reporter_id = auth.uid()
+  and exists (
+    select 1
+    from public.conversation_members cm
+    where cm.conversation_id = message_reports.conversation_id
+      and cm.user_id = auth.uid()
+  )
+  and exists (
+    select 1
+    from public.messages m
+    where m.id = message_reports.message_id
+      and m.conversation_id = message_reports.conversation_id
+  )
+);
+
+drop policy if exists "Users can read own message reports" on public.message_reports;
+create policy "Users can read own message reports"
+on public.message_reports
+for select
+to authenticated
+using (reporter_id = auth.uid());

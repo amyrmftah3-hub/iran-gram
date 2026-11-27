@@ -1874,7 +1874,7 @@ async function refreshMediaUrls(chat){
 }
 function renderMessages(){
  const c=activeChat();if(!c)return;
- const visibleMessages=c.messages.slice(-30);
+ const focusIndex=state.focusedMessageId?c.messages.findIndex(message=>String(message.id)===String(state.focusedMessageId)):-1;const visibleMessages=focusIndex>=0?c.messages.slice(Math.max(0,focusIndex-10),Math.min(c.messages.length,focusIndex+20)):c.messages.slice(-30);
  const pinned=c.pinnedMessageId&&visibleMessages.find(x=>x.id===c.pinnedMessageId);
  $('#messages').innerHTML=(pinned?`<button class="pinned-banner" data-jump-pinned="${pinned.id}" style="display:block;width:100%;text-align:right;padding:10px 14px;margin-bottom:10px;border-radius:12px;background:var(--panel);color:var(--text);border:1px solid var(--line)">📌 پیام سنجاق‌شده: ${esc(String(pinned.text||'').slice(0,110))}</button>`:'')+
  `<div class="daylabel">امروز</div>`+
@@ -3645,8 +3645,8 @@ $('#modal').addEventListener('click',async e=>{
   if(data.sender_id){const profile=await supabaseClient.from('profiles').select('display_name,username').eq('id',data.sender_id).maybeSingle();message.senderName=profile.data?.display_name||profile.data?.username||'کاربر'}
   chat.messages.push(message);chat.messages.sort((a,b)=>(Date.parse(a.createdAt||0)||0)-(Date.parse(b.createdAt||0)||0));
  }
- renderMessages();
- setTimeout(()=>[...document.querySelectorAll('[data-msg]')].find(el=>el.dataset.msg===String(messageId))?.scrollIntoView({behavior:'smooth',block:'center'}),50);
+ state.focusedMessageId=messageId;renderMessages();
+ setTimeout(()=>{[...document.querySelectorAll('[data-msg]')].find(el=>el.dataset.msg===String(messageId))?.scrollIntoView({behavior:'smooth',block:'center'});state.focusedMessageId=null},80);
 });
 $('#chatMoreBtn').onclick=()=>{
  const c=activeChat();if(!c)return;
@@ -3682,7 +3682,7 @@ function finishSplash(){
 finishSplash();setTimeout(finishSplash,1200);
 let iranGramReconnectInFlight=false;
 window.addEventListener('offline',()=>toast('اینترنت قطع شد؛ پیام‌ها پس از اتصال دوباره همگام می‌شوند.'));
-window.addEventListener('online',async()=>{if(!remoteMode||!currentUser||iranGramReconnectInFlight)return;iranGramReconnectInFlight=true;toast('اتصال برگشت؛ در حال همگام‌سازی گفتگوها…');try{await loadOnlineChats();await loadStories();if(realtimeChannel)await supabaseClient.removeChannel(realtimeChannel);realtimeChannel=null;await startOnline()}catch(error){console.warn('IranGram reconnect failed:',error);toast('همگام‌سازی ناموفق بود؛ دوباره تلاش کن.')}finally{iranGramReconnectInFlight=false}});
+window.addEventListener('online',async()=>{if(!remoteMode||!currentUser||iranGramReconnectInFlight)return;iranGramReconnectInFlight=true;toast('اتصال برگشت؛ در حال همگام‌سازی گفتگوها…');try{await startOnline()}catch(error){console.warn('IranGram reconnect failed:',error);toast('همگام‌سازی ناموفق بود؛ دوباره تلاش کن.')}finally{iranGramReconnectInFlight=false}});
 let iranGramStartupStarted=false;
 function startIranGramOnline(force=false){
  if(iranGramStartupStarted&&!force)return;iranGramStartupStarted=true;

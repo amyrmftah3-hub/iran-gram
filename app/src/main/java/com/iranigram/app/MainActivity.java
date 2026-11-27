@@ -54,7 +54,7 @@ public class MainActivity extends Activity {
     private static final String NOTIFICATION_CHANNEL_ID = "irangram_messages";
     private int nextNotificationId = 1000;
     private static final int FILE_CHOOSER_REQUEST = 42;
-    private static final String APP_URL = "https://appassets.androidplatform.net/assets/app.html?v=1.3.7";
+    private static final String APP_URL = "https://appassets.androidplatform.net/assets/app.html?v=1.3.13";
     private static final int NAVY = Color.rgb(7, 22, 55);
 
     private FrameLayout root;
@@ -326,7 +326,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void showNotification(String title, String body) {
             String currentUrl = webView == null ? "" : String.valueOf(webView.getUrl());
-            if (!currentUrl.startsWith("https://amyrmftah3-hub.github.io/iran-gram/")) return;
+            if (!currentUrl.startsWith("https://appassets.androidplatform.net/assets/")) return;
             runOnUiThread(() -> showNativeNotification(title, body));
         }
     }

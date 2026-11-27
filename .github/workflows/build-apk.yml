@@ -87,13 +87,13 @@ jobs:
         if: env.SIGNING_AVAILABLE == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.3.1-build-${{ github.run_number }}
-          name: IranGram 1.3.1 (build ${{ github.run_number }})
+          tag_name: v1.3.8-build-${{ github.run_number }}
+          name: IranGram 1.3.8 (build ${{ github.run_number }})
           make_latest: true
           draft: false
           prerelease: false
           body: |
-            IranGram 1.3.1 for Android.
+            IranGram 1.3.8 for Android.
 
             - Telegram-inspired dark interface
             - Bot command shortcuts and mini-games

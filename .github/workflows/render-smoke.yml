@@ -16,35 +16,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install Playwright
-        run: npm install --no-save playwright
+      - name: Install Playwright and static server
+        run: npm install --no-save playwright http-server
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Wait for GitHub Pages to publish IranGram 1.3.13
+      - name: Serve checked-out app files
         run: |
-          set -e
-          pages_url="https://amyrmftah3-hub.github.io/iran-gram/?check=${GITHUB_SHA}"
-          
-          for attempt in $(seq 1 60); do
-            pages="$(curl --max-time 10 -fsSL "$pages_url" || true)"
-            
-            if printf '%s' "$pages" | grep -Fq 'app.html?v=1.3.13'; then
-              echo "PASS GitHub Pages published IranGram 1.3.13"
+          npx http-server . -p 4173 -s > /tmp/iran-gram-http.log 2>&1 &
+          for attempt in $(seq 1 20); do
+            if curl --max-time 2 -fsS http://127.0.0.1:4173/ >/dev/null; then
+              echo "PASS local app server is ready"
               exit 0
             fi
-            sleep 5
+            sleep 1
           done
-          echo "GitHub Pages did not publish the current app build in time" >&2
+          cat /tmp/iran-gram-http.log
           exit 1
-      - name: Test live website and media upload paths
+      - name: Test checked-out website and media upload paths
         run: |
           node --input-type=module <<'NODE'
           import { chromium } from 'playwright';
           const browser = await chromium.launch({ headless: true });
           try {
             for (const [name, url] of [
-              ['landing-pages', 'https://amyrmftah3-hub.github.io/iran-gram/'],
-              ['app-pages', 'https://amyrmftah3-hub.github.io/iran-gram/app.html?v=1.3.13']
+              ['landing-pages', 'http://127.0.0.1:4173/'],
+              ['app-pages', 'http://127.0.0.1:4173/app.html?v=1.3.13']
             ]) {
               const page = await browser.newPage();
               if (name === 'app-pages') await page.addInitScript(() => localStorage.setItem('iranGramPro', JSON.stringify({ filter: 'archive', chats: [] })));

@@ -8,6 +8,10 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.pm.PackageManager;
 import android.content.Intent;
+import android.provider.ContactsContract;
+import android.database.Cursor;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import android.net.Uri;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -46,10 +50,11 @@ import androidx.webkit.WebViewAssetLoader;
 public class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 41;
     private static final int NOTIFICATION_PERMISSION_REQUEST = 43;
+    private static final int CONTACTS_PERMISSION_REQUEST = 44;
     private static final String NOTIFICATION_CHANNEL_ID = "irangram_messages";
     private int nextNotificationId = 1000;
     private static final int FILE_CHOOSER_REQUEST = 42;
-    private static final String APP_URL = "https://appassets.androidplatform.net/assets/app.html?v=1.3.1";
+    private static final String APP_URL = "https://appassets.androidplatform.net/assets/app.html?v=1.3.7";
     private static final int NAVY = Color.rgb(7, 22, 55);
 
     private FrameLayout root;
@@ -290,6 +295,28 @@ public class MainActivity extends Activity {
 
     private final class AndroidNotificationBridge {
         @JavascriptInterface
+        public void requestContacts() {
+            String currentUrl = webView == null ? "" : String.valueOf(webView.getUrl());
+            if (!currentUrl.startsWith("https://appassets.androidplatform.net/assets/")) return;
+            runOnUiThread(() -> {
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) sendContactsToWeb();
+                else ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_CONTACTS}, CONTACTS_PERMISSION_REQUEST);
+            });
+        }
+
+        @JavascriptInterface
+        public void dialNumber(String number) {
+            String currentUrl = webView == null ? "" : String.valueOf(webView.getUrl());
+            if (!currentUrl.startsWith("https://appassets.androidplatform.net/assets/")) return;
+            String safe = number == null ? "" : number.replaceAll("[^0-9+*#]", "");
+            if (safe.isEmpty() || safe.length() > 32) return;
+            runOnUiThread(() -> {
+                try { startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + Uri.encode(safe)))); }
+                catch (Exception e) { Toast.makeText(MainActivity.this, "بازکردن شماره‌گیر ممکن نشد.", Toast.LENGTH_SHORT).show(); }
+            });
+        }
+
+        @JavascriptInterface
         public void requestPermission() {
             String currentUrl = webView == null ? "" : String.valueOf(webView.getUrl());
             if (!currentUrl.startsWith("https://appassets.androidplatform.net/assets/")) return;
@@ -302,6 +329,33 @@ public class MainActivity extends Activity {
             if (!currentUrl.startsWith("https://amyrmftah3-hub.github.io/iran-gram/")) return;
             runOnUiThread(() -> showNativeNotification(title, body));
         }
+    }
+
+    private void sendContactsToWeb() {
+        if (webView == null) return;
+        JSONArray contacts = new JSONArray();
+        Cursor cursor = null;
+        try {
+            cursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                new String[]{ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER},
+                null, null, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " COLLATE NOCASE ASC");
+            if (cursor != null) {
+                java.util.HashSet<String> seen = new java.util.HashSet<>();
+                while (cursor.moveToNext() && contacts.length() < 5000) {
+                    String name = cursor.getString(0), number = cursor.getString(1);
+                    if (number == null || number.trim().isEmpty()) continue;
+                    String key = number.replaceAll("[^0-9]", "");
+                    if (key.isEmpty() || !seen.add(key)) continue;
+                    JSONObject item = new JSONObject();
+                    item.put("name", name == null ? "" : name);
+                    item.put("phone", number);
+                    contacts.put(item);
+                }
+            }
+        } catch (Exception e) { android.util.Log.e("IranGram", "Reading contacts failed", e); }
+        finally { if (cursor != null) cursor.close(); }
+        String payload = contacts.toString();
+        webView.post(() -> webView.evaluateJavascript("window.onIranGramContacts && window.onIranGramContacts(" + JSONObject.quote(payload) + ");", null));
     }
 
     private void requestNativeNotificationPermission() {
@@ -390,6 +444,11 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CONTACTS_PERMISSION_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) sendContactsToWeb();
+            else if (webView != null) webView.evaluateJavascript("window.onIranGramContacts && window.onIranGramContacts('[]')", null);
+            return;
+        }
         if (requestCode == NOTIFICATION_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 ensureNotificationChannel();

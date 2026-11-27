@@ -1814,12 +1814,28 @@ function renderMessages(){
    ${realRows.length?`<div class="reaction-summary" aria-label="واکنش‌های واقعی">${realRows.map(([emoji,count])=>`<button class="reaction-chip ${m.reactions?.includes(emoji)?"is-liked":""}" data-react="${m.id}" data-emoji="${emoji}" aria-pressed="${m.reactions?.includes(emoji)?"true":"false"}"><span>${emoji}</span><b>${count.toLocaleString("fa-IR")}</b></button>`).join('')}</div>`:''}
    <div class="msgactions">${["👍","❤️","😂","🔥","👏","🚀"].map(em=>`<button class="tiny reaction-btn ${m.reactions?.includes(em)?"is-liked":""}" data-react="${m.id}" data-emoji="${em}" aria-label="واکنش ${em}" aria-pressed="${m.reactions?.includes(em)?"true":"false"}">${em}</button>`).join('')}
    ${m.mine?`<button class="tiny" data-edit="${m.id}">ویرایش</button><button class="tiny" data-delete="${m.id}">حذف</button>`:''}
-   <button class="tiny" data-reply="${m.id}">پاسخ</button>${c.type==="channels"&&!m.reply?`<button class="tiny" data-channel-comments="${m.id}">💬 نظرات</button>`:""}<button class="tiny" data-pin="${m.id}">${c.pinnedMessageId===m.id?'برداشتن سنجاق':'📌 سنجاق'}</button><button class="tiny" data-forward="${m.id}">فوروارد</button><button class="tiny" data-copy="${m.id}">کپی</button><button class="tiny" data-save="${m.id}">ذخیره</button></div>
+   <button class="tiny" data-reply="${m.id}">پاسخ</button><button class="tiny" data-report-message="${m.id}">⚑ گزارش</button>${c.type==="channels"&&!m.reply?`<button class="tiny" data-channel-comments="${m.id}">💬 نظرات</button>`:""}<button class="tiny" data-pin="${m.id}">${c.pinnedMessageId===m.id?'برداشتن سنجاق':'📌 سنجاق'}</button><button class="tiny" data-forward="${m.id}">فوروارد</button><button class="tiny" data-copy="${m.id}">کپی</button><button class="tiny" data-save="${m.id}">ذخیره</button></div>
   </article>`
  }).join('');
  $('#messages').scrollTop=$('#messages').scrollHeight;
  const active=activeChat();if(active)refreshMediaUrls(active)
 }
+document.addEventListener('click',async e=>{
+ const report=e.target.closest('[data-report-message]');
+ if(!report)return;
+ e.preventDefault();
+ const chat=activeChat(),messageId=report.dataset.reportMessage;
+ const message=chat?.messages.find(x=>String(x.id)===String(messageId));
+ if(!remoteMode||!currentUser||!chat?.remote||!message){toast('برای گزارش پیام باید وارد حساب آنلاین شوی');return}
+ if(!confirm('این پیام را به‌عنوان محتوای نامناسب گزارش می‌کنی؟'))return;
+ report.disabled=true;
+ const {error}=await supabaseClient.from('message_reports').insert({
+  message_id:message.id,conversation_id:chat.id,reporter_id:currentUser.id,reason:'inappropriate_content'
+ });
+ report.disabled=false;
+ if(error){toast(error.code==='23505'?'این پیام را قبلاً گزارش کرده‌ای.':'ثبت گزارش ناموفق بود: '+error.message);return}
+ toast('گزارش ثبت شد؛ ممنون از کمکت.');
+});
 function openChat(id){const c=state.chats.find(c=>c.id===id);if(!c)return;const canCall=!!(remoteMode&&c.remote&&c.type==='people'&&!c.isBot);$('#audioCallBtn').style.display=canCall?'inline-grid':'none';$('#videoCallBtn').style.display=canCall?'inline-grid':'none';state.active=id;c.unread=0;if(remoteMode&&c.remote&&c.type==='channels')setTimeout(()=>recordChannelActivity(c.id).catch(err=>console.warn('Channel activity failed',err)),0);save();$('#emptyState').style.display='none';$('#chatView').style.display='flex';$('#app').classList.add('chat-open');$('#headAvatar').innerHTML=avatarMarkup(c);$('#headAvatar').className='avatar '+(c.color||'');$('#headName').innerHTML=esc(c.name)+(c.verified?' <span class="verified" title="تأییدشده">✓</span>':'');$('#headStatus').textContent=c.status||'گفت‌وگوی آنلاین';renderBotKeyboard(c);renderChats();renderMessages();$('#messageInput').focus()}
 function render(){renderChats();if(state.active&&activeChat()){openChatNoFocus()}if(state.profile.theme==='dark')document.body.classList.add('dark');else document.body.classList.remove('dark')}
 function openChatNoFocus(){const c=activeChat();if(!c)return;const canCall=!!(remoteMode&&c.remote&&c.type==='people'&&!c.isBot);$('#audioCallBtn').style.display=canCall?'inline-grid':'none';$('#videoCallBtn').style.display=canCall?'inline-grid':'none';$('#emptyState').style.display='none';$('#chatView').style.display='flex';$('#headAvatar').innerHTML=avatarMarkup(c);$('#headAvatar').className='avatar '+(c.color||'');$('#headName').textContent=c.name;$('#headStatus').textContent=c.status||'گفت‌وگوی آنلاین';renderBotKeyboard(c);renderMessages()}

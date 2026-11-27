@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b8fd3">
-<meta name="application-version" content="1.3.10">
+<meta name="application-version" content="1.3.11">
 <title>ایرانگرام | پیام‌رسان ایرانی</title>
 <style>
 :root{--blue:#168acd;--blue2:#087fbd;--bg:#e9f1f6;--panel:#fff;--text:#17212b;--muted:#71808f;--line:#e6edf2;--chat:#dcecf4;--bubble:#fff;--mine:#d9fdd3;--shadow:0 5px 24px #0a3a5510}
@@ -1647,6 +1647,8 @@ try{const s=JSON.parse(localStorage.getItem('iranGramPro'));if(s&&typeof s==='ob
 state.profile={name:'کاربر ایرانگرام',bio:'سلام! من در ایرانگرام هستم.',theme:'dark',avatar_url:'',...(state.profile&&typeof state.profile==='object'?state.profile:{})};
 state.chats=Array.isArray(state.chats)?state.chats.filter(c=>c&&typeof c==='object').map(c=>({...c,name:String(c.name||'گفت‌وگو'),messages:Array.isArray(c.messages)?c.messages:[]})):[];
 if(!['all','people','unread','groups','channels','archive','hidden'].includes(state.filter))state.filter='all';
+// هر بار شروع برنامه، فهرست گفتگوها از «همه چت‌ها» آغاز می‌شود؛ فیلتر قبلی آرشیو نباید ظاهر فهرست را با تب فعال ناهماهنگ کند.
+state.filter='all';
 function save(){try{localStorage.setItem('iranGramPro',JSON.stringify(state))}catch(e){}}
 const chatWallpaperPresets={
  midnight:{bg:'#0e1621',pattern:'radial-gradient(#ffffff0a 1px,transparent 1px)'},
@@ -1751,7 +1753,15 @@ async function openGlobalSearchResult(button){
  if(joined)openChat(id);else toast('عضویت ثبت شد، اما گفت‌وگو در فهرست قابل نمایش نیست.');
 }
 
+function syncChatFilterTabs(){
+ document.querySelectorAll('.filter[data-filter]').forEach(button=>{
+  const active=button.dataset.filter===state.filter;
+  button.classList.toggle('active',active);
+  button.setAttribute('aria-selected',active?'true':'false');
+ });
+}
 function renderChats(){
+ syncChatFilterTabs();
  const arr=state.chats.filter(c=>{
   const inFolder=state.filter==='all'?!c.archived&&!c.hidden:
    state.filter==='archive'?!!c.archived:
@@ -2143,7 +2153,7 @@ async function startOnline(){
    c.messages.push({id:m.id,text:m.body,senderId:m.sender_id,senderName:isMine?currentDisplayName:(!m.sender_id&&c.isBot?c.name:'کاربر'),mine:isMine,time:new Date(m.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[]});if(!isMine&&(c.type==='channels'||c.type==='groups')&&m.sender_id){supabaseClient.from('profiles').select('display_name,username').eq('id',m.sender_id).maybeSingle().then(({data})=>{const item=c.messages.find(x=>x.id===m.id);if(item&&data){item.senderName=data.display_name||data.username||'کاربر';if(state.active===c.id)renderMessages()}})}
    if(!isMine&&state.active!==c.id){c.unread=(c.unread||0)+1;const prefs=(()=>{try{return JSON.parse(localStorage.getItem('ig_settings')||'{}')}catch(e){return {}}})();const allowed=c.type==='channels'?prefs.notify_channels!==false:c.type==='groups'?prefs.notify_groups!==false:prefs.notify_private!==false;if(allowed){toast('پیام جدید از '+c.name);if(document.visibilityState!=='visible'){const title='ایرانگرام · '+c.name,body=prefs.notify_preview===false?'پیام جدید':String(m.body||'').slice(0,120);if(window.IranGramAndroid&&typeof window.IranGramAndroid.showNotification==='function'){try{window.IranGramAndroid.showNotification(title,body)}catch(notificationError){console.warn('Native notification unavailable',notificationError)}}else if('Notification' in window&&Notification.permission==='granted'){try{new Notification(title,{body})}catch(notificationError){console.warn('System notification unavailable',notificationError)}}}}}
    if(state.active===c.id)renderMessages();renderChats();
- }).on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages'},payload=>{const m=payload.new;const c=state.chats.find(x=>x.id===m.conversation_id);const local=c?.messages.find(x=>x.id===m.id);if(local){local.text=m.body;local.edited=true;if(state.active===c.id)renderMessages();renderChats()}}).on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},payload=>{const old=payload.old;for(const c of state.chats){const at=c.messages.findIndex(x=>x.id===old.id);if(at>=0){c.messages.splice(at,1);if(c.pinnedMessageId===old.id)c.pinnedMessageId=null;if(state.active===c.id)renderMessages();renderChats();break}}}).on('postgres_changes',{event:'INSERT',schema:'public',table:'conversation_members',filter:'user_id=eq.'+currentUser.id},()=>{loadOnlineChats()}).on('postgres_changes',{event:'*',schema:'public',table:'message_reactions'},payload=>{
+ }).on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages'},payload=>{const m=payload.new;const c=state.chats.find(x=>x.id===m.conversation_id);const local=c?.messages.find(x=>x.id===m.id);if(local){local.text=m.body;local.edited=true;if(state.active===c.id)renderMessages();renderChats()}}).on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},payload=>{const old=payload.old;for(const c of state.chats){const at=c.messages.findIndex(x=>x.id===old.id);if(at>=0){c.messages.splice(at,1);if(c.pinnedMessageId===old.id)c.pinnedMessageId=null;if(state.active===c.id)renderMessages();renderChats();break}}}).on('postgres_changes',{event:'*',schema:'public',table:'conversation_members',filter:'user_id=eq.'+currentUser.id},()=>{loadOnlineChats().catch(err=>console.warn('Conversation membership refresh failed:',err))}).on('postgres_changes',{event:'INSERT',schema:'public',table:'conversations'},()=>{loadOnlineChats().catch(err=>console.warn('New conversation refresh failed:',err))}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'conversations'},()=>{loadOnlineChats().catch(err=>console.warn('Conversation update refresh failed:',err))}).on('postgres_changes',{event:'DELETE',schema:'public',table:'conversations'},()=>{loadOnlineChats().catch(err=>console.warn('Conversation removal refresh failed:',err))}).on('postgres_changes',{event:'*',schema:'public',table:'message_reactions'},payload=>{
    const row=payload.new?.message_id?payload.new:payload.old;
    if(!row?.message_id)return;
    refreshMessageReactions(row.message_id).then(()=>{
@@ -3342,7 +3352,7 @@ function quickCreateModal(){
  showModal('شروع گفت‌وگوی تازه','<p class="subtle">چه چیزی می‌خواهی بسازی؟</p><button class="secondary" id="quickNewChat" style="width:100%;margin:5px 0">✉️ گفت‌وگوی شخصی</button><button class="secondary" id="quickNewGroup" style="width:100%;margin:5px 0">👥 ساخت گروه</button><button class="secondary" id="quickNewChannel" style="width:100%;margin:5px 0">📢 ساخت کانال</button><div class="modalactions"><button class="secondary" data-close>بستن</button></div>');
  $('#quickNewChat').onclick=()=>newChat();$('#quickNewGroup').onclick=()=>createCollection('groups');$('#quickNewChannel').onclick=()=>createCollection('channels');
 }
-$('#newBtn').onclick=quickCreateModal;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats();const term=e.target.value.trim();clearTimeout(globalSearchTimer);if(term.length<2){hideGlobalSearch();return}$('#search').setAttribute('aria-expanded','true');globalSearchTimer=setTimeout(()=>runGlobalSearch(term,++globalSearchRequest),320)};$('#searchResultsPanel').onclick=e=>{const b=e.target.closest('[data-search-kind]');if(b)openGlobalSearchResult(b)};document.addEventListener('click',e=>{if(!e.target.closest('.searchbox'))hideGlobalSearch()});document.querySelectorAll('.filter').forEach(b=>b.onclick=async()=>{document.querySelectorAll('.filter').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true');state.filter=b.dataset.filter;if(state.filter==='channels'&&remoteMode&&currentUser){try{await loadOnlineChats()}catch(error){console.error('Channel refresh failed:',error);toast('بارگذاری کانال‌ها ناموفق بود؛ دوباره تلاش کن.')}}else renderChats()});
+$('#newBtn').onclick=quickCreateModal;$('#startChat').onclick=newChat;$('#sendBtn').onclick=sendMessage;$('#messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});$('#messageInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'});$('#backBtn').onclick=()=>$('#app').classList.remove('chat-open');$('#search').oninput=e=>{state.query=e.target.value;renderChats();const term=e.target.value.trim();clearTimeout(globalSearchTimer);if(term.length<2){hideGlobalSearch();return}$('#search').setAttribute('aria-expanded','true');globalSearchTimer=setTimeout(()=>runGlobalSearch(term,++globalSearchRequest),320)};$('#searchResultsPanel').onclick=e=>{const b=e.target.closest('[data-search-kind]');if(b)openGlobalSearchResult(b)};document.addEventListener('click',e=>{if(!e.target.closest('.searchbox'))hideGlobalSearch()});document.querySelectorAll('.filter').forEach(b=>b.onclick=async()=>{state.filter=b.dataset.filter;syncChatFilterTabs();if(remoteMode&&currentUser){try{await loadOnlineChats()}catch(error){console.error('Conversation filter refresh failed:',error);toast('به‌روزرسانی فهرست گفتگوها ناموفق بود؛ دوباره تلاش کن.')}}else renderChats()});
 document.addEventListener('click',e=>{
  const chatButton=e.target.closest('[data-contact-chat]'),callButton=e.target.closest('[data-contact-call]');
  if(chatButton){e.preventDefault();openPhoneContactChat(Number(chatButton.dataset.contactChat),chatButton.dataset.contactUser);}

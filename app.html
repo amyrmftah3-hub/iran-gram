@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b8fd3">
-<meta name="application-version" content="1.3.8">
+<meta name="application-version" content="1.3.9">
 <title>ایرانگرام | پیام‌رسان ایرانی</title>
 <style>
 :root{--blue:#168acd;--blue2:#087fbd;--bg:#e9f1f6;--panel:#fff;--text:#17212b;--muted:#71808f;--line:#e6edf2;--chat:#dcecf4;--bubble:#fff;--mine:#d9fdd3;--shadow:0 5px 24px #0a3a5510}
@@ -1527,6 +1527,26 @@ html,body{background:#0e1621;color:var(--text);font-family:Tahoma,Arial,sans-ser
 .game-controls button{background:#2b82d9;color:#fff;border-radius:12px;padding:9px 15px}
 @media(max-width:760px){.app{width:100vw;grid-template-columns:1fr}.topbar{height:56px}.chatheader{height:52px}.messages{padding:12px 10px}.msg{max-width:88%}.game-catalog{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
+<style id="telegram-polish-139">
+.topbar{background:var(--panel)!important;color:var(--text)!important;border-bottom:1px solid var(--line)!important;box-shadow:0 1px 3px #00000008}
+.topbar-brand{flex:1 1 auto!important;min-width:0;overflow:hidden;color:var(--text)!important;font-size:17px!important}
+.topbar-brand img{width:34px!important;height:34px!important;border-radius:50%!important;flex:0 0 auto}
+#topbarAnnouncementText{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;font-weight:700;line-height:1.4;color:var(--text)}
+#globalAnnouncement{display:none!important}
+.chatrow{min-height:72px;padding:10px 14px!important;gap:12px!important;border-bottom:1px solid #edf0f2!important}
+.chatrow:hover,.chatrow.selected{background:#eaf4fb!important}
+.chathead b{font-size:14px!important;font-weight:700}
+.preview{font-size:12px!important;color:#788995!important}
+.filter{border-radius:18px!important;padding:8px 13px!important}
+.filter.active{background:#0b8fd3!important;color:#fff!important}
+.messages{background-color:#dce8e8!important;background-image:radial-gradient(#ffffff45 1px,transparent 1px)!important}
+.msg{border-radius:14px!important;box-shadow:0 1px 1px #263b4a12!important}
+.msg.mine{background:#e1ffc7!important;border-bottom-right-radius:4px!important}
+.msg:not(.mine){border-bottom-left-radius:4px!important}
+.composer{background:var(--panel)!important}
+.composefield{border-radius:22px!important}
+@media(max-width:760px){.topbar{height:56px!important;padding:8px 12px!important}.topbar-brand{font-size:16px!important}#topbarAnnouncementText{font-size:14px}}
+</style>
 </head>
  
 <body>
@@ -1534,7 +1554,7 @@ html,body{background:#0e1621;color:var(--text);font-family:Tahoma,Arial,sans-ser
 <div class="app" id="app">
 <aside class="sidebar">
  <header class="topbar">
-  <div class="topbar-brand"><img src="./icon.svg" alt=""><span>ایرانگرام</span></div><button class="iconbtn" id="menuBtn" title="گزینه‌های بیشتر" aria-label="گزینه‌های بیشتر">⋮</button>
+  <div class="topbar-brand"><img src="./icon.svg" alt=""><span id="topbarAnnouncementText">ایرانگرام</span></div><button class="iconbtn" id="menuBtn" title="گزینه‌های بیشتر" aria-label="گزینه‌های بیشتر">⋮</button>
  </header>
  <div class="menu" id="mainMenu">
   <div class="drawer-profile"><div class="drawer-avatar">ای</div><div class="drawer-user"><b id="drawerName">کاربر ایرانگرام</b><small id="drawerUsername">حساب ایرانگرام</small></div><button class="drawer-close" id="drawerClose" aria-label="بستن">×</button></div>
@@ -1836,7 +1856,7 @@ document.addEventListener('click',async e=>{
  if(error){toast(error.code==='23505'?'این پیام را قبلاً گزارش کرده‌ای.':'ثبت گزارش ناموفق بود: '+error.message);return}
  toast('گزارش ثبت شد؛ ممنون از کمکت.');
 });
-function openChat(id){const c=state.chats.find(c=>c.id===id);if(!c)return;const canCall=!!(remoteMode&&c.remote&&c.type==='people'&&!c.isBot);$('#audioCallBtn').style.display=canCall?'inline-grid':'none';$('#videoCallBtn').style.display=canCall?'inline-grid':'none';state.active=id;c.unread=0;if(remoteMode&&c.remote&&c.type==='channels')setTimeout(()=>recordChannelActivity(c.id).catch(err=>console.warn('Channel activity failed',err)),0);save();$('#emptyState').style.display='none';$('#chatView').style.display='flex';$('#app').classList.add('chat-open');$('#headAvatar').innerHTML=avatarMarkup(c);$('#headAvatar').className='avatar '+(c.color||'');$('#headName').innerHTML=esc(c.name)+(c.verified?' <span class="verified" title="تأییدشده">✓</span>':'');$('#headStatus').textContent=c.status||'گفت‌وگوی آنلاین';renderBotKeyboard(c);renderChats();renderMessages();$('#messageInput').focus()}
+function openChat(id){const c=state.chats.find(c=>c.id===id);if(!c)return;if(c.requiresJoin&&remoteMode&&currentUser){if(c.joining)return;c.joining=true;toast('در حال عضویت در '+c.name+'…');supabaseClient.from('conversation_members').insert({conversation_id:c.id,user_id:currentUser.id,role:'member'}).then(async({error})=>{c.joining=false;if(error&&error.code!=='23505'){toast('عضویت انجام نشد: '+error.message);return}await loadOnlineChats();const joined=state.chats.find(x=>x.id===id);if(joined){joined.requiresJoin=false;openChat(id)}}).catch(error=>{c.joining=false;toast('عضویت انجام نشد: '+(error?.message||'خطای اتصال'))});return}const canCall=!!(remoteMode&&c.remote&&c.type==='people'&&!c.isBot);$('#audioCallBtn').style.display=canCall?'inline-grid':'none';$('#videoCallBtn').style.display=canCall?'inline-grid':'none';state.active=id;c.unread=0;if(remoteMode&&c.remote&&c.type==='channels')setTimeout(()=>recordChannelActivity(c.id).catch(err=>console.warn('Channel activity failed',err)),0);save();$('#emptyState').style.display='none';$('#chatView').style.display='flex';$('#app').classList.add('chat-open');$('#headAvatar').innerHTML=avatarMarkup(c);$('#headAvatar').className='avatar '+(c.color||'');$('#headName').innerHTML=esc(c.name)+(c.verified?' <span class="verified" title="تأییدشده">✓</span>':'');$('#headStatus').textContent=c.status||'گفت‌وگوی آنلاین';renderBotKeyboard(c);renderChats();renderMessages();$('#messageInput').focus()}
 function render(){renderChats();if(state.active&&activeChat()){openChatNoFocus()}if(state.profile.theme==='dark')document.body.classList.add('dark');else document.body.classList.remove('dark')}
 function openChatNoFocus(){const c=activeChat();if(!c)return;const canCall=!!(remoteMode&&c.remote&&c.type==='people'&&!c.isBot);$('#audioCallBtn').style.display=canCall?'inline-grid':'none';$('#videoCallBtn').style.display=canCall?'inline-grid':'none';$('#emptyState').style.display='none';$('#chatView').style.display='flex';$('#headAvatar').innerHTML=avatarMarkup(c);$('#headAvatar').className='avatar '+(c.color||'');$('#headName').textContent=c.name;$('#headStatus').textContent=c.status||'گفت‌وگوی آنلاین';renderBotKeyboard(c);renderMessages()}
 
@@ -1960,15 +1980,27 @@ function setupStoryRealtime(){
 renderStories();
 
 async function loadOnlineChats(){
- const {data:membershipRows,error:membershipError}=await supabaseClient.from('conversation_members').select('conversation_id,role').eq('user_id',currentUser.id);
+ let {data:membershipRows,error:membershipError}=await supabaseClient.from('conversation_members').select('conversation_id,role').eq('user_id',currentUser.id).range(0,999);
  if(membershipError){toast('دریافت عضویت گفت‌وگوها ناموفق بود: '+membershipError.message);return}
+ membershipRows=membershipRows||[];
+ const [publicDiscoveryResult,ownedResult]=await Promise.all([
+  supabaseClient.from('conversations').select('id,title,type,description,avatar_url,username,is_public,created_at,created_by').eq('is_public',true).in('type',['group','channel']).order('created_at',{ascending:false}).limit(300),
+  supabaseClient.from('conversations').select('id,title,type,description,avatar_url,username,is_public,created_at,created_by').eq('created_by',currentUser.id).order('created_at',{ascending:false}).limit(300)
+ ]);
+ if(publicDiscoveryResult.error)console.warn('Public group/channel discovery unavailable',publicDiscoveryResult.error.message);
+ if(ownedResult.error)console.warn('Owned conversation discovery unavailable',ownedResult.error.message);
+ const publicRows=publicDiscoveryResult.data||[];
+ const ownedRows=ownedResult.data||[];
  const officialChannelId='e39f6339-049e-462a-8bbe-c9bfaff04278';
- if(!(membershipRows||[]).some(x=>x.conversation_id===officialChannelId)){
+ if(!membershipRows.some(x=>x.conversation_id===officialChannelId)){
   const {error:officialJoinError}=await supabaseClient.from('conversation_members').insert({conversation_id:officialChannelId,user_id:currentUser.id,role:'member'});
   if(!officialJoinError||(officialJoinError.code==='23505'))membershipRows.push({conversation_id:officialChannelId,role:'member'});
   else console.warn('Official channel auto-join unavailable',officialJoinError.message);
  }
- const conversationIds=(membershipRows||[]).map(x=>x.conversation_id).filter(Boolean);
+ const memberIds=new Set(membershipRows.map(x=>x.conversation_id));
+ const roleRows=membershipRows.slice();
+ for(const own of ownedRows){if(!roleRows.some(x=>x.conversation_id===own.id))roleRows.push({conversation_id:own.id,role:'owner'});}
+ const conversationIds=[...new Set([...membershipRows.map(x=>x.conversation_id),...publicRows.map(x=>x.id),...ownedRows.map(x=>x.id)].filter(Boolean))];
  let conversationRows=[],messageRows=[],preferences=[];
  if(conversationIds.length){
   const [conversationsResult,messagesResult,preferencesResult]=await Promise.all([
@@ -1985,9 +2017,9 @@ async function loadOnlineChats(){
  }
  const messagesByConversation=new Map();
  for(const m of messageRows){if(!messagesByConversation.has(m.conversation_id))messagesByConversation.set(m.conversation_id,[]);messagesByConversation.get(m.conversation_id).push(m)}
- const roleByConversation=new Map((membershipRows||[]).map(x=>[x.conversation_id,x.role]));
+ const roleByConversation=new Map(roleRows.map(x=>[x.conversation_id,x.role]));
  const preferenceMap=new Map((preferences||[]).map(p=>[p.conversation_id,p]));
- state.chats=conversationRows.map(c=>{const flags=preferenceMap.get(c.id)||{},chatMessages=(messagesByConversation.get(c.id)||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).slice(-30);return {id:c.id,name:c.title||'گفت‌وگو',description:c.description||'',avatarUrl:c.avatar_url||'',username:c.username||'',isPublic:!!c.is_public,type:c.type==='channel'?'channels':(c.type==='group'?'groups':'people'),avatar:c.type==='channel'?'📢':(c.type==='group'?'👥':(c.title||'گ')[0]),status:c.description||'گفت‌وگوی آنلاین',unread:0,remote:true,memberRole:(roleByConversation.get(c.id)==='owner'||c.created_by===currentUser.id)?'owner':roleByConversation.get(c.id),createdBy:c.created_by||null,archived:!!flags.archived,hidden:!!flags.hidden,pinned:(c.id==='e39f6339-049e-462a-8bbe-c9bfaff04278')||!!flags.pinned,pinnedMessageId:flags.pinned_message_id||null,muted:!!flags.muted,messages:chatMessages.map(m=>({id:m.id,text:m.body,senderId:m.sender_id,senderName:m.sender_id===currentUser.id?'Manager_MT':(m.sender_id?'کاربر':'بات'),mine:m.sender_id===currentUser.id,time:new Date(m.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:m.reply_to_id||null}))}});
+ state.chats=conversationRows.map(c=>{const flags=preferenceMap.get(c.id)||{},chatMessages=(messagesByConversation.get(c.id)||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).slice(-30);return {id:c.id,name:c.title||'گفت‌وگو',description:c.description||'',avatarUrl:c.avatar_url||'',username:c.username||'',isPublic:!!c.is_public,type:c.type==='channel'?'channels':(c.type==='group'?'groups':'people'),requiresJoin:!!c.is_public&&['channel','group'].includes(c.type)&&!memberIds.has(c.id),avatar:c.type==='channel'?'📢':(c.type==='group'?'👥':(c.title||'گ')[0]),status:c.description||'گفت‌وگوی آنلاین',unread:0,remote:true,memberRole:(roleByConversation.get(c.id)==='owner'||c.created_by===currentUser.id)?'owner':roleByConversation.get(c.id),createdBy:c.created_by||null,archived:!!flags.archived,hidden:!!flags.hidden,pinned:(c.id==='e39f6339-049e-462a-8bbe-c9bfaff04278')||!!flags.pinned,pinnedMessageId:flags.pinned_message_id||null,muted:!!flags.muted,messages:chatMessages.map(m=>({id:m.id,text:m.body,senderId:m.sender_id,senderName:m.sender_id===currentUser.id?'Manager_MT':(m.sender_id?'کاربر':'بات'),mine:m.sender_id===currentUser.id,time:new Date(m.created_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}),reactions:[],reply:m.reply_to_id||null}))}});
  const messageIds=state.chats.flatMap(c=>c.messages.map(m=>m.id)).filter(id=>typeof id==='string'&&id.length>20);if(messageIds.length){const {data:reactionRows,error:reactionError}=await supabaseClient.from('message_reactions').select('message_id,reaction,user_id').in('message_id',messageIds);if(!reactionError){for(const chat of state.chats){for(const msg of chat.messages){msg.reactions=[];msg.reactionCounts={}}}for(const row of reactionRows||[]){for(const chat of state.chats){const msg=chat.messages.find(m=>m.id===row.message_id);if(msg){msg.reactionCounts=msg.reactionCounts||{};msg.reactionCounts[row.reaction]=(msg.reactionCounts[row.reaction]||0)+1;if(currentUser&&row.user_id===currentUser.id){msg.reactions=Array.isArray(msg.reactions)?msg.reactions:[];if(!msg.reactions.includes(row.reaction))msg.reactions.push(row.reaction)}break}}}}}
  const ids=state.chats.map(c=>c.id);
  if(ids.length){
@@ -3094,15 +3126,18 @@ async function loadAdBanner(){
  el.hidden=false;
 }
 async function loadGlobalAnnouncement(){
- const el=$('#globalAnnouncement');if(!el)return;
- if(!remoteMode||!currentUser||!supabaseClient){el.hidden=true;el.textContent='';return}
+ const el=$('#globalAnnouncement'),title=$('#topbarAnnouncementText');
+ if(el){el.hidden=true;el.textContent=''}
+ if(!title)return;
+ if(!remoteMode||!currentUser||!supabaseClient){title.textContent='ایرانگرام';title.title='ایرانگرام';return}
  const nowIso=new Date().toISOString();
  const {data,error}=await supabaseClient.from('global_announcements').select('id,body,starts_at,expires_at').lte('starts_at',nowIso).gt('expires_at',nowIso).order('created_at',{ascending:false}).limit(1).maybeSingle();
- if(error){console.warn('Global announcement unavailable:',error.message);el.hidden=true;return}
- if(!data){el.hidden=true;el.textContent='';return}
- el.textContent='📌 اطلاعیه ایرانگرام\n'+data.body+'\nتا '+new Date(data.expires_at).toLocaleString('fa-IR');
- el.hidden=false;
+ if(error){console.warn('Global announcement unavailable:',error.message);title.textContent='ایرانگرام';title.title='ایرانگرام';return}
+ if(!data){title.textContent='ایرانگرام';title.title='ایرانگرام';return}
+ title.textContent=data.body;
+ title.title=data.body;
 }
+
 async function advertisementsModal(){
  if(!remoteMode){toast('برای دیدن تبلیغات وارد حساب شو.');return}
  const {data,error}=await supabaseClient.from('advertisements').select('id,title,target_url,ends_at').eq('status','active').lte('starts_at',new Date().toISOString()).gt('ends_at',new Date().toISOString()).order('created_at',{ascending:false});
@@ -3129,10 +3164,10 @@ async function adminPanel(){
  showModal('مدیریت ایرانگرام',`<p class="subtle">مدیر اصلی: amyrmftah3@gmail.com</p>
  <h4>تیک آبی کاربران</h4><label>انتخاب کاربر</label><select id="adminUser"><option value="">انتخاب کن</option>${userOptions}</select><div class="modalactions"><button class="primary" id="giveUserTick">دادن تیک آبی</button><button class="secondary" id="removeUserTick">برداشتن تیک</button></div>
  <h4>تیک آبی کانال</h4><label>انتخاب کانال</label><select id="adminChannel"><option value="">انتخاب کن</option>${channelOptions}</select><div class="modalactions"><button class="primary" id="giveChannelTick">دادن تیک</button><button class="secondary" id="removeChannelTick">برداشتن تیک دستی</button></div><p class="subtle">شرط خودکار: حداقل ۱۵٬۰۰۰ کاربر فعال یکتا در ۳۰ روز گذشته.</p>
- <h4>📌 پیام سراسری زمان‌دار</h4>
- <p class="subtle">این جمله بالای فهرست پیام‌ها برای همه کاربران نمایش داده می‌شود و در زمان تعیین‌شده خودکار ناپدید می‌شود.</p>
- <label>متن پیام (حداکثر ۵۰۰ نویسه)</label><textarea id="globalAnnouncementText" maxlength="500" rows="3" placeholder="جمله یا اطلاعیه‌ای که همه ببینند..."></textarea>
- <label>زمان پایان نمایش</label><input id="globalAnnouncementEnd" type="datetime-local">
+ <h4>📌 نوشته ثابت بالای ایرانگرام</h4>
+ <p class="subtle">متن تو به‌جای عنوان ایرانگرام بالای صفحه همه کاربران می‌آید و تا وقتی متن تازه‌ای منتشر نکنی باقی می‌ماند. زمان پایان اختیاری است.</p>
+ <label>متن نوشته (حداکثر ۵۰۰ نویسه)</label><textarea id="globalAnnouncementText" maxlength="500" rows="3" placeholder="جمله‌ای که می‌خواهی همه بالای صفحه ببینند..."></textarea>
+ <label>زمان پایان (اختیاری؛ خالی = تا تغییر بعدی)</label><input id="globalAnnouncementEnd" type="datetime-local">
  <button class="primary" id="createGlobalAnnouncement" style="width:100%;margin-top:8px">انتشار پیام سراسری</button>
  <div id="globalAnnouncementAdminRows" style="margin-top:10px">${globalRows}</div>
  <h4>تبلیغ کانال</h4><label>عنوان تبلیغ</label><input id="adTitle" placeholder="مثلاً کانال فناوری"><label>لینک مقصد (HTTPS)</label><input id="adUrl" type="url" placeholder="https://..."><label>کانال ایرانگرام (اختیاری)</label><select id="adChannel"><option value="">فقط لینک خارجی</option>${channelOptions}</select><label>پایان تبلیغ</label><input id="adEnd" type="datetime-local"><button class="primary" id="createAd" style="width:100%;margin-top:10px">ثبت و فعال‌سازی تبلیغ</button>
@@ -3142,9 +3177,10 @@ async function adminPanel(){
  $('#giveChannelTick').onclick=()=>setTick('channel',true);$('#removeChannelTick').onclick=()=>setTick('channel',false);
  $('#createGlobalAnnouncement').onclick=async()=>{
   const body=$('#globalAnnouncementText').value.trim(),end=$('#globalAnnouncementEnd').value;
-  if(!body||body.length>500||!end||new Date(end)<=new Date()){toast('متن و زمان پایان آینده را درست وارد کن.');return}
+  if(!body||body.length>500||(end&&new Date(end)<=new Date())){toast('متن را بنویس و اگر زمان پایان می‌گذاری، زمان آینده انتخاب کن.');return}
+  const expiresAt=end?new Date(end).toISOString():'2099-12-31T23:59:59.000Z';
   const button=$('#createGlobalAnnouncement');button.disabled=true;button.textContent='در حال انتشار...';
-  const {error}=await supabaseClient.from('global_announcements').insert({body,starts_at:new Date().toISOString(),expires_at:new Date(end).toISOString(),created_by:currentUser.id});
+  const {error}=await supabaseClient.from('global_announcements').insert({body,starts_at:new Date().toISOString(),expires_at:expiresAt,created_by:currentUser.id});
   if(error){button.disabled=false;button.textContent='انتشار پیام سراسری';toast('انتشار پیام ناموفق بود: '+error.message);return}
   toast('پیام سراسری برای همه منتشر شد.');await loadGlobalAnnouncement();adminPanel();
  };
@@ -3717,11 +3753,14 @@ html,body{width:100%;height:100%;min-height:0;overflow:hidden;overscroll-behavio
 /* GIF picker: curated popular reactions plus local video-to-GIF creator. */
 (function(){
  const gifItems=[
-  {name:'آفرین 👏',id:'l4HodBpDmoMA5p9bG'},
-  {name:'تشویق',id:'l0K4m0mzkJDAIdhHW'},
-  {name:'آره 👍',id:'mCIjCgs3nWQWfJZvPA'},
-  {name:'وااای 😮',id:'Q59bEIGzlhCrOl2CFw'},
-  {name:'خوشحالی 🎉',id:'dtjiBFOY2lo2XrcceW'}
+  {name:'میم ایرانی · پشمام',id:'f788bmzFezf856sHa9',tags:'ایرانی فارسی تعجب واکنش میم'},
+  {name:'گیف فارسی · خنده',id:'WAFqgIJfyOrNia5fK0',tags:'فارسی خنده طنز واکنش'},
+  {name:'میم ایرانی · واکنش',id:'3pvqD1r6yS0Iarr0hm',tags:'ایرانی فارسی ترند میم'},
+  {name:'ایران · واکنش',id:'Pza8Ui98wd9nw0cV4Q',tags:'ایران ایرانی فارسی واکنش'},
+  {name:'میم فارسی · خنده',id:'Cv8QFB9PLNhaGtumgI',tags:'میم فارسی خنده طنز'},
+  {name:'میم فارسی · نه',id:'fgcO5Qho5bvi2k9rA4',tags:'فارسی نه طنز واکنش'},
+  {name:'میم فارسی · ترند',id:'emALX6cUH4blhb8GjD',tags:'فارسی ترند میم واکنش'},
+  {name:'ایران · میم',id:'VMDaFP2obcOTCsAKOh',tags:'ایران ایرانی میم واکنش'}
  ];
  const gifUrl=id=>'https://media.giphy.com/media/'+id+'/giphy.gif';
  async function sendFeaturedGif(id,name){
@@ -3737,11 +3776,14 @@ html,body{width:100%;height:100%;min-height:0;overflow:hidden;overscroll-behavio
   }catch(error){console.warn('GIF download failed',error);toast('این گیف فعلاً دریافت نشد؛ اتصال اینترنت یا دسترسی به منبع را بررسی کن.')}
  }
  function openGifPicker(){
-  const cards=gifItems.map(item=>'<button class="gif-card" type="button" data-send-gif="'+item.id+'"><img loading="lazy" src="'+gifUrl(item.id)+'" alt="'+item.name+'"><span>'+item.name+'</span></button>').join('');
-  showModal('گیف‌های محبوب','<p class="subtle">چند گیف واکنشی محبوب برای ارسال سریع. برای ساخت گیف از ویدیوی خودت، گزینه ساخت گیف را بزن.</p><div class="gif-grid">'+cards+'</div><div class="gif-tools"><button class="secondary" id="makeOwnGif">＋ ساخت گیف از ویدیو</button><button class="secondary" data-close>بستن</button></div><p class="subtle">گیف‌ها از GIPHY بارگذاری می‌شوند؛ دسترسی به منبع به اینترنت دستگاه بستگی دارد.</p>');
-  $('#modal').querySelectorAll('[data-send-gif]').forEach(button=>button.onclick=()=>{const item=gifItems.find(x=>x.id===button.dataset.sendGif);if(item)sendFeaturedGif(item.id,item.name.replace(/[^\u0600-\u06FFa-zA-Z0-9]/g,'_'))});
+  const makeCards=items=>items.map(item=>'<button class="gif-card" type="button" data-send-gif="'+item.id+'"><img loading="lazy" src="'+gifUrl(item.id)+'" alt="'+item.name+'"><span>'+item.name+'</span></button>').join('');
+  showModal('گیف‌های محبوب ایرانی','<p class="subtle">مجموعه‌ای از گیف‌های فارسی و ایرانی پرطرفدار از GIPHY؛ جست‌وجو کن یا از ویدیوی خودت گیف بساز.</p><input id="gifSearch" type="search" placeholder="جست‌وجوی گیف فارسی، خنده، تعجب..." style="width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text)"><div class="gif-grid" id="gifGrid">'+makeCards(gifItems)+'</div><div class="gif-tools"><button class="secondary" id="makeOwnGif">＋ ساخت گیف از ویدیو</button><button class="secondary" data-close>بستن</button></div><p class="subtle">این مجموعه بر اساس محبوبیت و بازدید عمومی در GIPHY انتخاب شده؛ آمار تعداد ارسال در تلگرام برای هر گیف در دسترس عمومی نیست.</p>');
+  const bindGifButtons=()=>$('#gifGrid').querySelectorAll('[data-send-gif]').forEach(button=>button.onclick=()=>{const item=gifItems.find(x=>x.id===button.dataset.sendGif);if(item)sendFeaturedGif(item.id,item.name.replace(/[^\u0600-\u06FFa-zA-Z0-9]/g,'_'))});
+  $('#gifSearch').oninput=()=>{const term=$('#gifSearch').value.trim().toLowerCase();const matches=gifItems.filter(item=>(item.name+' '+item.tags).toLowerCase().includes(term));$('#gifGrid').innerHTML=makeCards(matches)||'<p class="subtle">گیفی با این عبارت پیدا نشد.</p>';bindGifButtons()};
+  bindGifButtons();
   $('#makeOwnGif').onclick=openGifCreator;
  }
+
  function loadGifEncoder(){
   if(window.GIF)return Promise.resolve();
   if(window.__igGifEncoderPromise)return window.__igGifEncoderPromise;

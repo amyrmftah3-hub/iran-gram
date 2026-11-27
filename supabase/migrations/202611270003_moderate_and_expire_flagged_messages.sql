@@ -33,14 +33,14 @@ before insert on public.messages
 for each row execute function public.ig_moderate_message_text();
 
 -- Keep deletion server-side so it continues when every client is closed.
-create extension if not exists pg_cron with schema pg_catalog;
+create extension if not exists pg_cron;
 
 do $$
 begin
   if not exists (select 1 from cron.job where jobname = 'irangram-delete-expired-moderated-messages') then
     perform cron.schedule(
       'irangram-delete-expired-moderated-messages',
-      '*/10 * * * *',
+      '* * * * *',
       $job$delete from public.messages
            where moderation_reason is not null
              and expires_at is not null

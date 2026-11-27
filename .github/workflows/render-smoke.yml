@@ -227,18 +227,26 @@ jobs:
                   throw new Error('Call reliability checks failed: ' + JSON.stringify(callProbe));
                 }
                 const validationProbe = await page.evaluate(async () => {
-                  const oldChats = state.chats, oldActive = state.active, oldRemote = remoteMode, oldUser = currentUser, oldToast = window.toast;
-                  let toastMessage = '';
+                  const oldChats = state.chats, oldActive = state.active, oldRemote = remoteMode, oldUser = currentUser, oldClient = supabaseClient;
+                  const oldToast = window.toast, oldRenderMessages = window.renderMessages, oldRenderChats = window.renderChats, oldSave = window.save;
+                  let toastMessage = '', uploaded = false, insertedBody = '';
                   state.chats = [{ id: '00000000-0000-0000-0000-000000000001', remote: true, type: 'people', messages: [] }];
                   state.active = state.chats[0].id; remoteMode = true; currentUser = { id: '00000000-0000-0000-0000-000000000002' };
                   window.toast = message => { toastMessage = String(message); };
-                  await uploadAndSendFile(new File([new Uint8Array([1,2,3])], 'invalid.bin', { type: 'application/x-invalid' }));
-                  const result = { message: toastMessage, pendingMessages: state.chats[0].messages.length };
-                  state.chats = oldChats; state.active = oldActive; remoteMode = oldRemote; currentUser = oldUser; window.toast = oldToast;
+                  window.renderMessages = () => {}; window.renderChats = () => {}; window.save = () => {};
+                  supabaseClient = {
+                    storage: { from: () => ({ upload: async () => { uploaded = true; return { error: null }; } }) },
+                    from: () => ({ insert: row => ({ select: () => ({ single: async () => { insertedBody = row.body; return { data: { id: 'media-test-id', created_at: new Date().toISOString() }, error: null }; } }) }) })
+                  };
+                  await uploadAndSendFile(new File([new Uint8Array([1,2,3])], 'unknown.bin', { type: 'application/x-invalid' }));
+                  const message = state.chats[0].messages[0];
+                  const result = { message: toastMessage, pendingMessages: state.chats[0].messages.length, uploaded, insertedBody, sendStatus: message?.sendStatus || '' };
+                  state.chats = oldChats; state.active = oldActive; remoteMode = oldRemote; currentUser = oldUser; supabaseClient = oldClient;
+                  window.toast = oldToast; window.renderMessages = oldRenderMessages; window.renderChats = oldRenderChats; window.save = oldSave;
                   return result;
                 });
-                if (!validationProbe.message.includes('پشتیبانی نمی‌شود') || validationProbe.pendingMessages !== 0) {
-                  throw new Error('Media validation error handling failed: ' + JSON.stringify(validationProbe));
+                if (!validationProbe.uploaded || validationProbe.pendingMessages !== 1 || validationProbe.sendStatus || !validationProbe.insertedBody.includes('application%2Foctet-stream')) {
+                  throw new Error('Generic attachment upload test failed: ' + JSON.stringify(validationProbe));
                 }
                 console.log('PASS media and call reliability checks ' + JSON.stringify({normalized,uploadPath,tusPath,callProbe,drawerAvatarStyle,validationProbe}));
               }
